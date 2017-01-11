@@ -5,4 +5,4 @@
 [![Coverage Status](https://coveralls.io/repos/ChrisRackauckas/DiffEqDiffTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/ChrisRackauckas/DiffEqDiffTools.jl?branch=master)
 [![codecov.io](http://codecov.io/github/ChrisRackauckas/DiffEqDiffTools.jl/coverage.svg?branch=master)](http://codecov.io/github/ChrisRackauckas/DiffEqDiffTools.jl?branch=master)
 
-DiffEqDiffTools.jl is a component package in the DifferentialEquations ecosystem. It holds the common tools for taking derivatives, Jacobians, etc. and utilizing the traits from the ParameterizedFunctions when possible for increasing the speed of calculations. Users interested in using this functionality should check out DifferentialEquations.jl.
+DiffEqDiffTools.jl is a component package in the DifferentialEquations ecosystem. It holds the common tools for taking derivatives, Jacobians, etc. and utilizing the traits from the ParameterizedFunctions when possible for increasing the speed of calculations. Users interested in using this functionality should check out [DifferentialEquations.jl](https://github.com/JuliaDiffEq/DifferentialEquations.jl/blob/master/src/DifferentialEquations.jl).
