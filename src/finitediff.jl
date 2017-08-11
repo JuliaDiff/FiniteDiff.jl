@@ -78,7 +78,7 @@ end
 
 function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}})
     eps_cbrt = cbrt(eps(T))
-    @fastmath @inbounds for i in 1 : length(x)
+    @inbounds for i in 1 : length(x)
         epsilon = compute_epsilon(Val{:forward}, x[i], eps_cbrt)
         epsilon_inv = one(T) / epsilon
         x_plus = x[i] + epsilon
@@ -89,7 +89,7 @@ end
 
 function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T})
     eps_cbrt = cbrt(eps(T))
-    @fastmath @inbounds for i in 1 : length(x)
+    @inbounds for i in 1 : length(x)
         epsilon = compute_epsilon(Val{:forward}, x[i], eps_cbrt)
         epsilon_inv = one(T) / epsilon
         x_plus = x[i] + epsilon
@@ -123,6 +123,78 @@ end
 
 
 #=
-Compute the Jacobian matrix of a real-valued callable f.
+Compute the Jacobian matrix of a real-valued callable f: R^n -> R^m.
 =#
-# TODO
+function finite_difference_jacobian{T<:Real}(f, x::AbstractArray{T}, t::DataType)
+    fx = f.(x)
+    J = zeros(T, length(fx), length(x))
+    finite_difference_jacobian!(J, f, x, t, fx)
+end
+
+function finite_difference_jacobian!{T<:Real}(J::AbstractArray{T}, f, x::AbstractArray{T}, t::DataType, fx::AbstractArray{T})
+    m, n = size(J)
+    if t == Val{:forward}
+        shifted_x = copy(x)
+        eps_sqrt = sqrt(eps(T))
+        for i in 1 : n
+            epsilon = compute_epsilon(t, x, eps_sqrt)
+            shifted_x[i] += epsilon
+            @. J[:, i] = (f(shifted_x) - f_x) / epsilon
+            shifted_x[i] = x[i]
+        end
+    elseif t == Val{:central}
+        shifted_x_plus = copy(x)
+        shifted_x_minus = copy(x)
+        eps_cbrt = cbrt(eps(T))
+        for i in 1 : n
+            epsilon = compute_epsilon(t, x, eps_cbrt)
+            shifted_x_plus[i] += epsilon
+            shifted_x_minus[i] -= epsilon
+            @. J[:, i] = (f(shifted_x_plus) - f(shifted_x_minus)) / (epsilon + epsilon)
+            shifted_x_plus[i] = x[i]
+            shifted_x_minus[i] = x[i]
+        end
+    end
+    J
+end
+
+function finite_difference_jacobian{T<:Real}(f, x::StridedArray{T}, t::DataType, fx::StridedArray{T})
+    J = zeros(T, length(fx), length(x))
+    finite_difference_jacobian!(J, f, x, t, fx)
+end
+
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T})
+    m, n = size(J)
+    eps_sqrt = sqrt(eps(T))
+    @inbounds for i = 1 : n
+        epsilon = compute_epsilon(Val{:forward}, x[i], eps_sqrt)
+        epsilon_inv = one(T) / epsilon
+        for j in 1 : m
+            if i == j
+                J[j,i] = (f(x[j]+epsilon) - fx[j]) * epsilon_inv
+            else
+                J[j,i] = zero(T)
+            end
+        end
+    end
+    J
+end
+
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, ::Union{Void,StridedArray{T}}=nothing)
+    m, n = size(J)
+    eps_cbrt = cbrt(eps(T))
+    @inbounds for i = 1 : n
+        epsilon = compute_epsilon(Val{:central}, x[i], eps_cbrt)
+        epsilon_double_inv = one(T) / (2 * epsilon)
+        for j in 1 : m
+            if i==j
+                J[j,i] = (f(x[j]+epsilon) - f(x[j]-epsilon)) * epsilon_double_inv
+            else
+                J[j,i] = zero(T)
+            end
+        end
+    end
+    J
+end
+
+# TODO: Jacobians for complex-valued callables
