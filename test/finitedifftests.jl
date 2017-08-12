@@ -6,11 +6,11 @@ df_ref = cos.(x)
 # TODO: add tests for non-StridedArrays and with more complicated functions
 
 # derivative tests
-@test maximum(abs.(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}) - df_ref)) < 1e-8
 @test maximum(abs.(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}) - df_ref)) < 1e-4
 @test maximum(abs.(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}, y) - df_ref)) < 1e-4
+@test maximum(abs.(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}) - df_ref)) < 1e-8
 
 # Jacobian tests
 using Calculus
-@test DiffEqDiffTools.finite_difference_jacobian(sin, x, Val{:central}) ≈ Calculus.finite_difference_jacobian(sin, x, :central)
 @test DiffEqDiffTools.finite_difference_jacobian(sin, x, Val{:forward}) ≈ Calculus.finite_difference_jacobian(sin, x, :forward)
+@test DiffEqDiffTools.finite_difference_jacobian(sin, x, Val{:central}) ≈ Calculus.finite_difference_jacobian(sin, x, :central)

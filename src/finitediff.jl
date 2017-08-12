@@ -14,51 +14,51 @@ end
     eps_cbrt * max(one(T), abs(x))
 end
 
-@inline function compute_epsilon{T<:Complex}(::Type{Val{:complex}}, x::T)
+@inline function compute_epsilon{T<:Complex}(::Type{Val{:Complex}}, x::T)
     eps(real(x))
+end
+
+@inline function compute_epsilon_factor{T<:Real}(fdtype::DataType, ::Type{T})
+    if fdtype==Val{:forward}
+        return sqrt(eps(T))
+    elseif fdtype==Val{:central}
+        return cbrt(eps(T))
+    else
+        error("Unrecognized fdtype: must be Val{:forward} or Val{:central}.")
+    end
 end
 
 
 #=
 Compute the derivative df of a real-valued callable f on a collection of points x.
 Generic fallbacks for AbstractArrays that are not StridedArrays.
+# TODO: test the fallbacks
 =#
-function finite_difference{T<:Real}(f, x::AbstractArray{T}, ::Type{Val{:central}}, ::Union{Void,AbstractArray{T}}=nothing)
+function finite_difference{T<:Real}(f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}=nothing)
     df = zeros(T, size(x))
-    finite_difference!(df, f, x, Val{:central})
-end
-
-function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, ::Type{Val{:central}}, ::Union{Void,AbstractArray{T}}=nothing)
-    eps_sqrt = sqrt(eps(T))
-    epsilon = compute_epsilon.(Val{:central}, x, eps_sqrt)
-    @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
-end
-
-function finite_difference{T<:Real}(f, x::AbstractArray{T}, ::Type{Val{:forward}}, f_x::AbstractArray{T}=f.(x))
-    df = zeros(T, size(x))
-    finite_difference!(df, f, x, Val{:forward}, f_x)
+    finite_difference!(df, f, x, fdtype, fx)
 end
 
 function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, ::Type{Val{:forward}}, f_x::AbstractArray{T}=f.(x))
-    eps_cbrt = cbrt(eps(T))
-    epsilon = compute_epsilon.(Val{:forward}, x, eps_cbrt)
+    epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
+    @. epsilon = compute_epsilon(Val{:forward}, x)
     @. df = (f(x+epsilon) - f_x) / epsilon
 end
 
+function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, ::Type{Val{:central}}, ::Union{Void,AbstractArray{T}}=nothing)
+    epsilon_factor = compute_epsilon_factor(Val{:central}, T)
+    @. epsilon = compute_epsilon(Val{:central}, x, epsilon_factor)
+    @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
+end
 
 #=
 Compute the derivative df of a real-valued callable f on a collection of points x.
 Optimized implementations for StridedArrays.
 =#
-function finite_difference{T<:Real}(f, x::StridedArray{T}, ::Type{Val{:central}}, ::Union{Void,StridedArray{T}}=nothing)
-    df = zeros(T, size(x))
-    finite_difference!(df, f, x, Val{:central})
-end
-
 function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, ::Union{Void,StridedArray{T}}=nothing)
-    eps_sqrt = sqrt(eps(T))
+    epsilon_factor = compute_epsilon_factor(Val{:central}, T)
     @inbounds for i in 1 : length(x)
-        epsilon = compute_epsilon(Val{:central}, x[i], eps_sqrt)
+        epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
         epsilon_double_inv = one(T) / (2*epsilon)
         x_plus, x_minus = x[i]+epsilon, x[i]-epsilon
         df[i] = (f(x_plus) - f(x_minus)) * epsilon_double_inv
@@ -77,9 +77,9 @@ function finite_difference{T<:Real}(f, x::StridedArray{T}, ::Type{Val{:forward}}
 end
 
 function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}})
-    eps_cbrt = cbrt(eps(T))
+    epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
     @inbounds for i in 1 : length(x)
-        epsilon = compute_epsilon(Val{:forward}, x[i], eps_cbrt)
+        epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
         epsilon_inv = one(T) / epsilon
         x_plus = x[i] + epsilon
         df[i] = (f(x_plus) - f(x[i])) * epsilon_inv
@@ -88,9 +88,9 @@ function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T},
 end
 
 function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T})
-    eps_cbrt = cbrt(eps(T))
+    epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
     @inbounds for i in 1 : length(x)
-        epsilon = compute_epsilon(Val{:forward}, x[i], eps_cbrt)
+        epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
         epsilon_inv = one(T) / epsilon
         x_plus = x[i] + epsilon
         df[i] = (f(x_plus) - fx[i]) * epsilon_inv
@@ -102,16 +102,16 @@ end
 Compute the derivative df of a real-valued callable f on a collection of points x.
 Single point implementations.
 =#
-function finite_difference{T<:Real}(f, x::T, t::DataType, f_x::Union{Void,T}=nothing)
-    epsilon = compute_epsilon(t, x)
-    finite_difference_kernel(f, x, t, epsilon, f_x)
+function finite_difference{T<:Real}(f, x::T, fdtype::DataType, f_x::Union{Void,T}=nothing)
+    epsilon = compute_epsilon(fdtype, x)
+    finite_difference_kernel(f, x, fdtype, epsilon, f_x)
 end
 
-@inline function finite_difference_kernel{T<:Real}(f, x::T, ::Type{Val{:forward}}, epsilon::T, f_x::Union{Void,T})
-    if typeof(f_x) == Void
+@inline function finite_difference_kernel{T<:Real}(f, x::T, ::Type{Val{:forward}}, epsilon::T, fx::Union{Void,T})
+    if typeof(fx) == Void
         return (f(x+epsilon) - f(x)) / epsilon
     else
-        return (f(x+epsilon) - f_x) / epsilon
+        return (f(x+epsilon) - fx) / epsilon
     end
 end
 
@@ -125,68 +125,54 @@ end
 #=
 Compute the Jacobian matrix of a real-valued callable f: R^n -> R^m.
 =#
-function finite_difference_jacobian{T<:Real}(f, x::AbstractArray{T}, t::DataType)
-    fx = f.(x)
+function finite_difference_jacobian{T<:Real}(f, x::AbstractArray{T}, fdtype::DataType=Val{:central}, funtype::DataType=Val{:Default})
+    if funtype==Val{:Default}
+        fx = f.(x)
+    elseif funtype==Val{:DiffEqJacobianWrapper}
+        f(fx, x)
+    else
+        error("Unrecognized funtype: must be Val{:Default} or Val{:DiffEqJacobianWrapper}.")
+    end
     J = zeros(T, length(fx), length(x))
-    finite_difference_jacobian!(J, f, x, t, fx)
+    finite_difference_jacobian!(J, f, x, fdtype, fx, funtype)
 end
 
-function finite_difference_jacobian!{T<:Real}(J::AbstractArray{T}, f, x::AbstractArray{T}, t::DataType, fx::AbstractArray{T})
+function finite_difference_jacobian!{T<:Real}(J::AbstractArray{T}, f, x::AbstractArray{T}, fdtype::DataType, fx::AbstractArray{T}, ::DataType)
+    # This is an inefficient fallback that only makes sense if setindex/getindex are unavailable, e.g. GPUArrays etc.
     m, n = size(J)
+    epsilon_factor = compute_epsilon_factor(fdtype, T)
     if t == Val{:forward}
         shifted_x = copy(x)
-        eps_sqrt = sqrt(eps(T))
-        for i in 1 : n
-            epsilon = compute_epsilon(t, x, eps_sqrt)
+        for i in 1:n
+            epsilon = compute_epsilon(t, x[i], epsilon_factor)
             shifted_x[i] += epsilon
-            @. J[:, i] = (f(shifted_x) - f_x) / epsilon
+            J[:, i] .= (f(shifted_x) - f_x) / epsilon
             shifted_x[i] = x[i]
         end
     elseif t == Val{:central}
-        shifted_x_plus = copy(x)
+        shifted_x_plus  = copy(x)
         shifted_x_minus = copy(x)
-        eps_cbrt = cbrt(eps(T))
-        for i in 1 : n
-            epsilon = compute_epsilon(t, x, eps_cbrt)
-            shifted_x_plus[i] += epsilon
+        for i in 1:n
+            epsilon = compute_epsilon(t, x[i], epsilon_factor)
+            shifted_x_plus[i]  += epsilon
             shifted_x_minus[i] -= epsilon
-            @. J[:, i] = (f(shifted_x_plus) - f(shifted_x_minus)) / (epsilon + epsilon)
-            shifted_x_plus[i] = x[i]
+            J[:, i] .= (f(shifted_x_plus) - f(shifted_x_minus)) / (epsilon + epsilon)
+            shifted_x_plus[i]  = x[i]
             shifted_x_minus[i] = x[i]
         end
+    else
+        error("Unrecognized fdtype: must be Val{:forward} or Val{:central}.")
     end
     J
 end
 
-function finite_difference_jacobian{T<:Real}(f, x::StridedArray{T}, t::DataType, fx::StridedArray{T})
-    J = zeros(T, length(fx), length(x))
-    finite_difference_jacobian!(J, f, x, t, fx)
-end
-
-function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T})
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, fx::StridedArray{T}, ::Type{Val{:Default}})
     m, n = size(J)
-    eps_sqrt = sqrt(eps(T))
-    @inbounds for i = 1 : n
-        epsilon = compute_epsilon(Val{:forward}, x[i], eps_sqrt)
-        epsilon_inv = one(T) / epsilon
-        for j in 1 : m
-            if i == j
-                J[j,i] = (f(x[j]+epsilon) - fx[j]) * epsilon_inv
-            else
-                J[j,i] = zero(T)
-            end
-        end
-    end
-    J
-end
-
-function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, ::Union{Void,StridedArray{T}}=nothing)
-    m, n = size(J)
-    eps_cbrt = cbrt(eps(T))
-    @inbounds for i = 1 : n
-        epsilon = compute_epsilon(Val{:central}, x[i], eps_cbrt)
+    epsilon_factor = compute_epsilon_factor(Val{:central}, T)
+    @inbounds for i in 1:n
+        epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
         epsilon_double_inv = one(T) / (2 * epsilon)
-        for j in 1 : m
+        for j in 1:m
             if i==j
                 J[j,i] = (f(x[j]+epsilon) - f(x[j]-epsilon)) * epsilon_double_inv
             else
@@ -196,5 +182,62 @@ function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedA
     end
     J
 end
+
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T}, ::Type{Val{:Default}})
+    m, n = size(J)
+    epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
+    @inbounds for i in 1:n
+        epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
+        epsilon_inv = one(T) / epsilon
+        for j in 1:m
+            if i==j
+                J[j,i] = (f(x[j]+epsilon) - fx[j]) * epsilon_inv
+            else
+                J[j,i] = zero(T)
+            end
+        end
+    end
+    J
+end
+
+# efficient implementations for OrdinaryDiffEq Jacobian wrappers, assuming the system function supplies StridedArrays
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T}, ::Type{Val{:JacobianWrapper}})
+    m, n = size(J)
+    epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
+    x1, fx1 = f.x1, f.fx1
+    copy!(x1, x)
+    copy!(fx1, fx)
+    @inbounds for i in 1:n
+        epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
+        epsilon_inv = one(T) / epsilon
+        x1[i] += epsilon
+        f(fx, x)
+        f(fx1, x1)
+        @. J[:,i] = (fx-fx1) * epsilon_inv
+        x1[i] -= epsilon
+    end
+    J
+end
+
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, fx::StridedArray{T}, ::Type{Val{:JacobianWrapper}})
+    m, n = size(J)
+    epsilon_factor = compute_epsilon_factor(Val{:central}, T)
+    x1, fx1 = f.x1, f.fx1
+    copy!(x1, x)
+    copy!(fx1, fx)
+    @inbounds for i in 1:n
+        epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
+        epsilon_double_inv = one(T) / (2 * epsilon)
+        x[i] += epsilon
+        x1[i] -= epsilon
+        f(fx, x)
+        f(fx1, x1)
+        @. J[:,i] = (fx-fx1) * epsilon_double_inv
+        x[i] -= epsilon
+        x1[i] += epsilon
+    end
+    J
+end
+
 
 # TODO: Jacobians for complex-valued callables
