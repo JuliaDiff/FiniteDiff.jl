@@ -14,8 +14,8 @@ end
     eps_cbrt * max(one(T), abs(x))
 end
 
-@inline function compute_epsilon{T<:Complex}(::Type{Val{:Complex}}, x::T)
-    eps(real(x))
+@inline function compute_epsilon{T<:Real}(::Type{Val{:complex}}, x::T, ::Union{Void,T}=nothing)
+    eps(x)
 end
 
 @inline function compute_epsilon_factor{T<:Real}(fdtype::DataType, ::Type{T})
@@ -34,28 +34,63 @@ Compute the derivative df of a real-valued callable f on a collection of points 
 Generic fallbacks for AbstractArrays that are not StridedArrays.
 # TODO: test the fallbacks
 =#
-function finite_difference{T<:Real}(f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}=nothing)
+function finite_difference{T<:Real}(f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}=nothing, funtype::DataType=Val{:Default})
     df = zeros(T, size(x))
-    finite_difference!(df, f, x, fdtype, fx)
+    finite_difference!(df, f, x, fdtype, fx, funtype)
 end
 
-function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, ::Type{Val{:forward}}, f_x::AbstractArray{T}=f.(x))
-    epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
-    @. epsilon = compute_epsilon(Val{:forward}, x)
-    @. df = (f(x+epsilon) - f_x) / epsilon
+function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}, ::Type{Val{:Default}})
+    epsilon_factor = compute_epsilon_factor(fdtype, T)
+    @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
+    if fdtype == Val{:forward}
+        if typeof(fx) == Void
+            @. df = (f(x+epsilon) - f(x)) / epsilon
+        else
+            @. df = (f(x+epsilon) - fx) / epsilon
+        end
+    elseif fdtype == Val{:central}
+        @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
+    end
+    df
 end
 
-function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, ::Type{Val{:central}}, ::Union{Void,AbstractArray{T}}=nothing)
-    epsilon_factor = compute_epsilon_factor(Val{:central}, T)
-    @. epsilon = compute_epsilon(Val{:central}, x, epsilon_factor)
-    @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
+function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}, ::Type{Val{:DiffEqDerivativeWrapper}})
+    epsilon_factor = compute_epsilon_factor(fdtype, T)
+    @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
+    error("Not implemented yet.")
+
+    if fdtype == Val{:forward}
+        if typeof(fx) == Void
+
+        else
+
+        end
+    elseif fdtype == Val{:central}
+
+    end
+    df
+end
+
+function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::T, fdtype::DataType, fx::AbstractArray{T}, ::Type{Val{:DiffEqDerivativeWrapper}})
+    epsilon = compute_epsilon(fdtype, x)
+    fx1 = f.fx1
+    if fdtype == Val{:forward}
+        f(fx, x)
+        f(fx1, x+epsilon)
+        @. df = (fx1 - fx) / epsilon
+    elseif fdtype == Val{:central}
+        f(fx, x-epsilon)
+        f(fx1, x+epsilon)
+        @. df = (fx1 - fx) / (2 * epsilon)
+    end
+    df
 end
 
 #=
 Compute the derivative df of a real-valued callable f on a collection of points x.
 Optimized implementations for StridedArrays.
 =#
-function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, ::Union{Void,StridedArray{T}}=nothing)
+function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, ::Union{Void,StridedArray{T}}, ::Type{Val{:Default}})
     epsilon_factor = compute_epsilon_factor(Val{:central}, T)
     @inbounds for i in 1 : length(x)
         epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
@@ -66,17 +101,7 @@ function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T},
     df
 end
 
-function finite_difference{T<:Real}(f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::Union{Void,StridedArray{T}})
-    df = zeros(T, size(x))
-    if typeof(fx) == Void
-        finite_difference!(df, f, x, Val{:forward})
-    else
-        finite_difference!(df, f, x, Val{:forward}, fx)
-    end
-    df
-end
-
-function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}})
+function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, ::Void, ::Type{Val{:Default}})
     epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
     @inbounds for i in 1 : length(x)
         epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
@@ -87,7 +112,7 @@ function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T},
     df
 end
 
-function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T})
+function finite_difference!{T<:Real}(df::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T}, ::Type{Val{:Default}})
     epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
     @inbounds for i in 1 : length(x)
         epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
