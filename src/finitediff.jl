@@ -14,10 +14,6 @@ end
     eps_cbrt * max(one(T), abs(x))
 end
 
-@inline function compute_epsilon{T<:Real}(::Type{Val{:complex}}, x::T, ::Union{Void,T}=nothing)
-    eps(x)
-end
-
 @inline function compute_epsilon_factor{T<:Real}(fdtype::DataType, ::Type{T})
     if fdtype==Val{:forward}
         return sqrt(eps(T))
@@ -40,48 +36,41 @@ function finite_difference{T<:Real}(f, x::AbstractArray{T}, fdtype::DataType, fx
 end
 
 function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}, ::Type{Val{:Default}})
-    epsilon_factor = compute_epsilon_factor(fdtype, T)
-    @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
     if fdtype == Val{:forward}
+        epsilon_factor = compute_epsilon_factor(fdtype, T)
+        @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
         if typeof(fx) == Void
             @. df = (f(x+epsilon) - f(x)) / epsilon
         else
             @. df = (f(x+epsilon) - fx) / epsilon
         end
     elseif fdtype == Val{:central}
+        epsilon_factor = compute_epsilon_factor(fdtype, T)
+        @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
         @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
-    end
-    df
-end
-
-function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::AbstractArray{T}, fdtype::DataType, fx::Union{Void,AbstractArray{T}}, ::Type{Val{:DiffEqDerivativeWrapper}})
-    epsilon_factor = compute_epsilon_factor(fdtype, T)
-    @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
-    error("Not implemented yet.")
-
-    if fdtype == Val{:forward}
-        if typeof(fx) == Void
-
-        else
-
-        end
-    elseif fdtype == Val{:central}
-
+    elseif fdtype == Val{:complex}
+        epsilon = eps(T)
+        @. df = imag(f(x+im*epsilon)) / epsilon
     end
     df
 end
 
 function finite_difference!{T<:Real}(df::AbstractArray{T}, f, x::T, fdtype::DataType, fx::AbstractArray{T}, ::Type{Val{:DiffEqDerivativeWrapper}})
-    epsilon = compute_epsilon(fdtype, x)
     fx1 = f.fx1
     if fdtype == Val{:forward}
+        epsilon = compute_epsilon(fdtype, x)
         f(fx, x)
         f(fx1, x+epsilon)
         @. df = (fx1 - fx) / epsilon
     elseif fdtype == Val{:central}
+        epsilon = compute_epsilon(fdtype, x)
         f(fx, x-epsilon)
         f(fx1, x+epsilon)
         @. df = (fx1 - fx) / (2 * epsilon)
+    elseif fdtype == Val{:complex}
+        epsilon = eps(T)
+        f(fx, f(x+im*epsilon))
+        @. df = imag(fx) / epsilon
     end
     df
 end
@@ -128,8 +117,13 @@ Compute the derivative df of a real-valued callable f on a collection of points 
 Single point implementations.
 =#
 function finite_difference{T<:Real}(f, x::T, fdtype::DataType, f_x::Union{Void,T}=nothing)
-    epsilon = compute_epsilon(fdtype, x)
-    finite_difference_kernel(f, x, fdtype, epsilon, f_x)
+    if fdtype == Val{:complex}
+        epsilon = eps(T)
+        return imag(f(x+im*epsilon)) / epsilon
+    else
+        epsilon = compute_epsilon(fdtype, x)
+        return finite_difference_kernel(f, x, fdtype, epsilon, f_x)
+    end
 end
 
 @inline function finite_difference_kernel{T<:Real}(f, x::T, ::Type{Val{:forward}}, epsilon::T, fx::Union{Void,T})
@@ -154,7 +148,7 @@ function finite_difference_jacobian{T<:Real}(f, x::AbstractArray{T}, fdtype::Dat
     if funtype==Val{:Default}
         fx = f.(x)
     elseif funtype==Val{:DiffEqJacobianWrapper}
-        f(fx, x)
+        fx = f(x)
     else
         error("Unrecognized funtype: must be Val{:Default} or Val{:DiffEqJacobianWrapper}.")
     end
@@ -217,6 +211,22 @@ function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedA
         for j in 1:m
             if i==j
                 J[j,i] = (f(x[j]+epsilon) - fx[j]) * epsilon_inv
+            else
+                J[j,i] = zero(T)
+            end
+        end
+    end
+    J
+end
+
+function finite_difference_jacobian!{T<:Real}(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:complex}}, fx::StridedArray{T}, ::Type{Val{:Default}})
+    m, n = size(J)
+    epsilon = eps(T)
+    epsilon_inv = one(T) / epsilon
+    @inbounds for i in 1:n
+        for j in 1:m
+            if i==j
+                J[j,i] = imag(f(x[j]+im*epsilon)) * epsilon_inv
             else
                 J[j,i] = zero(T)
             end
