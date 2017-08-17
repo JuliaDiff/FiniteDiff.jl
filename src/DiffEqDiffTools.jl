@@ -2,6 +2,6 @@ __precompile__()
 
 module DiffEqDiffTools
 
-# package code goes here
+include("finitediff.jl")
 
 end # module
