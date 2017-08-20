@@ -160,7 +160,7 @@ function finite_difference_jacobian!(J::AbstractArray{T}, f, x::AbstractArray{T}
     # This is an inefficient fallback that only makes sense if setindex/getindex are unavailable, e.g. GPUArrays etc.
     m, n = size(J)
     epsilon_factor = compute_epsilon_factor(fdtype, T)
-    if t == Val{:forward}
+    if fdtype == Val{:forward}
         shifted_x = copy(x)
         for i in 1:n
             epsilon = compute_epsilon(t, x[i], epsilon_factor)
@@ -168,11 +168,11 @@ function finite_difference_jacobian!(J::AbstractArray{T}, f, x::AbstractArray{T}
             J[:, i] .= (f(shifted_x) - f_x) / epsilon
             shifted_x[i] = x[i]
         end
-    elseif t == Val{:central}
+    elseif fdtype == Val{:central}
         shifted_x_plus  = copy(x)
         shifted_x_minus = copy(x)
         for i in 1:n
-            epsilon = compute_epsilon(t, x[i], epsilon_factor)
+            epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
             shifted_x_plus[i]  += epsilon
             shifted_x_minus[i] -= epsilon
             J[:, i] .= (f(shifted_x_plus) - f(shifted_x_minus)) / (epsilon + epsilon)
