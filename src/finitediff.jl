@@ -235,8 +235,9 @@ function finite_difference_jacobian!(J::StridedArray{T}, f, x::StridedArray{T}, 
     J
 end
 
-# efficient implementations for OrdinaryDiffEq Jacobian wrappers, assuming the system function supplies StridedArrays
-function finite_difference_jacobian!(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T}, ::Type{Val{:JacobianWrapper}}) where T<:Real
+# efficient implementations for OrdinaryDiffEq Jacobian wrappers
+# AbstractArray{T} should be OK if JacobianWrapper is provided
+function finite_difference_jacobian!(J::AbstractArray{T}, f, x::StridedArray{T}, ::Type{Val{:forward}}, fx::StridedArray{T}, ::Type{Val{:JacobianWrapper}}) where T<:Real
     m, n = size(J)
     epsilon_factor = compute_epsilon_factor(Val{:forward}, T)
     x1, fx1 = f.x1, f.fx1
@@ -254,7 +255,7 @@ function finite_difference_jacobian!(J::StridedArray{T}, f, x::StridedArray{T}, 
     J
 end
 
-function finite_difference_jacobian!(J::StridedArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, fx::StridedArray{T}, ::Type{Val{:JacobianWrapper}}) where T<:Real
+function finite_difference_jacobian!(J::AbstractArray{T}, f, x::StridedArray{T}, ::Type{Val{:central}}, fx::StridedArray{T}, ::Type{Val{:JacobianWrapper}}) where T<:Real
     m, n = size(J)
     epsilon_factor = compute_epsilon_factor(Val{:central}, T)
     x1, fx1 = f.x1, f.fx1
