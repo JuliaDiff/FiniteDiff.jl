@@ -221,7 +221,7 @@ end
 # TODO: optimized implementations for DiffEq wrappers
 
 #=
-Compute the derivative df of a real-valued callable f on a collection of points x.
+Compute the derivative df of a callable f on a collection of points x.
 Single point implementations.
 =#
 function finite_difference(f, x::T, fdtype::DataType, funtype::DataType=Val{:Real}, f_x::Union{Void,T}=nothing) where T<:Number
@@ -428,20 +428,16 @@ function finite_difference_jacobian!(J::StridedMatrix{<:Number}, f, x::StridedAr
     m, n = size(J)
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
-        epsilon_factor = compute_epsilon_factor(Val{:forward}, eltype(x))
+        epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i in 1:n
-            epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
+            epsilon = compute_epsilon(Val{:forward}, real(x[i]), epsilon_factor)
             epsilon_inv = one(returntype) / epsilon
             for j in 1:m
                 if i==j
                     if typeof(fx) == Void
-                        J[j,i] = (f(x[j]+epsilon) - f(x[j])) * epsilon_inv
+                        J[j,i] = ( real( f(x[j]+epsilon) - f(x[j]) ) + im*imag( f(x[j]+im*epsilon) - f(x[j]) ) ) * epsilon_inv
                     else
-                        if typeof(fx) == Void
-                            J[j,i] = (f(x[j]+epsilon) - f(x[j])) * epsilon_inv
-                        else
-                            J[j,i] = (f(x[j]+epsilon) - fx[j]) * epsilon_inv
-                        end
+                        J[j,i] = ( real( f(x[j]+epsilon) - fx[j] ) + im*imag( f(x[j]+im*epsilon) - fx[j] ) ) * epsilon_inv
                     end
                 else
                     J[j,i] = zero(returntype)
@@ -449,30 +445,20 @@ function finite_difference_jacobian!(J::StridedMatrix{<:Number}, f, x::StridedAr
             end
         end
     elseif fdtype == Val{:central}
-        epsilon_factor = compute_epsilon_factor(Val{:central}, eltype(x))
+        epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
         @inbounds for i in 1:n
-            epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
+            epsilon = compute_epsilon(Val{:central}, real(x[i]), epsilon_factor)
             epsilon_double_inv = one(returntype) / (2 * epsilon)
             for j in 1:m
                 if i==j
-                    J[j,i] = (f(x[j]+epsilon) - f(x[j]-epsilon)) * epsilon_double_inv
+                    J[j,i] = ( real( f(x[j]+epsilon)-f(x[j]-epsilon) ) + im*imag( f(x[j]+im*epsilon) - f(x[j]-im*epsilon) ) ) * epsilon_double_inv
                 else
                     J[j,i] = zero(returntype)
                 end
             end
         end
-    elseif fdtype == Val{:complex}
-        epsilon = eps(epsilon_elemtype)
-        epsilon_inv = one(epsilon_elemtype) / epsilon
-        @inbounds for i in 1:n
-            for j in 1:m
-                if i==j
-                    J[j,i] = imag(f(x[j]+im*epsilon)) * epsilon_inv
-                else
-                    J[j,i] = zero(returntype)
-                end
-            end
-        end
+    else
+        error("Unrecognized fdtype: must be Val{:forward} or Val{:central}.")
     end
     J
 end

@@ -81,6 +81,7 @@ J_ref = diagm(df_ref)
 @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), df_ref) < 1e-8
 
 # Jacobian tests for complex-valued callables
-#@test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Complex}, Val{:Default}), J_ref) < 1e-4
-#@test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Complex}, Val{:Default}), J_ref) < 1e-8
+@test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Complex}, Val{:Default}), J_ref) < 1e-4
+@test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Complex}, Val{:Default}), J_ref) < 1e-8
+
 # StridedArray tests end here
