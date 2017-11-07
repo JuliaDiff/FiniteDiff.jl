@@ -42,7 +42,7 @@ function finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Rea
         epsilon_complex = eps(epsilon_elemtype)
         @. df = imag(f(x+im*epsilon_complex)) / epsilon_complex
     else
-        error("Unrecognized fdtype: valid values are Val{:forward}, Val{:central} and Val{:complex}.")
+        fdtype_error(Val{:Real})
     end
     df
 end
@@ -61,7 +61,6 @@ function finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:N
         end
     end
     if fdtype == Val{:forward}
-        @show typeof(x)
         epsilon_factor = compute_epsilon_factor(Val{:forward}, eltype(epsilon))
         @. epsilon = compute_epsilon(Val{:forward}, real(x), epsilon_factor)
         if typeof(fx) == Void
@@ -72,8 +71,8 @@ function finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:N
         epsilon_factor = compute_epsilon_factor(Val{:central}, eltype(epsilon))
         @. epsilon = compute_epsilon(Val{:central}, real(x), epsilon_factor)
         @. df = real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-epsilon)) / (2 * epsilon)
-    elseif fdtype == Val{:complex}
-        error("Invalid fdtype value, Val{:complex} not implemented for complex-valued functions.")
+    else
+        fdtype_error(Val{:Complex})
     end
     df
 end
@@ -82,50 +81,90 @@ end
 #=
 Optimized implementations for StridedArrays.
 =#
-function finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
-    ::Type{Val{:central}}, ::Type{Val{:Real}}, ::Type{Val{:Default}},
+# for R -> R^n
+function finite_difference!(df::StridedArray{<:Real}, f, x::Real,
+    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
     fx::Union{Void,StridedArray{<:Real}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
-    epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
-    @inbounds for i in 1 : length(x)
-        epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
-        epsilon_double_inv = one(typeof(epsilon)) / (2*epsilon)
-        x_plus, x_minus = x[i]+epsilon, x[i]-epsilon
-        df[i] = (f(x_plus) - f(x_minus)) * epsilon_double_inv
-    end
-    df
-end
-
-function finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
-    ::Type{Val{:forward}}, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx::Union{Void,StridedArray{<:Real}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
-
-    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
-    epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
-    @inbounds for i in 1 : length(x)
-        epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
-        x_plus = x[i] + epsilon
+    if fdtype == Val{:forward}
+        epsilon = compute_epsilon(Val{:forward}, x)
         if typeof(fx) == Void
-            df[i] = (f(x_plus) - f(x[i])) / epsilon
+            df .= (f(x+epsilon) - f(x)) / epsilon
         else
-            df[i] = (f(x_plus) - fx[i]) / epsilon
+            df .= (f(x+epsilon) - fx) / epsilon
         end
+    elseif fdtype == Val{:central}
+        epsilon = compute_epsilon(Val{:central}, x)
+        df .= (f(x+epsilon) - f(x-epsilon)) / (2*epsilon)
+    elseif fdtype == Val{:complex}
+        epsilon = eps(eltype(x))
+        df .= imag(f(x+im*epsilon)) / epsilon
+    else
+        fdtype_error(Val{:Real})
     end
     df
 end
 
+# for R^n -> R^n
 function finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
-    ::Type{Val{:complex}}, ::Type{Val{:Real}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
     fx::Union{Void,StridedArray{<:Real}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
-    epsilon_complex = eps(eltype(x))
-    @inbounds for i in 1 : length(x)
-        df[i] = imag(f(x[i]+im*epsilon_complex)) / epsilon_complex
+    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+    if fdtype == Val{:forward}
+        epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
+        @inbounds for i in 1 : length(x)
+            epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
+            x_plus = x[i] + epsilon
+            if typeof(fx) == Void
+                df[i] = (f(x_plus) - f(x[i])) / epsilon
+            else
+                df[i] = (f(x_plus) - fx[i]) / epsilon
+            end
+        end
+    elseif fdtype == Val{:central}
+        epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
+        @inbounds for i in 1 : length(x)
+            epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
+            epsilon_double_inv = one(typeof(epsilon)) / (2*epsilon)
+            x_plus, x_minus = x[i]+epsilon, x[i]-epsilon
+            df[i] = (f(x_plus) - f(x_minus)) * epsilon_double_inv
+        end
+    elseif fdtype == Val{:complex}
+        epsilon_complex = eps(eltype(x))
+        @inbounds for i in 1 : length(x)
+            df[i] = imag(f(x[i]+im*epsilon_complex)) / epsilon_complex
+        end
+    else
+        fdtype_error(Val{:Real})
     end
     df
 end
 
+# C -> C^n
+function finite_difference!(df::StridedArray{<:Number}, f, x::Number,
+    fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
+    fx::Union{Void,StridedArray{<:Number}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+
+    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+    if fdtype == Val{:forward}
+        epsilon = compute_epsilon(Val{:forward}, real(x[i]))
+        if typeof(fx) == Void
+            df .= ( real( f(x+epsilon) - f(x) ) + im*imag( f(x+im*epsilon) - f(x) ) ) / epsilon
+        else
+            df .= ( real( f(x+epsilon) - fx ) + im*imag( f(x+im*epsilon) - fx )) / epsilon
+        end
+    elseif fdtype == Val{:central}
+        epsilon = compute_epsilon(Val{:central}, real(x[i]))
+        df .= (real(f(x+epsilon) - f(x-epsilon)) + im*imag(f(x+im*epsilon) - f(x-im*epsilon))) / (2 * epsilon)
+    else
+        fdtype_error(Val{:Complex})
+    end
+    df
+end
+
+# C^n -> C^n
 function finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
     fx::Union{Void,StridedArray{<:Number}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
@@ -147,8 +186,8 @@ function finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Num
             epsilon = compute_epsilon(Val{:central}, real(x[i]), epsilon_factor)
             df[i] = (real(f(x[i]+epsilon) - f(x[i]-epsilon)) + im*imag(f(x[i]+im*epsilon) - f(x[i]-im*epsilon))) / (2 * epsilon)
         end
-    elseif fdtype == Val{:complex}
-        error("Invalid fdtype value, Val{:complex} not implemented for complex-valued functions.")
+    else
+        fdtype_error(Val{:Complex})
     end
     df
 end
@@ -169,6 +208,8 @@ function finite_difference(f, x::T, fdtype::DataType, funtype::DataType=Val{:Rea
     elseif funtype == Val{:Complex}
         epsilon = compute_epsilon(fdtype, real(x))
         return finite_difference_kernel(f, x, fdtype, funtype, epsilon, f_x)
+    else
+        fdtype_error(funtype)
     end
 end
 
@@ -186,7 +227,7 @@ end
 
 @inline function finite_difference_kernel(f, x::Number, ::Type{Val{:forward}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
     if typeof(fx) == Void
-        return real((f(x[i]+epsilon) - f(x[i]))) / epsilon + im*imag((f(x[i]+im*epsilon) - fx[i])) / epsilon
+        return real((f(x[i]+epsilon) - f(x[i]))) / epsilon + im*imag((f(x[i]+im*epsilon) - f(x[i]))) / epsilon
     else
         return real((f(x[i]+epsilon) - fx[i])) / epsilon + im*imag((f(x[i]+im*epsilon) - fx[i])) / epsilon
     end

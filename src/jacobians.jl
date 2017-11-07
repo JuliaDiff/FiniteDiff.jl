@@ -15,7 +15,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::Abstract
 end
 
 function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractArray{<:Real},
-    fdtype::DataType, ::Type{Val{:Real}}, wrappertype::DataType=Val{:Default},
+    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
     fx::Union{Void,AbstractArray{<:Real}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
 
     # TODO: test and rework this
@@ -23,13 +23,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractAr
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
         if typeof(fx) == Void
-            if wrappertype==Val{:Default}
-                fx = f.(x)
-            elseif wrappertype==Val{:DiffEqJacobianWrapper}
-                fx = f(x)
-            else
-                error("Unrecognized wrappertype: must be Val{:Default} or Val{:DiffEqJacobianWrapper}.")
-            end
+            fx = f.(x)
         end
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         shifted_x = copy(x)
