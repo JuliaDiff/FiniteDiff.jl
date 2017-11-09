@@ -22,7 +22,6 @@ end
     else
         error("Unrecognized fdtype: must be Val{:forward} or Val{:central}.")
     end
-    nothing
 end
 
 function compute_epsilon_elemtype(epsilon, x)
@@ -31,11 +30,10 @@ function compute_epsilon_elemtype(epsilon, x)
     elseif eltype(x) <: Real
         return eltype(x)
     elseif eltype(x) <: Complex
-        return eltype(x).parameters[1]
+        return real(eltype(x))
     else
         error("Could not compute epsilon type.")
     end
-    nothing
 end
 
 function fdtype_error(funtype::DataType=Val{:Real})
@@ -46,7 +44,6 @@ function fdtype_error(funtype::DataType=Val{:Real})
     else
         error("Unrecognized funtype: valid values are Val{:Real} or Val{:Complex}.")
     end
-    nothing
 end
 
 include("derivatives.jl")
