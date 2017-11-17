@@ -16,6 +16,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractAr
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     x1, fx1 = f.x1, f.fx1
     copy!(x1, x)
+    vfx, vfx1 = vec(fx1),vec(fx)
     if fdtype == Val{:forward}
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i ∈ 1:n
@@ -23,7 +24,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractAr
             x1[i] += epsilon
             f(fx1, x1)
             f(fx, x)
-            @. J[:,i] = (fx1 - fx) / epsilon
+            @. J[:,i] = (vfx1 - vfx) / epsilon
             x1[i] -= epsilon
         end
     elseif fdtype == Val{:central}
@@ -34,7 +35,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractAr
             x[i] -= epsilon
             f(fx1, x1)
             f(fx, x)
-            @. J[:,i] = (fx1 - fx) / (2*epsilon)
+            @. J[:,i] = (vfx1 - vfx) / (2*epsilon)
             x1[i] -= epsilon
             x[i] += epsilon
         end
@@ -61,6 +62,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::Abstract
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     x1, fx1 = f.x1, f.fx1
     copy!(x1, x)
+    vfx, vfx1 = vec(fx1),vec(fx)
     if fdtype == Val{:forward}
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i ∈ 1:n
@@ -68,7 +70,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::Abstract
             x1[i] += epsilon
             f(fx1, x1)
             f(fx, x)
-            @. J[:,i] = ( real( (fx1 - fx) ) + im*imag( (fx1 - fx) ) ) / epsilon
+            @. J[:,i] = ( real( (vfx1 - vfx) ) + im*imag( (vfx1 - vfx) ) ) / epsilon
             x1[i] -= epsilon
         end
     elseif fdtype == Val{:central}
@@ -79,7 +81,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::Abstract
             x[i] -= epsilon
             f(fx1, x1)
             f(fx, x)
-            @. J[:,i] = ( real( (fx1 - fx) ) + im*imag( fx1 - fx ) ) / (2*epsilon)
+            @. J[:,i] = ( real( (vfx1 - vfx) ) + im*imag( vfx1 - vfx ) ) / (2*epsilon)
             x1[i] -= epsilon
             x[i] += epsilon
         end
