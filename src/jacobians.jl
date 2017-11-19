@@ -2,12 +2,12 @@
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
     wrappertype::DataType=Val{:Default},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x),
+    fx::Union{Void,AbstractArray{<:Number}}=nothing,
+    epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x),
     inplace::DataType=Val{true})
-
     J = zeros(returntype, length(x), length(x))
     finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx,
-                                epsilon, returntype,inplace)
+                                epsilon, returntype, inplace)
 end
 
 function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
@@ -18,14 +18,14 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
     epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x),
     inplace::DataType=Val{true})
 
-    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx,
+    _finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx,
                                 epsilon, returntype, inplace)
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
+function _finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
     x::AbstractArray{<:Real},
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx, epsilon, returntype=eltype(x), inplace::Type{Val{true}})
+    fx, epsilon, returntype, inplace::Type{Val{true}})
 
     # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
     m, n = size(J)
@@ -68,7 +68,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
     J
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
+function _finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
     x::AbstractArray{<:Number},
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
     fx, epsilon, returntype, inplace::Type{Val{true}})
