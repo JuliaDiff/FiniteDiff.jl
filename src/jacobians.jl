@@ -194,9 +194,7 @@ function _finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
     m, n = size(J)
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
-        if typeof(fx) == Void
-            fx = f(x)
-        end
+        fx = f(x)
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         shifted_x = copy(x)
         @inbounds for i in 1:n
