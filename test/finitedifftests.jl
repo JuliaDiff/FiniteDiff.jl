@@ -67,14 +67,12 @@ df_ref = -sin.(real(x)) + im*cos.(imag(x))
     @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), df_ref) < 1e-8
 end
 
-function f(x)
-    fvec = zeros(x)
+function f(fvec,x)
     fvec[1] = (x[1]+3)*(x[2]^3-7)+18
     fvec[2] = sin(x[2]*exp(x[1])-1)
-    fvec
 end
-x = rand(2)
-y = f(x)
+x = rand(2); y = rand(2)
+f(y,x)
 J_ref = [[-7+x[2]^3 3*(3+x[1])*x[2]^2]; [exp(x[1])*x[2]*cos(1-exp(x[1])*x[2]) exp(x[1])*cos(1-exp(x[1])*x[2])]]
 J = zeros(J_ref)
 df = zeros(x)
@@ -108,14 +106,13 @@ epsilon = zeros(x)
     @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-14
 end
 
-function f(x)
-    fvec = zeros(x)
+function f(fvec,x)
     fvec[1] = (im*x[1]+3)*(x[2]^3-7)+18
     fvec[2] = sin(x[2]*exp(x[1])-1)
-    fvec
 end
 x = rand(2) + im*rand(2)
-y = f(x)
+y = similar(x)
+f(y,x)
 J_ref = [[im*(-7+x[2]^3) 3*(3+im*x[1])*x[2]^2]; [exp(x[1])*x[2]*cos(1-exp(x[1])*x[2]) exp(x[1])*cos(1-exp(x[1])*x[2])]]
 J = zeros(J_ref)
 df = zeros(x)
