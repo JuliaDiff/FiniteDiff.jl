@@ -108,29 +108,6 @@ epsilon = zeros(x)
     @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-14
 end
 
-# Jacobian tests w/ derivatives (real-valued callables)
-@time @testset "Jacobian StridedArray real-valued derivative tests" begin
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:forward})
-    @show df, df_ref
-    @test err_func(df, df_ref) < 1e-4
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:central})
-    @test err_func(df, df_ref) < 1e-8
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:complex})
-    @test err_func(df, df_ref) < 1e-15
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:forward}, Val{:Real}, Val{:Default}, y)
-    @test err_func(df, df_ref) < 1e-4
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:central}, Val{:Real}, Val{:Default}, y)
-    @test err_func(df, df_ref) < 1e-8
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:complex}, Val{:Real}, Val{:Default}, y)
-    @test err_func(df, df_ref) < 1e-15
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:forward}, Val{:Real}, Val{:Default}, y, epsilon)
-    @test err_func(df, df_ref) < 1e-4
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:central}, Val{:Real}, Val{:Default}, y, epsilon)
-    @test err_func(df, df_ref) < 1e-8
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon)
-    @test err_func(df, df_ref) < 1e-15
-end
-
 function f(x)
     fvec = zeros(x)
     fvec[1] = (im*x[1]+3)*(x[2]^3-7)+18
@@ -166,19 +143,4 @@ epsilon = zeros(real.(x))
     @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), J_ref) < 1e-8
 end
 
-# Jacobian tests w/ derivatives (complex-valued callables)
-@time @testset "Jacobian StridedArray complex-valued derivative tests" begin
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:forward}, Val{:Complex}, Val{:Default})
-    @test err_func(df, df_ref) < 1e-4
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:central}, Val{:Complex}, Val{:Default})
-    @test err_func(df, df_ref) < 1e-8
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y)
-    @test err_func(df, df_ref) < 1e-4
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y)
-    @test err_func(df, df_ref) < 1e-8
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y, epsilon)
-    @test err_func(df, df_ref) < 1e-4
-    DiffEqDiffTools.finite_difference_jacobian!(J, df, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon)
-    @test err_func(df, df_ref) < 1e-8
-end
 # StridedArray tests end here
