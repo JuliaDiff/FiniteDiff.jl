@@ -34,11 +34,11 @@ function _finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
         if typeof(fx) == Void
             fx = similar(x,returntype)
         end
-        f(fx,x)
         # TODO: Remove these allocations
         fx2 = similar(x,returntype)
         shifted_x = copy(x)
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
+        f(fx,x)
         @inbounds for i in 1:n
             epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
             shifted_x[i] += epsilon
@@ -96,13 +96,12 @@ function _finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
         if typeof(fx) == Void
             fx = similar(x,returntype)
         end
-        f(fx,x)
         # TODO: Remove these allocations
         fx2 = similar(x,returntype)
         shifted_x = copy(x)
 
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
-
+        f(fx,x)
         @inbounds for i in 1:n
             epsilon = compute_epsilon(Val{:forward}, real(x[i]), epsilon_factor)
             shifted_x[i] += epsilon
@@ -148,9 +147,7 @@ function _finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
     m, n = size(J)
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
-        if typeof(fx) == Void
-            fx = f(x)
-        end
+        fx = f(x)
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         shifted_x = copy(x)
         @inbounds for i in 1:n
