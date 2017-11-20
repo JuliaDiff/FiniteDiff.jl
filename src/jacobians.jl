@@ -2,11 +2,12 @@
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
     wrappertype::DataType=Val{:Default},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
-
+    fx::Union{Void,AbstractArray{<:Number}}=nothing,
+    epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x),
+    inplace::DataType=Val{true})
     J = zeros(returntype, length(x), length(x))
     finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx,
-                                epsilon, returntype)
+                                epsilon, returntype, inplace)
 end
 
 function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
@@ -14,24 +15,139 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
     fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
     wrappertype::DataType=Val{:Default},
     fx::Union{Void,AbstractArray{<:Number}}=nothing,
-    epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x))
+    epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x),
+    inplace::DataType=Val{true})
 
-    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx, epsilon, returntype)
+    _finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx,
+                                epsilon, returntype, inplace)
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
+function _finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
     x::AbstractArray{<:Real},
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx::Union{Void,AbstractArray{<:Real}}=nothing,
-    epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
+    fx, epsilon, returntype, inplace::Type{Val{true}})
 
     # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
     m, n = size(J)
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
         if typeof(fx) == Void
-            fx = f(x)
+            fx = similar(x,returntype)
         end
+        # TODO: Remove these allocations
+        fx2 = similar(x,returntype)
+        shifted_x = copy(x)
+        epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
+        f(fx,x)
+        @inbounds for i in 1:n
+            epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
+            shifted_x[i] += epsilon
+            f(fx2,shifted_x)
+            J[:, i] .= (fx2 - fx) / epsilon
+            shifted_x[i] = x[i]
+        end
+    elseif fdtype == Val{:central}
+        epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
+        if typeof(fx) == Void
+            fx1 = similar(x,returntype)
+        else
+            fx1 = fx
+        end
+        # TODO: Remove these allocations
+        fx2 = similar(x,returntype)
+        shifted_x_plus  = copy(x)
+        shifted_x_minus = copy(x)
+        @inbounds for i in 1:n
+            epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
+            shifted_x_plus[i]  += epsilon
+            shifted_x_minus[i] -= epsilon
+            f(fx1,shifted_x_plus)
+            f(fx2,shifted_x_minus)
+            J[:, i] .= (fx1 - fx2) / (epsilon + epsilon)
+            shifted_x_plus[i]  = x[i]
+            shifted_x_minus[i] = x[i]
+        end
+    elseif fdtype == Val{:complex}
+        x0 = Vector{Complex{eltype(x)}}(x)
+        epsilon = eps(eltype(x))
+        fx1 = similar(x,Complex{eltype(x)})
+        @inbounds for i in 1:n
+            x0[i] += im * epsilon
+            f(fx1,x0)
+            J[:,i] .= imag.(fx1) / epsilon
+            x0[i] -= im * epsilon
+        end
+    else
+        fdtype_error(Val{:Real})
+    end
+    J
+end
+
+function _finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
+    x::AbstractArray{<:Number},
+    fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
+    fx, epsilon, returntype, inplace::Type{Val{true}})
+
+    # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
+    m, n = size(J)
+    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+    if fdtype == Val{:forward}
+
+        if typeof(fx) == Void
+            fx = similar(x,returntype)
+        end
+        # TODO: Remove these allocations
+        fx2 = similar(x,returntype)
+        shifted_x = copy(x)
+
+        epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
+        f(fx,x)
+        @inbounds for i in 1:n
+            epsilon = compute_epsilon(Val{:forward}, real(x[i]), epsilon_factor)
+            shifted_x[i] += epsilon
+            f(fx2,shifted_x)
+            @. J[:, i] = ( real(fx2 - fx ) + im*imag( fx2 - fx ) ) / epsilon
+            shifted_x[i] = x[i]
+        end
+    elseif fdtype == Val{:central}
+        epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
+
+        if typeof(fx) == Void
+            fx1 = similar(x,returntype)
+        else
+            fx1 = fx
+        end
+        # TODO: Remove these allocations
+        fx2 = similar(x,returntype)
+        shifted_x_plus  = copy(x)
+        shifted_x_minus = copy(x)
+
+        @inbounds for i in 1:n
+            epsilon = compute_epsilon(Val{:central}, real(x[i]), epsilon_factor)
+            shifted_x_plus[i]  += epsilon
+            shifted_x_minus[i] -= epsilon
+            f(fx1,shifted_x_plus)
+            f(fx2,shifted_x_minus)
+            @. J[:, i] = ( real(fx1 - fx2) + im*imag(fx1 - fx2) ) / (2 * epsilon)
+            shifted_x_plus[i]  = x[i]
+            shifted_x_minus[i] = x[i]
+        end
+    else
+        fdtype_error(Val{:Complex})
+    end
+    J
+end
+
+function _finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
+    x::AbstractArray{<:Real},
+    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
+    fx, epsilon, returntype, inplace::Type{Val{false}})
+
+    # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
+    m, n = size(J)
+    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+    if fdtype == Val{:forward}
+        fx = f(x)
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         shifted_x = copy(x)
         @inbounds for i in 1:n
@@ -66,18 +182,16 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
     J
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
+function _finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
     x::AbstractArray{<:Number},
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
+    fx, epsilon, returntype, inplace::Type{Val{false}})
 
     # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
     m, n = size(J)
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
-        if typeof(fx) == Void
-            fx = f(x)
-        end
+        fx = f(x)
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         shifted_x = copy(x)
         @inbounds for i in 1:n
