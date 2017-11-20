@@ -1,32 +1,29 @@
 # Compute the Jacobian matrix of a real-valued callable f.
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x),
-    df::Union{Void,AbstractArray{<:Number}}=nothing)
+    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
+    wrappertype::DataType=Val{:Default},
+    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
 
     J = zeros(returntype, length(x), length(x))
-    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx, epsilon, returntype, df)
+    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx,
+                                epsilon, returntype)
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, df::AbstractVector, f, x::AbstractArray{<:Number},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x))
+function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
+    x::AbstractArray{<:Number},
+    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
+    wrappertype::DataType=Val{:Default},
+    fx::Union{Void,AbstractArray{<:Number}}=nothing,
+    epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x))
 
-    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx, epsilon, returntype, df)
+    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx, epsilon, returntype)
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::AbstractArray{<:Number},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Number}}=nothing, returntype=eltype(x),
-    df::Union{Void,AbstractArray{<:Number}}=nothing)
-
-    finite_difference_jacobian!(J, f, x, fdtype, funtype, wrappertype, fx, epsilon, returntype, df)
-end
-
-function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractArray{<:Real},
+function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
+    x::AbstractArray{<:Real},
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx::Union{Void,AbstractArray{<:Real}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x),
-    df::Union{Void,AbstractArray{<:Real}}=nothing)
+    fx::Union{Void,AbstractArray{<:Real}}=nothing,
+    epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
 
     # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
     m, n = size(J)
@@ -66,16 +63,13 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f, x::AbstractAr
     else
         fdtype_error(Val{:Real})
     end
-    if typeof(df) != Void
-        df .= diag(J)
-    end
     J
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::AbstractArray{<:Number},
+function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
+    x::AbstractArray{<:Number},
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x),
-    df::Union{Void,AbstractArray{<:Number}}=nothing)
+    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, returntype=eltype(x))
 
     # TODO: test and rework this to support GPUArrays and non-indexable types, if possible
     m, n = size(J)
@@ -106,9 +100,6 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f, x::Abstract
         end
     else
         fdtype_error(Val{:Complex})
-    end
-    if typeof(df) != Void
-        df .= diag(J)
     end
     J
 end
