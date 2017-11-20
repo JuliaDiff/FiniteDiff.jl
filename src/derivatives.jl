@@ -14,13 +14,13 @@ function finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:N
     fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
     fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
-    finite_difference!(df, f, x, fdtype, funtype, wrappertype, fx, return_type)
+    _finite_difference!(df, f, x, fdtype, funtype, wrappertype, fx, epsilon, return_type)
 end
 
 # Fallbacks for real-valued callables start here.
-function finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Real},
+function _finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Real},
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx::Union{Void,AbstractArray{<:Real}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+    fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if typeof(epsilon) == Void
@@ -49,9 +49,9 @@ end
 # Fallbacks for real-valued callables end here.
 
 # Fallbacks for complex-valued callables start here.
-function finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
+function _finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+    fx, epsilon, return_type)
 
     if (fdtype == Val{:forward} || fdtype == Val{:central}) && typeof(epsilon) == Void
         if eltype(x) <: Real
@@ -82,9 +82,9 @@ end
 Optimized implementations for StridedArrays.
 =#
 # for R -> R^n
-function finite_difference!(df::StridedArray{<:Real}, f, x::Real,
+function _finite_difference!(df::StridedArray{<:Real}, f, x::Real,
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx::Union{Void,StridedArray{<:Real}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+    fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -107,9 +107,9 @@ function finite_difference!(df::StridedArray{<:Real}, f, x::Real,
 end
 
 # for R^n -> R^n
-function finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
+function _finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
-    fx::Union{Void,StridedArray{<:Real}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+    fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -143,9 +143,9 @@ function finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real}
 end
 
 # C -> C^n
-function finite_difference!(df::StridedArray{<:Number}, f, x::Number,
+function _finite_difference!(df::StridedArray{<:Number}, f, x::Number,
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
-    fx::Union{Void,StridedArray{<:Number}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+    fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -165,9 +165,9 @@ function finite_difference!(df::StridedArray{<:Number}, f, x::Number,
 end
 
 # C^n -> C^n
-function finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
+function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
     fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
-    fx::Union{Void,StridedArray{<:Number}}=nothing, epsilon::Union{Void,StridedArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+    fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
