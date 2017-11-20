@@ -2,7 +2,7 @@
 Compute the derivative df of a callable f on a collection of points x.
 Generic fallbacks for AbstractArrays that are not StridedArrays.
 =#
-function finite_difference(f, x::AbstractArray{<:Number},
+function finite_difference(f, x::Union{<:Number,AbstractArray{<:Number}},
     fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
     fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
@@ -10,7 +10,7 @@ function finite_difference(f, x::AbstractArray{<:Number},
     finite_difference!(df, f, x, fdtype, funtype, wrappertype, fx, epsilon, return_type)
 end
 
-function finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
+function finite_difference!(df::AbstractArray{<:Number}, f, x::Union{<:Number,AbstractArray{<:Number}},
     fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
     fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
