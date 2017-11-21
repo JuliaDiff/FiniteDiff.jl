@@ -45,7 +45,3 @@ function fdtype_error(funtype::DataType=Val{:Real})
         error("Unrecognized funtype: valid values are Val{:Real} or Val{:Complex}.")
     end
 end
-
-include("derivatives.jl")
-include("jacobians.jl")
-include("diffeqwrappers.jl")
