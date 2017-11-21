@@ -78,11 +78,11 @@ J = zeros(J_ref)
 df = zeros(x)
 df_ref = diag(J_ref)
 epsilon = zeros(x)
-forward_cache = DiffEqDiffTools.JacobianCache(Val{:forward},Val{:Real},similar(x),similar(x),similar(x))
-central_cache = DiffEqDiffTools.JacobianCache(Val{:central},Val{:Real},similar(x),similar(x),similar(x))
-complex_cache = DiffEqDiffTools.JacobianCache(Val{:complex},Val{:Real},
+forward_cache = DiffEqDiffTools.JacobianCache(similar(x),similar(x),similar(x),Val{:forward})
+central_cache = DiffEqDiffTools.JacobianCache(similar(x),similar(x),similar(x))
+complex_cache = DiffEqDiffTools.JacobianCache(
                 Complex{eltype(x)}.(similar(x)),Complex{eltype(x)}.(similar(x)),
-                Complex{eltype(x)}.(similar(x)))
+                Complex{eltype(x)}.(similar(x)),Val{:complex})
 
 # Jacobian tests for real-valued callables
 @time @testset "Jacobian StridedArray real-valued tests" begin
@@ -104,8 +104,8 @@ J = zeros(J_ref)
 df = zeros(x)
 df_ref = diag(J_ref)
 epsilon = zeros(real.(x))
-forward_cache = DiffEqDiffTools.JacobianCache(Val{:forward},Val{:Complex},similar(x),similar(x),similar(x))
-central_cache = DiffEqDiffTools.JacobianCache(Val{:central},Val{:Complex},similar(x),similar(x),similar(x))
+forward_cache = DiffEqDiffTools.JacobianCache(similar(x),similar(x),similar(x),Val{:forward})
+central_cache = DiffEqDiffTools.JacobianCache(similar(x),similar(x),similar(x))
 
 # Jacobian tests for complex-valued callables
 @time @testset "Jacobian StridedArray complex-valued tests" begin

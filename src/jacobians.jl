@@ -4,17 +4,22 @@ struct JacobianCache{CacheType,CacheType2,CacheType3,fdtype,RealOrComplex}
     fx1::CacheType3
 end
 
-function JacobianCache(fdtype::DataType, RealOrComplex::DataType,x1,fx,fx1)
+function JacobianCache(x1,fx,fx1,fdtype::DataType=Val{:central},
+                       RealOrComplex::DataType =
+                       fdtype==Val{:complex} ? Val{:Real} : eltype(x1) <: Complex ?
+                       Val{:Complex} : Val{:Real})
     JacobianCache{typeof(x1),typeof(fx),typeof(fx1),
                   fdtype,RealOrComplex}(x1,fx,fx1)
 end
 
-function finite_difference_jacobian(f,x,fdtype=Val{:central})
+function finite_difference_jacobian(f,x,fdtype=Val{:central},
+                    RealOrComplex::DataType =
+                    fdtype==Val{:complex} ? Val{:Real} : eltype(x) <: Complex ?
+                    Val{:Complex} : Val{:Real})
     x1 = similar(x)
     fx = similar(x)
     fx1 = similar(x)
-    RealOrComplex = eltype(x) <: Complex ? Val{:Complex} : Val{:Real}
-    cache = JacobianCache(fdtype, RealOrComplex,x1,fx,fx1)
+    cache = JacobianCache(x1,fx,fx1,fdtype,RealOrComplex)
     finite_difference_jacobian(f,x,cache)
 end
 
