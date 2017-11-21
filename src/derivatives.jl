@@ -29,11 +29,7 @@ function _finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Re
     if fdtype == Val{:forward}
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @. epsilon = compute_epsilon(Val{:forward}, x, epsilon_factor)
-        if typeof(fx) == Void
-            @. df = (f(x+epsilon) - f(x)) / epsilon
-        else
-            @. df = (f(x+epsilon) - fx) / epsilon
-        end
+        @. df = (f(x+epsilon) - f(x)) / epsilon
     elseif fdtype == Val{:central}
         epsilon_factor = compute_epsilon_factor(Val{:central}, eltype(x))
         @. epsilon = compute_epsilon(Val{:central}, x, epsilon_factor)
@@ -85,15 +81,10 @@ Optimized implementations for StridedArrays.
 function _finite_difference!(df::StridedArray{<:Real}, f, x::Real,
     fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
     fx, epsilon, return_type)
-
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
         epsilon = compute_epsilon(Val{:forward}, x)
-        if typeof(fx) == Void
-            df .= (f(x+epsilon) - f(x)) / epsilon
-        else
-            df .= (f(x+epsilon) - fx) / epsilon
-        end
+        df .= (f(x+epsilon) - f(x)) / epsilon
     elseif fdtype == Val{:central}
         epsilon = compute_epsilon(Val{:central}, x)
         df .= (f(x+epsilon) - f(x-epsilon)) / (2*epsilon)
@@ -117,11 +108,7 @@ function _finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real
         @inbounds for i in 1 : length(x)
             epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
             x_plus = x[i] + epsilon
-            if typeof(fx) == Void
-                df[i] = (f(x_plus) - f(x[i])) / epsilon
-            else
-                df[i] = (f(x_plus) - fx[i]) / epsilon
-            end
+            df[i] = (f(x_plus) - f(x[i])) / epsilon
         end
     elseif fdtype == Val{:central}
         epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
@@ -150,11 +137,7 @@ function _finite_difference!(df::StridedArray{<:Number}, f, x::Number,
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
         epsilon = compute_epsilon(Val{:forward}, real(x[i]))
-        if typeof(fx) == Void
-            df .= ( real( f(x+epsilon) - f(x) ) + im*imag( f(x+im*epsilon) - f(x) ) ) / epsilon
-        else
-            df .= ( real( f(x+epsilon) - fx ) + im*imag( f(x+im*epsilon) - fx )) / epsilon
-        end
+        df .= ( real( f(x+epsilon) - f(x) ) + im*imag( f(x+im*epsilon) - f(x) ) ) / epsilon
     elseif fdtype == Val{:central}
         epsilon = compute_epsilon(Val{:central}, real(x[i]))
         df .= (real(f(x+epsilon) - f(x-epsilon)) + im*imag(f(x+im*epsilon) - f(x-im*epsilon))) / (2 * epsilon)
@@ -174,11 +157,7 @@ function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Nu
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i in 1 : length(x)
             epsilon = compute_epsilon(Val{:forward}, real(x[i]), epsilon_factor)
-            if typeof(fx) == Void
-                df[i] = ( real( f(x[i]+epsilon) - f(x[i]) ) + im*imag( f(x[i]+im*epsilon) - f(x[i]) ) ) / epsilon
-            else
-                df[i] = ( real( f(x[i]+epsilon) - fx[i] ) + im*imag( f(x[i]+im*epsilon) - fx[i] )) / epsilon
-            end
+            df[i] = ( real( f(x[i]+epsilon) - f(x[i]) ) + im*imag( f(x[i]+im*epsilon) - f(x[i]) ) ) / epsilon
         end
     elseif fdtype == Val{:central}
         epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
@@ -214,11 +193,7 @@ function finite_difference(f, x::T, fdtype::DataType, funtype::DataType=Val{:Rea
 end
 
 @inline function finite_difference_kernel(f, x::T, ::Type{Val{:forward}}, ::Type{Val{:Real}}, epsilon::T, fx::Union{Void,T}=nothing) where T<:Real
-    if typeof(fx) == Void
-        return (f(x+epsilon) - f(x)) / epsilon
-    else
-        return (f(x+epsilon) - fx) / epsilon
-    end
+    return (f(x+epsilon) - f(x)) / epsilon
 end
 
 @inline function finite_difference_kernel(f, x::T, ::Type{Val{:central}}, ::Type{Val{:Real}}, epsilon::T, ::Union{Void,T}=nothing) where T<:Real
@@ -226,11 +201,7 @@ end
 end
 
 @inline function finite_difference_kernel(f, x::Number, ::Type{Val{:forward}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
-    if typeof(fx) == Void
-        return real((f(x[i]+epsilon) - f(x[i]))) / epsilon + im*imag((f(x[i]+im*epsilon) - f(x[i]))) / epsilon
-    else
-        return real((f(x[i]+epsilon) - fx[i])) / epsilon + im*imag((f(x[i]+im*epsilon) - fx[i])) / epsilon
-    end
+    return real((f(x[i]+epsilon) - f(x[i]))) / epsilon + im*imag((f(x[i]+im*epsilon) - f(x[i]))) / epsilon
 end
 
 @inline function finite_difference_kernel(f, x::Number, ::Type{Val{:central}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
