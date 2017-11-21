@@ -3,23 +3,23 @@ Compute the derivative df of a callable f on a collection of points x.
 Generic fallbacks for AbstractArrays that are not StridedArrays.
 =#
 function finite_difference(f, x::Union{<:Number,AbstractArray{<:Number}},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
+    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
     fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
     df = zeros(return_type, size(x))
-    finite_difference!(df, f, x, fdtype, funtype, wrappertype, fx, epsilon, return_type)
+    finite_difference!(df, f, x, fdtype, funtype, fx, epsilon, return_type)
 end
 
 function finite_difference!(df::AbstractArray{<:Number}, f, x::Union{<:Number,AbstractArray{<:Number}},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real}, wrappertype::DataType=Val{:Default},
+    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
     fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
-    _finite_difference!(df, f, x, fdtype, funtype, wrappertype, fx, epsilon, return_type)
+    _finite_difference!(df, f, x, fdtype, funtype, fx, epsilon, return_type)
 end
 
 # Fallbacks for real-valued callables start here.
 function _finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Real},
-    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Real}},
     fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
@@ -46,7 +46,7 @@ end
 
 # Fallbacks for complex-valued callables start here.
 function _finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
-    fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Complex}},
     fx, epsilon, return_type)
 
     if (fdtype == Val{:forward} || fdtype == Val{:central}) && typeof(epsilon) == Void
@@ -79,7 +79,7 @@ Optimized implementations for StridedArrays.
 =#
 # for R -> R^n
 function _finite_difference!(df::StridedArray{<:Real}, f, x::Real,
-    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Real}},
     fx, epsilon, return_type)
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -99,7 +99,7 @@ end
 
 # for R^n -> R^n
 function _finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
-    fdtype::DataType, ::Type{Val{:Real}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Real}},
     fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
@@ -131,7 +131,7 @@ end
 
 # C -> C^n
 function _finite_difference!(df::StridedArray{<:Number}, f, x::Number,
-    fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Complex}},
     fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
@@ -149,7 +149,7 @@ end
 
 # C^n -> C^n
 function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
-    fdtype::DataType, ::Type{Val{:Complex}}, ::Type{Val{:Default}},
+    fdtype::DataType, ::Type{Val{:Complex}},
     fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
