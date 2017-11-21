@@ -8,7 +8,7 @@ function JacobianCache(x1,fx,_fx1,fdtype::DataType=Val{:central},
                        RealOrComplex::DataType =
                        fdtype==Val{:complex} ? Val{:Real} : eltype(x1) <: Complex ?
                        Val{:Complex} : Val{:Real})
-    if fdtype == Val{:complex} && fx1 != nothing
+    if fdtype == Val{:complex} && _fx1 != nothing
         warn("fx1 cache is ignored when fdtype == Val{:complex}.")
         fx1 = nothing
     else
