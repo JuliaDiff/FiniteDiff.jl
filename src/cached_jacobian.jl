@@ -70,7 +70,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,
     epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
     copy!(x1, x)
-    vfx, vfx1 = vec(fx1),vec(fx)
+    vfx, vfx1 = vec(fx), vec(fx1)
     if fdtype == Val{:forward}
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i ∈ 1:n
