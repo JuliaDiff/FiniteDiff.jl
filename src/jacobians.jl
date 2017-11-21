@@ -9,6 +9,21 @@ function JacobianCache(fdtype::DataType, RealOrComplex::DataType,x1,fx,fx1)
                   fdtype,RealOrComplex}(x1,fx,fx1)
 end
 
+function finite_difference_jacobian(f,x,fdtype=Val{:central})
+    x1 = similar(x)
+    fx = similar(x)
+    fx1 = similar(x)
+    RealOrComplex = eltype(x) <: Complex ? Val{:Complex} : Val{:Real}
+    cache = JacobianCache(fdtype, RealOrComplex,x1,fx,fx1)
+    finite_difference_jacobian(f,x,cache)
+end
+
+function finite_difference_jacobian(f,x,cache::JacobianCache)
+    J = zeros(eltype(x), length(x), length(x))
+    finite_difference_jacobian!(J,f,x,cache)
+    J
+end
+
 function finite_difference_jacobian!(J::AbstractMatrix{<:Real}, f,
                      x::AbstractArray{<:Real},
                      cache::JacobianCache{CacheType,CacheType2,CacheType3,
