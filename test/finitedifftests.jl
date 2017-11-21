@@ -18,25 +18,25 @@ err_func(a,b) = maximum(abs.(a-b))
     @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:central}), df_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:complex}), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:forward}, Val{:Real}, Val{:Default}, y), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:central}, Val{:Real}, Val{:Default}, y), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:complex}, Val{:Real}, Val{:Default}, y), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:forward}, Val{:Real}, y), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:central}, Val{:Real}, y), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:complex}, Val{:Real}, y), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:forward}, Val{:Real}, Val{:Default}, y, epsilon), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:central}, Val{:Real}, Val{:Default}, y, epsilon), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:forward}, Val{:Real}, y, epsilon), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:central}, Val{:Real}, y, epsilon), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference(sin, x, Val{:complex}, Val{:Real}, y, epsilon), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}), df_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:complex}), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}, Val{:Real}, Val{:Default}, y), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}, Val{:Real}, Val{:Default}, y), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:complex}, Val{:Real}, Val{:Default}, y), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}, Val{:Real}, y), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}, Val{:Real}, y), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:complex}, Val{:Real}, y), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}, Val{:Real}, Val{:Default}, y, epsilon), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}, Val{:Real}, Val{:Default}, y, epsilon), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:forward}, Val{:Real}, y, epsilon), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:central}, Val{:Real}, y, epsilon), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference!(df, sin, x, Val{:complex}, Val{:Real}, y, epsilon), df_ref) < 1e-15
 end
 
 # derivative tests for complex-valued callables
@@ -51,20 +51,20 @@ df_ref = -sin.(real(x)) + im*cos.(imag(x))
     @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, Val{:Default}, y), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}, y), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, y), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y, epsilon), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}, y, epsilon), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, y, epsilon), df_ref) < 1e-8
 
     @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:forward}, Val{:Complex}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:central}, Val{:Complex}), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:forward}, Val{:Complex}, y), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:central}, Val{:Complex}, y), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y, epsilon), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:forward}, Val{:Complex}, y, epsilon), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference!(df, f, x, Val{:central}, Val{:Complex}, y, epsilon), df_ref) < 1e-8
 end
 
 function f(fvec,x)
@@ -78,32 +78,18 @@ J = zeros(J_ref)
 df = zeros(x)
 df_ref = diag(J_ref)
 epsilon = zeros(x)
+forward_cache = DiffEqDiffTools.JacobianCache(Val{:forward},Val{:Real},similar(x),similar(x),similar(x))
+central_cache = DiffEqDiffTools.JacobianCache(Val{:central},Val{:Real},similar(x),similar(x),similar(x))
+complex_cache = DiffEqDiffTools.JacobianCache(Val{:complex},Val{:Real},
+                Complex{eltype(x)}.(similar(x)),Complex{eltype(x)}.(similar(x)),
+                Complex{eltype(x)}.(similar(x)))
 
 # Jacobian tests for real-valued callables
 @time @testset "Jacobian StridedArray real-valued tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:complex}), J_ref) < 1e-14
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Real}, Val{:Default}, y), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Real}, Val{:Default}, y), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:complex}, Val{:Real}, Val{:Default}, y), J_ref) < 1e-14
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-14
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:forward}), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:complex}), J_ref) < 1e-14
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:forward}, Val{:Real}, Val{:Default}, y), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}, Val{:Real}, Val{:Default}, y), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:complex}, Val{:Real}, Val{:Default}, y), J_ref) < 1e-14
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:forward}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:complex}, Val{:Real}, Val{:Default}, y, epsilon), J_ref) < 1e-14
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, complex_cache), J_ref) < 1e-14
 end
 
 function f(fvec,x)
@@ -118,26 +104,14 @@ J = zeros(J_ref)
 df = zeros(x)
 df_ref = diag(J_ref)
 epsilon = zeros(real.(x))
+forward_cache = DiffEqDiffTools.JacobianCache(Val{:forward},Val{:Complex},similar(x),similar(x),similar(x))
+central_cache = DiffEqDiffTools.JacobianCache(Val{:central},Val{:Complex},similar(x),similar(x),similar(x))
 
 # Jacobian tests for complex-valued callables
 @time @testset "Jacobian StridedArray complex-valued tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Complex}, Val{:Default}), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Complex}, Val{:Default}), J_ref) < 1e-8
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Complex}, Val{:Default}, y), J_ref) < 1e-8
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y, epsilon), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), J_ref) < 1e-8
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:forward}, Val{:Complex}, Val{:Default}), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}, Val{:Complex}, Val{:Default}), J_ref) < 1e-8
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y), J_ref) < 1e-8
-
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:forward}, Val{:Complex}, Val{:Default}, y, epsilon), J_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian!(J, f, x, Val{:central}, Val{:Complex}, Val{:Default}, y, epsilon), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
 end
 
 # StridedArray tests end here
