@@ -115,3 +115,18 @@ central_cache = DiffEqDiffTools.JacobianCache(similar(x),similar(x),similar(x))
 end
 
 # StridedArray tests end here
+
+# Tests for C -> C and C -> C^n
+x = 2.0 + im*3.0
+f(x) = cos(real(x)) + im*log(imag(x))
+y = f(x)
+df_ref = -sin(real(x)) + im*1/imag(x)
+
+@time @testset "Derivative Number complex-valued tests" begin
+    # Finite difference kernel.
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}, y), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, y), df_ref) < 1e-10
+    # C -> C^n
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:forward}, Val{:Complex}, [y]), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference(f, x, Val{:central}, Val{:Complex}, [y]), df_ref) < 1e-10
+end
