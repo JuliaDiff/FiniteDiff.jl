@@ -136,10 +136,10 @@ function _finite_difference!(df::StridedArray{<:Number}, f, x::Number,
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
-        epsilon = compute_epsilon(Val{:forward}, real(x[i]))
+        epsilon = compute_epsilon(Val{:forward}, real(x))
         df .= ( real( f(x+epsilon) - f(x) ) + im*imag( f(x+im*epsilon) - f(x) ) ) / epsilon
     elseif fdtype == Val{:central}
-        epsilon = compute_epsilon(Val{:central}, real(x[i]))
+        epsilon = compute_epsilon(Val{:central}, real(x))
         df .= (real(f(x+epsilon) - f(x-epsilon)) + im*imag(f(x+im*epsilon) - f(x-im*epsilon))) / (2 * epsilon)
     else
         fdtype_error(Val{:Complex})
@@ -201,7 +201,7 @@ end
 end
 
 @inline function finite_difference_kernel(f, x::Number, ::Type{Val{:forward}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
-    return real((f(x[i]+epsilon) - f(x[i]))) / epsilon + im*imag((f(x[i]+im*epsilon) - f(x[i]))) / epsilon
+    return real((f(x+epsilon) - f(x))) / epsilon + im*imag((f(x+im*epsilon) - f(x))) / epsilon
 end
 
 @inline function finite_difference_kernel(f, x::Number, ::Type{Val{:central}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
