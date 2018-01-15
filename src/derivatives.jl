@@ -87,7 +87,7 @@ function DerivativeCache(
             fdtype_error(Val{:Complex})
         end
         if typeof(fx) != Void
-            warn("Pre-computed function values aren't used for fdtype == Val{:complex}.")
+            warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
         end
         return DerivativeCache{Void,Void,fdtype,RealOrComplex}(nothing, nothing)
     else
@@ -173,7 +173,7 @@ function _finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::Abstr
         end
         @. df = real((f(x+epsilon) - fx)) / epsilon + im*imag((f(x+im*epsilon) - fx)) / epsilon
     elseif fdtype == Val{:central}
-        @. df = real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-epsilon)) / (2 * epsilon)
+        @. df = real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-im*epsilon)) / (2 * epsilon)
     else
         fdtype_error(Val{:Complex})
     end
