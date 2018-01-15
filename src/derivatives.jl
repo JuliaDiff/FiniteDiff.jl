@@ -1,40 +1,160 @@
 #=
-Compute the derivative df of a callable f on a collection of points x.
-Generic fallbacks for AbstractArrays that are not StridedArrays.
+Derivative of f : R -> R or f : C -> C at a single point x.
 =#
-function finite_difference(f, x::Union{<:Number,AbstractArray{<:Number}},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+function finite_difference_derivative(f, x::T, fdtype::DataType, funtype::DataType=Val{:Real},
+    f_x::Union{Void,T}=nothing) where T<:Number
+
+    if funtype == Val{:Real}
+        if fdtype == Val{:complex}
+            epsilon = eps(T)
+        else
+            epsilon = compute_epsilon(fdtype, x)
+        end
+    elseif funtype == Val{:Complex}
+        epsilon = compute_epsilon(fdtype, real(x))
+    else
+        fdtype_error(funtype)
+    end
+
+    _finite_difference_kernel(f, x, fdtype, funtype, epsilon, f_x)
+end
+
+#=
+Finite difference kernels for single point derivatives of f : R -> R.
+These are currently underused because of inlining / broadcast issues.
+Revisit this in Julia v0.7 / 1.0.
+=#
+@inline function _finite_difference_kernel(f, x::T, ::Type{Val{:forward}}, ::Type{Val{:Real}},
+    epsilon::T, fx::Union{Void,T}=nothing) where T<:Real
+
+    if typeof(fx) == Void
+        return (f(x+epsilon) - f(x)) / epsilon
+    else
+        return (f(x+epsilon) - fx) / epsilon
+    end
+end
+
+@inline function _finite_difference_kernel(f, x::T, ::Type{Val{:central}}, ::Type{Val{:Real}},
+    epsilon::T, ::Union{Void,T}=nothing) where T<:Real
+
+    (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
+end
+
+@inline function _finite_difference_kernel(f, x::T, ::Type{Val{:complex}}, ::Type{Val{:Real}},
+    epsilon::T, ::Union{Void,T}=nothing) where T<:Real
+
+    imag(f(x+im*epsilon)) / epsilon
+end
+
+@inline function _finite_difference_kernel(f, x::Number, ::Type{Val{:forward}}, ::Type{Val{:Complex}},
+    epsilon::Real, fx::Union{Void,<:Number}=nothing)
+
+    if typeof(fx) == Void
+        return real((f(x+epsilon) - f(x))) / epsilon + im*imag((f(x+im*epsilon) - f(x))) / epsilon
+    else
+        return real((f(x+epsilon) - fx)) / epsilon + im*imag((f(x+im*epsilon) - fx)) / epsilon
+    end
+end
+
+@inline function _finite_difference_kernel(f, x::Number, ::Type{Val{:central}}, ::Type{Val{:Complex}},
+    epsilon::Real, fx::Union{Void,<:Number}=nothing)
+
+    real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-im*epsilon)) / (2 * epsilon)
+end
+# Single point derivative implementations end here.
+
+
+#=
+Multi-point implementations of scalar derivatives for efficiency.
+=#
+struct DerivativeCache{CacheType1, CacheType2, fdtype, RealOrComplex}
+    fx      :: CacheType1
+    epsilon :: CacheType2
+end
+
+function DerivativeCache(
+    x       :: AbstractArray{<:Number},
+    fx      :: Union{Void,AbstractArray{<:Number}} = nothing,
+    epsilon :: Union{Void,AbstractArray{<:Number}} = nothing,
+    fdtype  :: DataType = Val{:central},
+    RealOrComplex :: DataType =
+        fdtype==Val{:complex} ? Val{:Real} : eltype(x) <: Complex ?
+        Val{:Complex} : Val{:Real}
+    )
+
+    if fdtype == Val{:complex}
+        if RealOrComplex == Val{:Complex}
+            fdtype_error(Val{:Complex})
+        end
+        if typeof(fx) != Void
+            warn("Pre-computed function values aren't used for fdtype == Val{:complex}.")
+        end
+        return DerivativeCache{Void,Void,fdtype,RealOrComplex}(nothing, nothing)
+    else
+        epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+        if typeof(epsilon) == Void
+            epsilon = zeros(epsilon_elemtype, size(x))
+        end
+        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+        @. epsilon = compute_epsilon(fdtype, real(x), epsilon_factor)
+        if fdtype != Val{:forward}
+            if typeof(fx) != Void
+                warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
+            end
+            return DerivativeCache{Void,typeof(epsilon),fdtype,RealOrComplex}(nothing,epsilon)
+        else
+            return DerivativeCache{typeof(fx),typeof(epsilon),fdtype,RealOrComplex}(fx,epsilon)
+        end
+    end
+end
+
+#=
+Compute the derivative df of a scalar-valued map f at a collection of points x.
+=#
+function finite_difference_derivative(f, x::AbstractArray{<:Number}, fdtype::DataType=Val{:central},
+    RealOrComplex :: DataType =
+        fdtype==Val{:complex} ? Val{:Real} : eltype(x) <: Complex ?
+        Val{:Complex} : Val{:Real},
+    fx :: Union{Void,AbstractArray{<:Number}}=nothing,
+    epsilon :: Union{Void,AbstractArray{<:Real}}=nothing,
+    return_type :: DataType=eltype(x))
 
     df = zeros(return_type, size(x))
-    finite_difference!(df, f, x, fdtype, funtype, fx, epsilon, return_type)
+    finite_difference_derivative!(df, f, x, fdtype, RealOrComplex, fx, epsilon, return_type)
 end
 
-function finite_difference!(df::AbstractArray{<:Number}, f, x::Union{<:Number,AbstractArray{<:Number}},
-    fdtype::DataType=Val{:central}, funtype::DataType=Val{:Real},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing, epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
+function finite_difference_derivative!(df::AbstractArray{<:Number}, f,
+    x::AbstractArray{<:Number}, fdtype::DataType=Val{:central},
+    RealOrComplex :: DataType =
+        fdtype==Val{:complex} ? Val{:Real} : eltype(x) <: Complex ?
+        Val{:Complex} : Val{:Real},
+    fx::Union{Void,AbstractArray{<:Number}}=nothing,
+    epsilon::Union{Void,AbstractArray{<:Real}}=nothing, return_type::DataType=eltype(x))
 
-    _finite_difference!(df, f, x, fdtype, funtype, fx, epsilon, return_type)
+    cache = DerivativeCache(x, fx, epsilon, fdtype, RealOrComplex)
+    _finite_difference_derivative!(df, f, x, cache)
 end
 
-# Fallbacks for real-valued callables start here.
-function _finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Real},
-    fdtype::DataType, ::Type{Val{:Real}},
-    fx, epsilon, return_type)
+function finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
+    cache::DerivativeCache{T1,T2,fdtype,RealOrComplex}) where {T1,T2,fdtype,RealOrComplex}
 
-    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
-    if typeof(epsilon) == Void
-        epsilon = zeros(epsilon_elemtype, size(x))
-    end
+    _finite_difference_derivative!(df, f, x, cache)
+end
+
+function _finite_difference_derivative!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Real},
+    cache::DerivativeCache{T1,T2,fdtype,Val{:Real}}) where {T1,T2,fdtype}
+
+    fx, epsilon = cache.fx, cache.epsilon
     if fdtype == Val{:forward}
-        epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
-        @. epsilon = compute_epsilon(Val{:forward}, x, epsilon_factor)
-        @. df = (f(x+epsilon) - f(x)) / epsilon
+        if typeof(fx) == Void
+            @. df = (f(x+epsilon) - f(x)) / epsilon
+        else
+            @. df = (f(x+epsilon) - fx) / epsilon
+        end
     elseif fdtype == Val{:central}
-        epsilon_factor = compute_epsilon_factor(Val{:central}, eltype(x))
-        @. epsilon = compute_epsilon(Val{:central}, x, epsilon_factor)
         @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
     elseif fdtype == Val{:complex}
+        epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
         epsilon_complex = eps(epsilon_elemtype)
         @. df = imag(f(x+im*epsilon_complex)) / epsilon_complex
     else
@@ -42,45 +162,33 @@ function _finite_difference!(df::AbstractArray{<:Real}, f, x::AbstractArray{<:Re
     end
     df
 end
-# Fallbacks for real-valued callables end here.
 
-# Fallbacks for complex-valued callables start here.
-function _finite_difference!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
-    fdtype::DataType, ::Type{Val{:Complex}},
-    fx, epsilon, return_type)
+function _finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
+    cache::DerivativeCache{T1,T2,fdtype,Val{:Complex}}) where {T1,T2,fdtype}
 
-    if (fdtype == Val{:forward} || fdtype == Val{:central}) && typeof(epsilon) == Void
-        if eltype(x) <: Real
-            epsilon = zeros(eltype(x), size(x))
-        else
-            epsilon = zeros(eltype(real(x)), size(x))
-        end
-    end
+    fx, epsilon = cache.fx, cache.epsilon
     if fdtype == Val{:forward}
-        epsilon_factor = compute_epsilon_factor(Val{:forward}, eltype(epsilon))
-        @. epsilon = compute_epsilon(Val{:forward}, real(x), epsilon_factor)
         if typeof(fx) == Void
             fx = f.(x)
         end
         @. df = real((f(x+epsilon) - fx)) / epsilon + im*imag((f(x+im*epsilon) - fx)) / epsilon
     elseif fdtype == Val{:central}
-        epsilon_factor = compute_epsilon_factor(Val{:central}, eltype(epsilon))
-        @. epsilon = compute_epsilon(Val{:central}, real(x), epsilon_factor)
         @. df = real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-epsilon)) / (2 * epsilon)
     else
         fdtype_error(Val{:Complex})
     end
     df
 end
-# Fallbacks for complex-valued callables end here.
 
 #=
-Optimized implementations for StridedArrays.
+Optimized implementations for StridedArrays. These should be redundant now.
+Delete after we're sure the performance difference is gone.
 =#
 # for R -> R^n
+#=
 function _finite_difference!(df::StridedArray{<:Real}, f, x::Real,
-    fdtype::DataType, ::Type{Val{:Real}},
-    fx, epsilon, return_type)
+    fdtype::DataType, ::Type{Val{:Real}}, fx, epsilon, return_type)
+
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
         epsilon = compute_epsilon(Val{:forward}, x)
@@ -99,8 +207,7 @@ end
 
 # for R^n -> R^n
 function _finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
-    fdtype::DataType, ::Type{Val{:Real}},
-    fx, epsilon, return_type)
+    fdtype::DataType, ::Type{Val{:Real}}, fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -131,8 +238,7 @@ end
 
 # C -> C^n
 function _finite_difference!(df::StridedArray{<:Number}, f, x::Number,
-    fdtype::DataType, ::Type{Val{:Complex}},
-    fx, epsilon, return_type)
+    fdtype::DataType, ::Type{Val{:Complex}}, fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -149,8 +255,7 @@ end
 
 # C^n -> C^n
 function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
-    fdtype::DataType, ::Type{Val{:Complex}},
-    fx, epsilon, return_type)
+    fdtype::DataType, ::Type{Val{:Complex}}, fx, epsilon, return_type)
 
     epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
     if fdtype == Val{:forward}
@@ -170,40 +275,4 @@ function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Nu
     end
     df
 end
-
-#=
-Compute the derivative df of a callable f on a collection of points x.
-Single point implementations.
 =#
-function finite_difference(f, x::T, fdtype::DataType, funtype::DataType=Val{:Real}, f_x::Union{Void,T}=nothing) where T<:Number
-    if funtype == Val{:Real}
-        if fdtype == Val{:complex}
-            epsilon = eps(T)
-            return imag(f(x+im*epsilon)) / epsilon
-        else
-            epsilon = compute_epsilon(fdtype, x)
-            return finite_difference_kernel(f, x, fdtype, funtype, epsilon, f_x)
-        end
-    elseif funtype == Val{:Complex}
-        epsilon = compute_epsilon(fdtype, real(x))
-        return finite_difference_kernel(f, x, fdtype, funtype, epsilon, f_x)
-    else
-        fdtype_error(funtype)
-    end
-end
-
-@inline function finite_difference_kernel(f, x::T, ::Type{Val{:forward}}, ::Type{Val{:Real}}, epsilon::T, fx::Union{Void,T}=nothing) where T<:Real
-    return (f(x+epsilon) - f(x)) / epsilon
-end
-
-@inline function finite_difference_kernel(f, x::T, ::Type{Val{:central}}, ::Type{Val{:Real}}, epsilon::T, ::Union{Void,T}=nothing) where T<:Real
-    (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
-end
-
-@inline function finite_difference_kernel(f, x::Number, ::Type{Val{:forward}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
-    return real((f(x+epsilon) - f(x))) / epsilon + im*imag((f(x+im*epsilon) - f(x))) / epsilon
-end
-
-@inline function finite_difference_kernel(f, x::Number, ::Type{Val{:central}}, ::Type{Val{:Complex}}, epsilon::Real, fx::Union{Void,<:Number}=nothing)
-    real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-im*epsilon)) / (2 * epsilon)
-end
