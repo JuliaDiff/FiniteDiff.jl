@@ -46,16 +46,25 @@ function GradientCache(
         end
 
     else # the f:R->R^n case
-        # need cache arrays for fx1 and fx2
-        if typeof(c1) != typeof(df) || size(c1) != size(df)
-            _c1 = similar(df)
+        # need cache arrays for fx1 and fx2, except in complex mode
+        if fdtype != Val{:complex}
+            if typeof(c1) != typeof(df) || size(c1) != size(df)
+                _c1 = similar(df)
+            else
+                _c1 = c1
+            end
+            if fdtype == Val{:forward} && typeof(fx) != Void
+                _c2 = nothing
+            else
+                if typeof(c2) != typeof(df) || size(c2) != size(df)
+                    _c2 = similar(df)
+                else
+                    _c2 = c2
+                end
+            end
         else
-            _c1 = c1
-        end
-        if typeof(c2) != typeof(df) || size(c2) != size(df)
-            _c2 = similar(df)
-        else
-            _c2 = c2
+            _c1 = nothing
+            _c2 = nothing
         end
     end
     GradientCache{typeof(_fx),typeof(_c1),typeof(_c2),fdtype,RealOrComplex}(_fx,_c1,_c2)
@@ -144,16 +153,26 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
     # c1 denotes fx1, c2 is fx2, sizes guaranteed by the cache constructor
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
 
+    epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
     if fdtype == Val{:forward}
-        # TODO
+        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+        epsilon = compute_epsilon(Val{:forward}, real(x), epsilon_factor)
+        c1 .= f(x+epsilon)
+        if typeof(fx) != Void
+            @. df = (c1 - fx) / epsilon
+        else
+            c2 .= f(x)
+            @. df = (c1 - c2) / epsilon
+        end
     elseif fdtype == Val{:central}
+        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+        epsilon = compute_epsilon(Val{:central}, real(x), epsilon_factor)
         c1 .= f(x+epsilon)
         c2 .= f(x-epsilon)
-        @inbounds for i ∈ 1 : length(fx)
-            df[i] = (f(x+epsilon)[1] - f(x-epsilon)[1]) / (2*epsilon)
-        end
+        @. df = (c1 - c2) / (2*epsilon)
     elseif fdtype == Val{:complex}
-        # TODO
+        epsilon_complex = eps(epsilon_elemtype)
+        df .= imag.(f(x+im*epsilon_complex)) ./ epsilon_complex
     end
     df
 end
@@ -162,13 +181,13 @@ end
 function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
     cache::GradientCache{T1,T2,T3,fdtype,Val{:Complex}}) where {T1,T2,T3,fdtype}
 
-    # TODO
+    error("Not implemented yet.")
     df
 end
 
 function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
     cache::GradientCache{T1,T2,T3,fdtype,Val{:Complex}}) where {T1,T2,T3,fdtype}
 
-    # TODO
+    error("Not implemented yet.")
     df
 end
