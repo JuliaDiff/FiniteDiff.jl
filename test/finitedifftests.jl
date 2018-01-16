@@ -1,3 +1,9 @@
+
+# TODO: add tests for GPUArrays
+# TODO: add tests for DEDataArrays
+
+
+# Derivative tests
 x = collect(linspace(-2π, 2π, 100))
 y = sin.(x)
 df = zeros(100)
@@ -8,9 +14,6 @@ central_cache = DiffEqDiffTools.DerivativeCache(x, nothing, epsilon, Val{:centra
 complex_cache = DiffEqDiffTools.DerivativeCache(x, nothing, nothing, Val{:complex})
 
 err_func(a,b) = maximum(abs.(a-b))
-
-# TODO: add tests for GPUArrays
-# TODO: add tests for DEDataArrays
 
 @time @testset "Derivative single point real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:forward}), √2/2) < 1e-4
@@ -85,6 +88,7 @@ end
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, central_cache), df_ref) < 1e-8
 end
 
+# Gradient tests
 f(x) = 2x[1] + x[2]^2
 x = rand(2)
 fx = f(x)
@@ -92,23 +96,35 @@ df = zeros(2)
 df_ref = [2., 2*x[2]]
 forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward},Val{:Real})
 central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central},Val{:Real})
-#complex_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:complex},Val{:Real})
+complex_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:complex},Val{:Real})
 
 @time @testset "Gradient of f:R^n->R real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
-    #@test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
-    #@test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:complex}), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
-    #@test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, complex_cache), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, complex_cache), df_ref) < 1e-15
 end
 
+@time @testset "Gradient of f:R^n->R complex-valued tests" begin
+    # TODO
+end
 
+@time @testset "Gradient of f:R->R^n real-valued tests" begin
+    # TODO
+end
+
+@time @testset "Gradient of f:R->R^n complex-valued tests" begin
+    # TODO
+end
+
+# Jacobian tests
 function f(fvec,x)
     fvec[1] = (x[1]+3)*(x[2]^3-7)+18
     fvec[2] = sin(x[2]*exp(x[1])-1)

@@ -25,20 +25,26 @@ function GradientCache(
 
     if typeof(x) <: AbstractArray # the f:R^n->R case
         # need cache arrays for epsilon (c1) and x1 (c2)
-        epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
-        if typeof(c1) == Void || eltype(c1) != epsilon_elemtype
-            _c1 = zeros(epsilon_elemtype, size(x))
-        else
-            _c1 = c1
-        end
-        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
-        @. _c1 = compute_epsilon(fdtype, real(x), epsilon_factor)
+        if fdtype != Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
+            epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
+            if typeof(c1) == Void || eltype(c1) != epsilon_elemtype
+                _c1 = zeros(epsilon_elemtype, size(x))
+            else
+                _c1 = c1
+            end
+            epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+            @. _c1 = compute_epsilon(fdtype, real(x), epsilon_factor)
 
-        if typeof(c2) != typeof(x) || size(c2) != size(x)
-            _c2 = copy(x)
+            if typeof(c2) != typeof(x) || size(c2) != size(x)
+                _c2 = copy(x)
+            else
+                copy!(_c2, x)
+            end
         else
-            copy!(_c2, x)
+            _c1 = x + 0*im
+            _c2 = nothing
         end
+
     else # the f:R->R^n case
         # need cache arrays for fx1 and fx2
         if typeof(c1) != typeof(df) || size(c1) != size(df)
@@ -117,7 +123,14 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             x[i]  += c1[i]
         end
     elseif fdtype == Val{:complex}
-        # TODO
+        epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
+        epsilon_complex = eps(epsilon_elemtype)
+        # we use c1 here to avoid typing issues with x
+        @inbounds for i ∈ eachindex(x)
+            c1[i] += im*epsilon_complex
+            df[i]  = imag(f(c1)) / epsilon_complex
+            c1[i] -= im*epsilon_complex
+        end
     end
     df
 end
