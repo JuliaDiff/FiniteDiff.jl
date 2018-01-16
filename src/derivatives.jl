@@ -82,38 +82,38 @@ function DerivativeCache(
         Val{:Complex} : Val{:Real}
     )
 
-    if typeof(x)<:StridedArray && typeof(fx)<:Union{Void,StridedArray}
-        if typeof(epsilon)!=Void
-            warn("StridedArrays don't benefit from pre-allocating epsilon.")
-            epsilon = nothing
-        end
+    if fdtype == Val{:complex} && RealOrComplex == Val{:Complex}
+        fdtype_error(Val{:Complex})
     end
-    if fdtype == Val{:complex}
-        if RealOrComplex == Val{:Complex}
-            fdtype_error(Val{:Complex})
-        end
-        if typeof(fx) != Void || typeof(epsilon) != Void
-            warn("Val{:complex} doesn't benefit from cache arrays.")
-        end
-        return DerivativeCache{Void,Void,fdtype,RealOrComplex}(nothing, nothing)
+
+    if fdtype != Val{:forward}
+        warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
+        _fx = nothing
     else
-        if !(typeof(x)<:StridedArray && typeof(fx)<:Union{Void,StridedArray})
+        # more runtime sanity checks?
+        _fx = fx
+    end
+
+    if typeof(epsilon) == Void
+        _epsilon = nothing
+    else
+        if typeof(x)<:StridedArray && typeof(fx)<:Union{Void,StridedArray}
+            warn("StridedArrays don't benefit from pre-allocating epsilon.")
+            _epsilon = nothing
+        elseif fdtype == Val{:complex}
+            warn("Val{:complex} makes the epsilon array redundant.")
+            _epsilon = nothing
+        else
             epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
             if typeof(epsilon) == Void || eltype(epsilon) != epsilon_elemtype
                 epsilon = zeros(epsilon_elemtype, size(x))
             end
             epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
             @. epsilon = compute_epsilon(fdtype, real(x), epsilon_factor)
-        end
-        if fdtype != Val{:forward}
-            if typeof(fx) != Void
-                warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
-            end
-            return DerivativeCache{Void,typeof(epsilon),fdtype,RealOrComplex}(nothing,epsilon)
-        else
-            return DerivativeCache{typeof(fx),typeof(epsilon),fdtype,RealOrComplex}(fx,epsilon)
+            _epsilon = epsilon
         end
     end
+    DerivativeCache{typeof(_fx),typeof(_epsilon),fdtype,RealOrComplex}(_fx,_epsilon)
 end
 
 #=
