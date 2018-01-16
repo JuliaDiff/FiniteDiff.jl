@@ -1,4 +1,4 @@
-struct GradientCache{CacheType, CacheType2, CacheType3, fdtype, RealOrComplex}
+struct GradientCache{CacheType1, CacheType2, CacheType3, fdtype, RealOrComplex}
     fx :: CacheType1
     c1 :: CacheType2
     c2 :: CacheType3
@@ -7,19 +7,15 @@ end
 function GradientCache(
     df     :: AbstractArray{<:Number},
     x      :: Union{<:Number, AbstractArray{<:Number}},
-    fx     :: Union{Void,AbstractArray{<:Number}} = nothing,
-    c1     :: AbstractArray{<:Number} = nothing,
-    c2     :: AbstractArray{<:Number} = nothing,
+    fx     :: Union{Void,<:Number,AbstractArray{<:Number}} = nothing,
+    c1     :: Union{Void,AbstractArray{<:Number}} = nothing,
+    c2     :: Union{Void,AbstractArray{<:Number}} = nothing,
     fdtype :: DataType = Val{:central},
     RealOrComplex :: DataType =
-        fdtype==Val{:complex} ? Val{:Real} : eltype(x1) <: Complex ? Val{:Complex} : Val{:Real}
+        fdtype==Val{:complex} ? Val{:Real} : eltype(x) <: Complex ? Val{:Complex} : Val{:Real}
     )
 
-    if fdtype == Val{:complex} && RealOrComplex == Val{:Complex}
-        fdtype_error(Val{:Complex})
-    end
-
-    if fdtype != Val{:forward}
+    if fdtype != Val{:forward} && typeof(fx) != Void
         warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
         _fx = nothing
     else
@@ -28,8 +24,8 @@ function GradientCache(
     end
 
     if typeof(x) <: AbstractArray # the f:R^n->R case
-        # need cache arrays for epsilon and x1
-        epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+        # need cache arrays for epsilon (c1) and x1 (c2)
+        epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
         if typeof(c1) == Void || eltype(c1) != epsilon_elemtype
             _c1 = zeros(epsilon_elemtype, size(x))
         else
@@ -56,7 +52,7 @@ function GradientCache(
             _c2 = c2
         end
     end
-    GradientCache{typeof(fx),typeof(c1),typeof(c2),fdtype,RealOrComplex}(fx,c1,c2)
+    GradientCache{typeof(_fx),typeof(_c1),typeof(_c2),fdtype,RealOrComplex}(_fx,_c1,_c2)
 end
 
 function finite_difference_gradient(f, x, fdtype::DataType=Val{:central},
@@ -107,7 +103,6 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     # c2 is x1, pre-set to the values of x by the cache constructor
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype == Val{:forward}
-        # TODO: do we even need c2 for the forward case?
         @inbounds for i ∈ eachindex(x)
             c2[i] += c1[i]
             df[i]  = (f(c2) - f(x)) / c1[i]
@@ -115,12 +110,11 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
         end
     elseif fdtype == Val{:central}
         @inbounds for i ∈ eachindex(x)
-            #copy!(x1,x)
             c2[i] += c1[i]
             x[i]  -= c1[i]
             df[i]  = (f(c2) - f(x)) / (2*c1[i])
             c2[i] -= c1[i]
-            x[i]  += c1[i] # revert any changes to x
+            x[i]  += c1[i]
         end
     elseif fdtype == Val{:complex}
         # TODO
