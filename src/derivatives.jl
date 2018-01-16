@@ -82,21 +82,29 @@ function DerivativeCache(
         Val{:Complex} : Val{:Real}
     )
 
+    if typeof(x)<:StridedArray && typeof(fx)<:Union{Void,StridedArray}
+        if typeof(epsilon)!=Void
+            warn("StridedArrays don't benefit from pre-allocating epsilon.")
+            epsilon = nothing
+        end
+    end
     if fdtype == Val{:complex}
         if RealOrComplex == Val{:Complex}
             fdtype_error(Val{:Complex})
         end
-        if typeof(fx) != Void
-            warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
+        if typeof(fx) != Void || typeof(epsilon) != Void
+            warn("Val{:complex} doesn't benefit from cache arrays.")
         end
         return DerivativeCache{Void,Void,fdtype,RealOrComplex}(nothing, nothing)
     else
-        epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
-        if typeof(epsilon) == Void
-            epsilon = zeros(epsilon_elemtype, size(x))
+        if !(typeof(x)<:StridedArray && typeof(fx)<:Union{Void,StridedArray})
+            epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+            if typeof(epsilon) == Void || eltype(epsilon) != epsilon_elemtype
+                epsilon = zeros(epsilon_elemtype, size(x))
+            end
+            epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+            @. epsilon = compute_epsilon(fdtype, real(x), epsilon_factor)
         end
-        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
-        @. epsilon = compute_epsilon(fdtype, real(x), epsilon_factor)
         if fdtype != Val{:forward}
             if typeof(fx) != Void
                 warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
@@ -181,41 +189,25 @@ function _finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::Abstr
 end
 
 #=
-Optimized implementations for StridedArrays. These should be redundant now.
-Delete after we're sure the performance difference is gone.
+Optimized implementations for StridedArrays.
+Essentially, the only difference between these and the AbstractArray case
+is that here we can compute the epsilon one by one in local variables and avoid caching it.
 =#
-# for R -> R^n
-#=
-function _finite_difference!(df::StridedArray{<:Real}, f, x::Real,
-    fdtype::DataType, ::Type{Val{:Real}}, fx, epsilon, return_type)
+function _finite_difference_derivative!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
+    cache::DerivativeCache{T1,T2,fdtype,Val{:Real}}) where {T1,T2,fdtype}
 
-    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+    epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
     if fdtype == Val{:forward}
-        epsilon = compute_epsilon(Val{:forward}, x)
-        df .= (f(x+epsilon) - f(x)) / epsilon
-    elseif fdtype == Val{:central}
-        epsilon = compute_epsilon(Val{:central}, x)
-        df .= (f(x+epsilon) - f(x-epsilon)) / (2*epsilon)
-    elseif fdtype == Val{:complex}
-        epsilon = eps(eltype(x))
-        df .= imag(f(x+im*epsilon)) / epsilon
-    else
-        fdtype_error(Val{:Real})
-    end
-    df
-end
-
-# for R^n -> R^n
-function _finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real},
-    fdtype::DataType, ::Type{Val{:Real}}, fx, epsilon, return_type)
-
-    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
-    if fdtype == Val{:forward}
+        fx = cache.fx
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i in 1 : length(x)
             epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
             x_plus = x[i] + epsilon
-            df[i] = (f(x_plus) - f(x[i])) / epsilon
+            if typeof(fx) == Void
+                df[i] = (f(x_plus) - f(x[i])) / epsilon
+            else
+                df[i] = (f(x_plus) - fx[i]) / epsilon
+            end
         end
     elseif fdtype == Val{:central}
         epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
@@ -236,33 +228,21 @@ function _finite_difference!(df::StridedArray{<:Real}, f, x::StridedArray{<:Real
     df
 end
 
-# C -> C^n
-function _finite_difference!(df::StridedArray{<:Number}, f, x::Number,
-    fdtype::DataType, ::Type{Val{:Complex}}, fx, epsilon, return_type)
+function _finite_difference_derivative!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
+    cache::DerivativeCache{T1,T2,fdtype,Val{:Complex}}) where {T1,T2,fdtype}
 
-    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
+    epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
     if fdtype == Val{:forward}
-        epsilon = compute_epsilon(Val{:forward}, real(x))
-        df .= ( real( f(x+epsilon) - f(x) ) + im*imag( f(x+im*epsilon) - f(x) ) ) / epsilon
-    elseif fdtype == Val{:central}
-        epsilon = compute_epsilon(Val{:central}, real(x))
-        df .= (real(f(x+epsilon) - f(x-epsilon)) + im*imag(f(x+im*epsilon) - f(x-im*epsilon))) / (2 * epsilon)
-    else
-        fdtype_error(Val{:Complex})
-    end
-    df
-end
-
-# C^n -> C^n
-function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Number},
-    fdtype::DataType, ::Type{Val{:Complex}}, fx, epsilon, return_type)
-
-    epsilon_elemtype = compute_epsilon_elemtype(epsilon, x)
-    if fdtype == Val{:forward}
+        fx = cache.fx
         epsilon_factor = compute_epsilon_factor(Val{:forward}, epsilon_elemtype)
         @inbounds for i in 1 : length(x)
             epsilon = compute_epsilon(Val{:forward}, real(x[i]), epsilon_factor)
-            df[i] = ( real( f(x[i]+epsilon) - f(x[i]) ) + im*imag( f(x[i]+im*epsilon) - f(x[i]) ) ) / epsilon
+            if typeof(fx) == Void
+                fxi = f(x[i])
+            else
+                fxi = fx[i]
+            end
+            df[i] = ( real( f(x[i]+epsilon) - fxi ) + im*imag( f(x[i]+im*epsilon) - fxi ) ) / epsilon
         end
     elseif fdtype == Val{:central}
         epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
@@ -275,4 +255,3 @@ function _finite_difference!(df::StridedArray{<:Number}, f, x::StridedArray{<:Nu
     end
     df
 end
-=#
