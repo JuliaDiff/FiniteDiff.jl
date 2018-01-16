@@ -20,7 +20,7 @@ end
     elseif fdtype==Val{:central}
         return cbrt(eps(T))
     else
-        error("Unrecognized fdtype: must be Val{:forward} or Val{:central}.")
+        error("Unrecognized fdtype $fdtype: must be Val{:forward} or Val{:central}.")
     end
 end
 
