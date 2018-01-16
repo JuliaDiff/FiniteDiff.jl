@@ -24,3 +24,19 @@ mutable struct UDerivativeWrapper{F,tType} <: Function
   t::tType
 end
 (p::UDerivativeWrapper)(u) = p.f(p.t,u)
+
+mutable struct ParamJacobianWrapper{fType,tType,uType} <: Function
+  f::fType
+  t::tType
+  u::uType
+end
+
+function (pf::ParamJacobianWrapper)(du1,p)
+  pf.f(pf.t,pf.u,p,du1)
+end
+
+function (pf::ParamJacobianWrapper)(p)
+  du1 = similar(uprev)
+  set_param_values!(pf.f,p)
+  pf.f(pf.t,pf.u,du1)
+end
