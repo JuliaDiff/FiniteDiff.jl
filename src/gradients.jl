@@ -120,7 +120,11 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     if fdtype == Val{:forward}
         @inbounds for i ∈ eachindex(x)
             c2[i] += c1[i]
-            df[i]  = (f(c2) - f(x)) / c1[i]
+            if typeof(fx) != Void
+                df[i] = (f(c2) - fx) / c1[i]
+            else
+                df[i]  = (f(c2) - f(x)) / c1[i]
+            end
             c2[i] -= c1[i]
         end
     elseif fdtype == Val{:central}
@@ -177,14 +181,63 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
     df
 end
 
-
+# vector of derivatives of f : C^n -> C by each component of a vector x
 function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
     cache::GradientCache{T1,T2,T3,fdtype,Val{:Complex}}) where {T1,T2,T3,fdtype}
 
-    error("Not implemented yet.")
+    # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
+    # c1 denotes epsilon (pre-computed by the cache constructor),
+    # c2 is x1, pre-set to the values of x by the cache constructor
+    fx, c1, c2 = cache.fx, cache.c1, cache.c2
+    if fdtype == Val{:forward}
+        @inbounds for i ∈ eachindex(x)
+            epsilon = c1[i]
+            c2[i] += epsilon
+            if typeof(fx) == Void
+                df[i]  = real(f(c2) - f(x)) / epsilon
+            else
+                df[i]  = real(f(c2) - fx) / epsilon
+            end
+            c2[i] -= epsilon
+            c2[i] += im*epsilon
+            if typeof(fx) == Void
+                df[i] += im*imag(f(c2) - f(x)) / epsilon
+            else
+                df[i] += im*imag(f(c2) - fx) / epsilon
+            end
+            c2[i] -= im*epsilon
+        end
+    elseif fdtype == Val{:central}
+        @inbounds for i ∈ eachindex(x)
+            epsilon = c1[i]
+            c2[i]  += epsilon
+            x[i]   -= epsilon
+            df[i]   = real(f(c2) - f(x)) / (2*epsilon)
+            c2[i]  -= c1[i]
+            x[i]   += c1[i]
+            c2[i]  += im*epsilon
+            x[i]   -= im*epsilon
+            df[i]  += im*imag(f(c2) - f(x)) / (2*epsilon)
+            c2[i]  -= im*epsilon
+            x[i]   += im*epsilon
+        end
+    elseif fdtype == Val{:complex}
+        epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
+        epsilon_complex = eps(epsilon_elemtype)
+        # we use c1 here to avoid typing issues with x
+        @inbounds for i ∈ eachindex(x)
+            c1[i] += im*epsilon_complex
+            df[i]  = imag(f(c1)) / epsilon_complex
+            c1[i] -= im*epsilon_complex
+        end
+    else
+        fdtype_error(Val{:Complex})
+    end
     df
 end
 
+# vector of derivatives of f : C -> C^n
+# this is effectively a vector of partial derivatives, but we still call it a gradient
 function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
     cache::GradientCache{T1,T2,T3,fdtype,Val{:Complex}}) where {T1,T2,T3,fdtype}
 
