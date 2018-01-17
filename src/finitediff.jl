@@ -14,7 +14,7 @@ end
     eps_cbrt * max(one(T), abs(x))
 end
 
-@inline function compute_epsilon(::Type{Val{:complex}}, x::T) where T<:Real
+@inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Void,T}=nothing) where T<:Real
     eps(T)
 end
 
@@ -25,18 +25,6 @@ end
         return cbrt(eps(T))
     else
         return one(T)
-    end
-end
-
-function compute_epsilon_elemtype(epsilon, x)
-    if typeof(epsilon) != Void
-        return eltype(epsilon)
-    elseif eltype(x) <: Real
-        return eltype(x)
-    elseif eltype(x) <: Complex
-        return real(eltype(x))
-    else
-        error("Could not compute epsilon type.")
     end
 end
 
