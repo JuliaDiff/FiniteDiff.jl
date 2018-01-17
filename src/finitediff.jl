@@ -14,13 +14,17 @@ end
     eps_cbrt * max(one(T), abs(x))
 end
 
+@inline function compute_epsilon(::Type{Val{:complex}}, x::T) where T<:Real
+    eps(T)
+end
+
 @inline function compute_epsilon_factor(fdtype::DataType, ::Type{T}) where T<:Number
     if fdtype==Val{:forward}
         return sqrt(eps(T))
     elseif fdtype==Val{:central}
         return cbrt(eps(T))
     else
-        error("Unrecognized fdtype $fdtype: must be Val{:forward} or Val{:central}.")
+        return one(T)
     end
 end
 

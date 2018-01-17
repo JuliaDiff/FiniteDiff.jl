@@ -195,17 +195,12 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             c2[i] += epsilon
             if typeof(fx) == Void
                 df[i]  = real(f(c2) - f(x)) / epsilon
-            else
-                df[i]  = real(f(c2) - fx) / epsilon
-            end
-            c2[i] -= epsilon
-            c2[i] += im*epsilon
-            if typeof(fx) == Void
                 df[i] += im*imag(f(c2) - f(x)) / epsilon
             else
+                df[i]  = real(f(c2) - fx) / epsilon
                 df[i] += im*imag(f(c2) - fx) / epsilon
             end
-            c2[i] -= im*epsilon
+            c2[i] -= epsilon
         end
     elseif fdtype == Val{:central}
         @inbounds for i ∈ eachindex(x)
@@ -213,25 +208,12 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             c2[i]  += epsilon
             x[i]   -= epsilon
             df[i]   = real(f(c2) - f(x)) / (2*epsilon)
-            c2[i]  -= c1[i]
-            x[i]   += c1[i]
-            c2[i]  += im*epsilon
-            x[i]   -= im*epsilon
             df[i]  += im*imag(f(c2) - f(x)) / (2*epsilon)
-            c2[i]  -= im*epsilon
-            x[i]   += im*epsilon
-        end
-    elseif fdtype == Val{:complex}
-        epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
-        epsilon_complex = eps(epsilon_elemtype)
-        # we use c1 here to avoid typing issues with x
-        @inbounds for i ∈ eachindex(x)
-            c1[i] += im*epsilon_complex
-            df[i]  = imag(f(c1)) / epsilon_complex
-            c1[i] -= im*epsilon_complex
+            c2[i]  -= c1[i]
+            x[i]   += c1[i]            
         end
     else
-        fdtype_error(Val{:Complex})
+        fdtype_error(Val{:complex})
     end
     df
 end
@@ -241,6 +223,34 @@ end
 function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
     cache::GradientCache{T1,T2,T3,fdtype,Val{:Complex}}) where {T1,T2,T3,fdtype}
 
-    error("Not implemented yet.")
+    # NOTE: in this case epsilon is a scalar, we need two arrays for fx1 and fx2
+    # c1 denotes fx1, c2 is fx2, sizes guaranteed by the cache constructor
+    fx, c1, c2 = cache.fx, cache.c1, cache.c2
+
+    epsilon_elemtype = compute_epsilon_elemtype(nothing, x)
+    if fdtype == Val{:forward}
+        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+        epsilon = compute_epsilon(Val{:forward}, real(x), epsilon_factor)
+        c1 .= f(x+epsilon)
+        if typeof(fx) != Void
+            @. df  = real(c1 - fx) / epsilon
+            @. df += im*imag(c1 - fx) / epsilon
+        else
+            c2 .= f(x)
+            @. df  = real(c1 - c2) / epsilon
+            @. df += im*imag(c1 - c2) / epsilon
+        end
+    elseif fdtype == Val{:central}
+        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+        epsilon = compute_epsilon(Val{:central}, real(x), epsilon_factor)
+        c1 .= f(x+epsilon)
+        c2 .= f(x-epsilon)
+        @. df  = real(c1 - c2) / (2*epsilon)
+        #c1 .= im*imag(f(x+im*epsilon))
+        #c2 .= im*imag(f(x-im*epsilon))
+        @. df += im*imag(c1 - c2) / (2*epsilon)
+    elseif fdtype == Val{:complex}
+        fdtype_error(Val{:complex})
+    end
     df
 end

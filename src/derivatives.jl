@@ -1,29 +1,26 @@
 #=
-Derivative of f : R -> R or f : C -> C at a single point x.
+Sinple-point derivatives of scalar->scalar maps.
 =#
-function finite_difference_derivative(f, x::T, fdtype::DataType, funtype::DataType=Val{:Real},
-    f_x::Union{Void,T}=nothing) where T<:Number
+function finite_difference_derivative(f, x::T, fdtype::DataType=Val{:central},
+    returntype::DataType=eltype(x), f_x::Union{Void,T}=nothing) where T<:Number
 
-    if funtype == Val{:Real}
-        if fdtype == Val{:complex}
-            epsilon = eps(T)
-        else
-            epsilon = compute_epsilon(fdtype, x)
-        end
-    elseif funtype == Val{:Complex}
-        epsilon = compute_epsilon(fdtype, real(x))
-    else
-        fdtype_error(funtype)
+    epsilon = compute_epsilon(fdtype, real(x))
+    if fdtype == Val{:forward}
+        return (f(x+epsilon) - f(x)) / epsilon
+    elseif fdtype == Val{:central}
+        return (f(x+epsilon) - f(x-epsilon)) / (2*epsilon)
+    elseif fdtype == Val{:complex} && returntype == Val{:Real}
+        return imag(f(x+im*epsilon)) / epsilon
     end
-
-    _finite_difference_kernel(f, x, fdtype, funtype, epsilon, f_x)
+    fdtype_error(returntype)
 end
 
 #=
-Finite difference kernels for single point derivatives of f : R -> R.
-These are currently underused because of inlining / broadcast issues.
+Finite difference kernels for single point derivatives.
+These are currently unused because of inlining / broadcast issues.
 Revisit this in Julia v0.7 / 1.0.
 =#
+#=
 @inline function _finite_difference_kernel(f, x::T, ::Type{Val{:forward}}, ::Type{Val{:Real}},
     epsilon::T, fx::Union{Void,T}=nothing) where T<:Real
 
@@ -61,6 +58,7 @@ end
 
     real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-im*epsilon)) / (2 * epsilon)
 end
+=#
 # Single point derivative implementations end here.
 
 
@@ -179,9 +177,9 @@ function _finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::Abstr
         if typeof(fx) == Void
             fx = f.(x)
         end
-        @. df = real((f(x+epsilon) - fx)) / epsilon + im*imag((f(x+im*epsilon) - fx)) / epsilon
+        @. df = real((f(x+epsilon) - fx)) / epsilon + im*imag((f(x+epsilon) - fx)) / epsilon
     elseif fdtype == Val{:central}
-        @. df = real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-im*epsilon)) / (2 * epsilon)
+        @. df = real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
     else
         fdtype_error(Val{:Complex})
     end
@@ -242,13 +240,13 @@ function _finite_difference_derivative!(df::StridedArray{<:Number}, f, x::Stride
             else
                 fxi = fx[i]
             end
-            df[i] = ( real( f(x[i]+epsilon) - fxi ) + im*imag( f(x[i]+im*epsilon) - fxi ) ) / epsilon
+            df[i] = ( real( f(x[i]+epsilon) - fxi ) + im*imag( f(x[i]+epsilon) - fxi ) ) / epsilon
         end
     elseif fdtype == Val{:central}
         epsilon_factor = compute_epsilon_factor(Val{:central}, epsilon_elemtype)
         @inbounds for i in 1 : length(x)
             epsilon = compute_epsilon(Val{:central}, real(x[i]), epsilon_factor)
-            df[i] = (real(f(x[i]+epsilon) - f(x[i]-epsilon)) + im*imag(f(x[i]+im*epsilon) - f(x[i]-im*epsilon))) / (2 * epsilon)
+            df[i] = ( real( f(x[i]+epsilon) - f(x[i]-epsilon) ) + im*imag( f(x[i]+epsilon) - f(x[i]-epsilon) ) ) / (2 * epsilon)
         end
     else
         fdtype_error(Val{:Complex})
