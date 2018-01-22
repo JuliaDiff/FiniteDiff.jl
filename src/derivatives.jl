@@ -1,10 +1,10 @@
 #=
-Sinple-point derivatives of scalar->scalar maps.
+Single-point derivatives of scalar->scalar maps.
 =#
 function finite_difference_derivative(f, x::T, fdtype::DataType=Val{:central},
     returntype::DataType=eltype(x), f_x::Union{Void,T}=nothing) where T<:Number
 
-    epsilon = compute_epsilon(fdtype, real(x))
+    epsilon = compute_epsilon(fdtype, x)
     if fdtype==Val{:forward}
         return (f(x+epsilon) - f(x)) / epsilon
     elseif fdtype==Val{:central}
@@ -73,7 +73,7 @@ end
 function DerivativeCache(
     x          :: AbstractArray{<:Number},
     fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing,
     fdtype     :: DataType = Val{:central},
     returntype :: DataType = eltype(x))
 
@@ -99,8 +99,8 @@ function DerivativeCache(
         if typeof(epsilon)==Void || eltype(epsilon)!=real(eltype(x))
             epsilon = zeros(real(eltype(x)), size(x))
         end
-        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
-        @. epsilon = compute_epsilon(fdtype, real(x), epsilon_factor)
+        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
+        @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
         _epsilon = epsilon
     end
     DerivativeCache{typeof(_fx),typeof(_epsilon),fdtype,returntype}(_fx,_epsilon)
@@ -115,7 +115,7 @@ function finite_difference_derivative(
     fdtype     :: DataType = Val{:central},
     returntype :: DataType = eltype(x),      # return type of f
     fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}}   = nothing)
+    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing)
 
     df = zeros(returntype, size(x))
     finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon)
@@ -160,10 +160,10 @@ Optimized implementations for StridedArrays.
 Essentially, the only difference between these and the AbstractArray case
 is that here we can compute the epsilon one by one in local variables and avoid caching it.
 =#
-function _finite_difference_derivative!(df::StridedArray, f, x::StridedArray,
+function finite_difference_derivative!(df::StridedArray, f, x::StridedArray,
     cache::DerivativeCache{T1,T2,fdtype,returntype}) where {T1,T2,fdtype,returntype}
 
-    epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
+    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
     if fdtype == Val{:forward}
         fx = cache.fx
         @inbounds for i ∈ eachindex(x)
