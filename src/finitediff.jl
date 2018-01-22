@@ -6,12 +6,12 @@ Very heavily inspired by Calculus.jl, but with an emphasis on performance and Di
 Compute the finite difference interval epsilon.
 Reference: Numerical Recipes, chapter 5.7.
 =#
-@inline function compute_epsilon(::Type{Val{:forward}}, x::T, eps_sqrt::T=sqrt(eps(T))) where T<:Real
-    eps_sqrt * max(one(T), abs(x))
+@inline function compute_epsilon(::Type{Val{:forward}}, x::T, eps_sqrt=sqrt(eps(real(T)))) where T<:Number
+    eps_sqrt * max(one(real(T)), abs(x))
 end
 
-@inline function compute_epsilon(::Type{Val{:central}}, x::T, eps_cbrt::T=cbrt(eps(T))) where T<:Real
-    eps_cbrt * max(one(T), abs(x))
+@inline function compute_epsilon(::Type{Val{:central}}, x::T, eps_cbrt=cbrt(eps(real(T)))) where T<:Number
+    eps_cbrt * max(one(real(T)), abs(x))
 end
 
 @inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Void,T}=nothing) where T<:Real
@@ -20,20 +20,20 @@ end
 
 @inline function compute_epsilon_factor(fdtype::DataType, ::Type{T}) where T<:Number
     if fdtype==Val{:forward}
-        return sqrt(eps(T))
+        return sqrt(eps(real(T)))
     elseif fdtype==Val{:central}
-        return cbrt(eps(T))
+        return cbrt(eps(real(T)))
     else
-        return one(T)
+        return one(real(T))
     end
 end
 
-function fdtype_error(funtype::DataType=Val{:Real})
-    if funtype == Val{:Real}
+function fdtype_error(funtype::DataType=Float64)
+    if funtype<:Real
         error("Unrecognized fdtype: valid values are Val{:forward}, Val{:central} and Val{:complex}.")
-    elseif funtype == Val{:Complex}
+    elseif funtype<:Complex
         error("Unrecognized fdtype: valid values are Val{:forward} or Val{:central}.")
     else
-        error("Unrecognized funtype: valid values are Val{:Real} or Val{:Complex}.")
+        error("Unrecognized returntype: should be a subtype of Real or Complex.")
     end
 end
