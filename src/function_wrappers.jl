@@ -1,29 +1,33 @@
-mutable struct TimeGradientWrapper{fType,uType} <: Function
+mutable struct TimeGradientWrapper{fType,uType,P} <: Function
   f::fType
   uprev::uType
+  p::P
 end
-(p::TimeGradientWrapper)(t) = (du2 = similar(p.uprev); p.f(t,p.uprev,du2); du2)
-(p::TimeGradientWrapper)(du2,t) = p.f(t,p.uprev,du2)
+(ff::TimeGradientWrapper)(t) = (du2 = similar(ff.uprev); ff.f(du2,ff.uprev,ff.p,t); du2)
+(ff::TimeGradientWrapper)(du2,t) = ff.f(du2,ff.uprev,ff.p,t)
 
-mutable struct UJacobianWrapper{fType,tType} <: Function
+mutable struct UJacobianWrapper{fType,tType,P} <: Function
   f::fType
   t::tType
+  p::P
 end
 
-(p::UJacobianWrapper)(du1,uprev) = p.f(p.t,uprev,du1)
-(p::UJacobianWrapper)(uprev) = (du1 = similar(uprev); p.f(p.t,uprev,du1); du1)
+(ff::UJacobianWrapper)(du1,uprev) = ff.f(du1,uprev,ff.p,ff.t)
+(ff::UJacobianWrapper)(uprev) = (du1 = similar(uprev); ff.f(du1,uprev,ff.p,ff.t); du1)
 
-mutable struct TimeDerivativeWrapper{F,uType} <: Function
+mutable struct TimeDerivativeWrapper{F,uType,P} <: Function
   f::F
   u::uType
+  p::P
 end
-(p::TimeDerivativeWrapper)(t) = p.f(t,p.u)
+(ff::TimeDerivativeWrapper)(t) = ff.f(ff.u,ff.p,t)
 
-mutable struct UDerivativeWrapper{F,tType} <: Function
+mutable struct UDerivativeWrapper{F,tType,P} <: Function
   f::F
   t::tType
+  p::P
 end
-(p::UDerivativeWrapper)(u) = p.f(p.t,u)
+(ff::UDerivativeWrapper)(u) = ff.f(u,ff.p,ff.t)
 
 mutable struct ParamJacobianWrapper{fType,tType,uType} <: Function
   f::fType
@@ -31,12 +35,11 @@ mutable struct ParamJacobianWrapper{fType,tType,uType} <: Function
   u::uType
 end
 
-function (pf::ParamJacobianWrapper)(du1,p)
-  pf.f(pf.t,pf.u,p,du1)
+function (ff::ParamJacobianWrapper)(du1,p)
+  ff.f(du1,ff.u,p,ff.t)
 end
 
-function (pf::ParamJacobianWrapper)(p)
+function (ff::ParamJacobianWrapper)(p)
   du1 = similar(uprev)
-  set_param_values!(pf.f,p)
-  pf.f(pf.t,pf.u,du1)
+  ff.f(du1,ff.u,p,ff.t)
 end
