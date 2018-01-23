@@ -23,22 +23,25 @@ function GradientCache(
     end
 
     if typeof(x)<:AbstractArray # the vector->scalar case
-        # need cache arrays for x1 (c1) and epsilon (c2, only if non-StridedArray)
+        # need cache arrays for x1 (c1) and epsilon (c2) (both only if non-StridedArray)
         if fdtype!=Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
-            if typeof(c1)!=typeof(x) || size(c1)!=size(x)
-                _c1 = similar(x)
-            else
-                _c1 = c1
-            end
-            if typeof(c2)!=Void && x<:StridedVector
-                warn("c2 cache isn't necessary when x<:StridedVector.")
-            end
-            if (typeof(c2)==Void || eltype(c2)!=real(eltype(x))) && !(typeof(x)<:StridedVector)
-                _c2 = zeros(real(eltype(x)), size(x))
-            elseif typeof(x)<:StridedArray
+            if typeof(x)<:StridedVector
+                _c1 = nothing
                 _c2 = nothing
+                if typeof(c1)!=Void || typeof(c2)!=Void
+                    warn("For StridedVectors, neither c1 nor c2 are necessary.")
+                end
             else
-                _c2 = c2
+                if typeof(c1)!=typeof(x) || size(c1)!=size(x)
+                    _c1 = similar(x)
+                else
+                    _c1 = c1
+                end
+                if (typeof(c2)==Void || eltype(c2)!=real(eltype(x)))
+                    _c2 = zeros(real(eltype(x)), size(x))
+                else
+                    _c2 = c2
+                end
             end
         else
             if !(returntype<:Real)
@@ -186,30 +189,31 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
         epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
-        copy!(c1,x)
     end
     if fdtype == Val{:forward}
         @inbounds for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
-            c1_old = c1[i]
-            c1[i] += epsilon
+            x_old = x[i]
+            x[i] += epsilon
+            dfi = f(x)
+            x[i] = x_old
             if typeof(fx) != Void
-                df[i] = (f(c1) - fx) / epsilon
+                dfi -= fx
             else
-                df[i]  = (f(c1) - f(x)) / epsilon
+                dfi -= f(x)
             end
-            c1[i] = c1_old
+            df[i] = dfi / epsilon
         end
     elseif fdtype == Val{:central}
         @inbounds for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
-            c1_old = c1[i]
-            c1[i] += epsilon
-            x_old  = x[i]
-            x[i]  -= epsilon
-            df[i]  = (f(c1) - f(x)) / (2*epsilon)
-            c1[i]  = c1_old
-            x[i]   = x_old
+            x_old = x[i]
+            x[i] += epsilon
+            dfi = f(x)
+            x[i] = x_old - epsilon
+            dfi -= f(x)
+            x[i] = x_old
+            df[i] = dfi / (2*epsilon)
         end
     elseif fdtype == Val{:complex} && returntype <: Real
         copy!(c1,x)
