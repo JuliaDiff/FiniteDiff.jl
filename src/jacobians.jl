@@ -9,9 +9,9 @@ function JacobianCache(
     x1         :: Union{Void,AbstractArray{<:Number}} = nothing,
     fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
     fx1        :: Union{Void,AbstractArray{<:Number}} = nothing,
-    fdtype     :: DataType = Val{:central},
-    returntype :: DataType = eltype(x),
-    inplace    :: Bool = true)
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if fdtype==Val{:complex}
         if !(returntype<:Real)
@@ -49,8 +49,12 @@ function JacobianCache(
     JacobianCache{typeof(_x1),typeof(_fx),typeof(_fx1),fdtype,returntype,inplace}(_x1,_fx,_fx1)
 end
 
-function finite_difference_jacobian(f,x,fdtype=Val{:central},returntype=eltype(x))
-    cache = JacobianCache(x,nothing,nothing,nothing,fdtype,returntype)
+function finite_difference_jacobian(f, x::AbstractArray{<:Number},
+    fdtype     :: Type{T1}=Val{:central},
+    returntype :: Type{T2}=eltype(x),
+    inplace    :: Type{Val{T3}}=Val{true}) where {T1,T2,T3}
+
+    cache = JacobianCache(x,nothing,nothing,nothing,fdtype,returntype,inplace)
     finite_difference_jacobian(f,x,cache)
 end
 
@@ -74,7 +78,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractA
             epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
             x1_save = x1[i]
             x1[i] += epsilon
-            if inplace
+            if inplace == Val{true}
                 f(fx1, x1)
                 f(fx, x)
             else
@@ -93,7 +97,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractA
             x_save = x[i]
             x1[i] += epsilon
             x[i]  -= epsilon
-            if inplace
+            if inplace == Val{true}
                 f(fx1, x1)
                 f(fx, x)
             else
@@ -109,7 +113,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractA
         @inbounds for i ∈ 1:n
             x1_save = x1[i]
             x1[i] += im * epsilon
-            if inplace
+            if inplace == Val{true}
                 f(fx,x1)
             else
                 fx .= f(x1)
