@@ -136,9 +136,9 @@ complex_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:compl
 
 @time @testset "Gradient of f:scalar->vector real-valued tests" begin
     @test_broken err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), true, fx), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), true, fx), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}, eltype(x), true, fx), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}, eltype(x), Val{true}, fx), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
@@ -159,8 +159,8 @@ forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forwa
 central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
 
 @time @testset "Gradient of f:vector->scalar complex-valued tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), true, fx), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), true, fx), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-7
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-7

@@ -10,9 +10,9 @@ function GradientCache(
     fx         :: Union{Void,<:Number,AbstractArray{<:Number}} = nothing,
     c1         :: Union{Void,AbstractArray{<:Number}} = nothing,
     c2         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    fdtype     :: DataType = Val{:central},
-    returntype :: DataType = eltype(x),
-    inplace    :: Bool = true)
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if fdtype!=Val{:forward} && typeof(fx)!=Void
         warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
@@ -30,13 +30,10 @@ function GradientCache(
             else
                 _c1 = c1
             end
-            epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
-            @. _c1 = compute_epsilon(fdtype, real(x), epsilon_factor)
-
             if typeof(c2)!=typeof(x) || size(c2)!=size(x)
-                _c2 = copy(x)
+                _c2 = similar(x)
             else
-                copy!(_c2, x)
+                _c2 = c2
             end
         else
             if !(returntype<:Real)
@@ -76,16 +73,16 @@ function GradientCache(
     GradientCache{typeof(_fx),typeof(_c1),typeof(_c2),fdtype,returntype,inplace}(_fx,_c1,_c2)
 end
 
-function finite_difference_gradient(f, x, fdtype::DataType=Val{:central},
-    returntype::DataType=eltype(x), inplace::Bool=true,
+function finite_difference_gradient(f, x, fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x), inplace::Type{Val{T3}}=Val{true},
     fx::Union{Void,AbstractArray{<:Number}}=nothing,
     c1::Union{Void,AbstractArray{<:Number}}=nothing,
-    c2::Union{Void,AbstractArray{<:Number}}=nothing)
+    c2::Union{Void,AbstractArray{<:Number}}=nothing) where {T1,T2,T3}
 
     if typeof(x) <: AbstractArray
         df = zeros(returntype, size(x))
     else
-        if inplace
+        if inplace == Val{true}
             if typeof(fx)==Void && typeof(c1)==Void && typeof(c2)==Void
                 error("In the scalar->vector in-place map case, at least one of fx, c1 or c2 must be provided, otherwise we cannot infer the return size.")
             else
@@ -102,12 +99,12 @@ function finite_difference_gradient(f, x, fdtype::DataType=Val{:central},
     finite_difference_gradient!(df,f,x,cache)
 end
 
-function finite_difference_gradient!(df, f, x, fdtype::DataType=Val{:central},
-    returntype::DataType=eltype(x), inplace::Bool=true,
+function finite_difference_gradient!(df, f, x, fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x), inplace::Type{Val{T3}}=Val{true},
     fx::Union{Void,AbstractArray{<:Number}}=nothing,
     c1::Union{Void,AbstractArray{<:Number}}=nothing,
     c2::Union{Void,AbstractArray{<:Number}}=nothing,
-    )
+    ) where {T1,T2,T3}
 
     cache = GradientCache(df,x,fx,c1,c2,fdtype,returntype,inplace)
     finite_difference_gradient!(df,f,x,cache)
@@ -131,9 +128,13 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
-    # c1 denotes epsilon (pre-computed by the cache constructor),
-    # c2 is x1, pre-set to the values of x by the cache constructor
+    # c1 denotes epsilon, c2 is x1, pre-set to the values of x by the cache constructor
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
+    if fdtype != Val{:complex}
+        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
+        @. c1 = compute_epsilon(fdtype, x, epsilon_factor)
+        copy!(c2,x)
+    end
     if fdtype == Val{:forward}
         @inbounds for i ∈ eachindex(x)
             c2[i] += c1[i]
@@ -153,6 +154,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             x[i]  += c1[i]
         end
     elseif fdtype == Val{:complex} && returntype <: Real
+        copy!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
         @inbounds for i ∈ eachindex(x)
@@ -176,9 +178,9 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
 
     if fdtype == Val{:forward}
-        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
-        epsilon = compute_epsilon(Val{:forward}, real(x), epsilon_factor)
-        if inplace
+        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
+        epsilon = compute_epsilon(Val{:forward}, x, epsilon_factor)
+        if inplace == Val{true}
             f(c1, x+epsilon)
         else
             c1 .= f(x+epsilon)
@@ -186,7 +188,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
         if typeof(fx) != Void
             @. df = (c1 - fx) / epsilon
         else
-            if inplace
+            if inplace == Val{true}
                 f(c2, x)
             else
                 c2 .= f(x)
@@ -194,9 +196,9 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
             @. df = (c1 - c2) / epsilon
         end
     elseif fdtype == Val{:central}
-        epsilon_factor = compute_epsilon_factor(fdtype, real(eltype(x)))
-        epsilon = compute_epsilon(Val{:central}, real(x), epsilon_factor)
-        if inplace
+        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
+        epsilon = compute_epsilon(Val{:central}, x, epsilon_factor)
+        if inplace == Val{true}
             f(c1, x+epsilon)
             f(c2, x-epsilon)
         else
@@ -206,7 +208,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
         @. df = (c1 - c2) / (2*epsilon)
     elseif fdtype == Val{:complex} && returntype <: Real
         epsilon_complex = eps(real(eltype(x)))
-        if inplace
+        if inplace == Val{true}
             f(c1, x+im*epsilon_complex)
         else
             c1 .= f(x+im*epsilon_complex)

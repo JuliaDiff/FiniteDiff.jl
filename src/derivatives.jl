@@ -1,8 +1,8 @@
 #=
 Single-point derivatives of scalar->scalar maps.
 =#
-function finite_difference_derivative(f, x::T, fdtype::DataType=Val{:central},
-    returntype::DataType=eltype(x), f_x::Union{Void,T}=nothing) where T<:Number
+function finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x), f_x::Union{Void,T}=nothing) where {T<:Number,T1,T2}
 
     epsilon = compute_epsilon(fdtype, x)
     if fdtype==Val{:forward}
@@ -74,8 +74,8 @@ function DerivativeCache(
     x          :: AbstractArray{<:Number},
     fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
     epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing,
-    fdtype     :: DataType = Val{:central},
-    returntype :: DataType = eltype(x))
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x)) where {T1,T2}
 
     if fdtype==Val{:complex} && !(eltype(returntype)<:Real)
         fdtype_error(returntype)
@@ -99,8 +99,6 @@ function DerivativeCache(
         if typeof(epsilon)==Void || eltype(epsilon)!=real(eltype(x))
             epsilon = zeros(real(eltype(x)), size(x))
         end
-        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
-        @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
         _epsilon = epsilon
     end
     DerivativeCache{typeof(_fx),typeof(_epsilon),fdtype,returntype}(_fx,_epsilon)
@@ -112,10 +110,10 @@ Compute the derivative df of a scalar-valued map f at a collection of points x.
 function finite_difference_derivative(
     f,
     x          :: AbstractArray{<:Number},
-    fdtype     :: DataType = Val{:central},
-    returntype :: DataType = eltype(x),      # return type of f
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),      # return type of f
     fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing)
+    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing) where {T1,T2}
 
     df = zeros(returntype, size(x))
     finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon)
@@ -125,10 +123,10 @@ function finite_difference_derivative!(
     df         :: AbstractArray{<:Number},
     f,
     x          :: AbstractArray{<:Number},
-    fdtype     :: DataType = Val{:central},
-    returntype :: DataType = eltype(x),
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
     fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}}   = nothing)
+    epsilon    :: Union{Void,AbstractArray{<:Real}}   = nothing) where {T1,T2}
 
     cache = DerivativeCache(x, fx, epsilon, fdtype, returntype)
     finite_difference_derivative!(df, f, x, cache)
@@ -138,6 +136,10 @@ function finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::Abstra
     cache::DerivativeCache{T1,T2,fdtype,returntype}) where {T1,T2,fdtype,returntype}
 
     fx, epsilon = cache.fx, cache.epsilon
+    if typeof(epsilon) != Void
+        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
+        @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
+    end
     if fdtype == Val{:forward}
         if typeof(fx) == Void
             @. df = (f(x+epsilon) - f(x)) / epsilon
