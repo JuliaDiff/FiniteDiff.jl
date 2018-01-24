@@ -14,51 +14,6 @@ function finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
     end
     fdtype_error(returntype)
 end
-
-#=
-Finite difference kernels for single point derivatives.
-These are currently unused because of inlining / broadcast issues.
-Revisit this in Julia v0.7 / 1.0.
-=#
-#=
-@inline function _finite_difference_kernel(f, x::T, ::Type{Val{:forward}}, ::Type{Val{:Real}},
-    epsilon::T, fx::Union{Void,T}=nothing) where T<:Real
-
-    if typeof(fx) == Void
-        return (f(x+epsilon) - f(x)) / epsilon
-    else
-        return (f(x+epsilon) - fx) / epsilon
-    end
-end
-
-@inline function _finite_difference_kernel(f, x::T, ::Type{Val{:central}}, ::Type{Val{:Real}},
-    epsilon::T, ::Union{Void,T}=nothing) where T<:Real
-
-    (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
-end
-
-@inline function _finite_difference_kernel(f, x::T, ::Type{Val{:complex}}, ::Type{Val{:Real}},
-    epsilon::T, ::Union{Void,T}=nothing) where T<:Real
-
-    imag(f(x+im*epsilon)) / epsilon
-end
-
-@inline function _finite_difference_kernel(f, x::Number, ::Type{Val{:forward}}, ::Type{Val{:Complex}},
-    epsilon::Real, fx::Union{Void,<:Number}=nothing)
-
-    if typeof(fx) == Void
-        return real((f(x+epsilon) - f(x))) / epsilon + im*imag((f(x+im*epsilon) - f(x))) / epsilon
-    else
-        return real((f(x+epsilon) - fx)) / epsilon + im*imag((f(x+im*epsilon) - fx)) / epsilon
-    end
-end
-
-@inline function _finite_difference_kernel(f, x::Number, ::Type{Val{:central}}, ::Type{Val{:Complex}},
-    epsilon::Real, fx::Union{Void,<:Number}=nothing)
-
-    real(f(x+epsilon) - f(x-epsilon)) / (2 * epsilon) + im*imag(f(x+im*epsilon) - f(x-im*epsilon)) / (2 * epsilon)
-end
-=#
 # Single point derivative implementations end here.
 
 

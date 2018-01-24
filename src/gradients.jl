@@ -169,7 +169,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
                     dfi = (f(c1) - fx0) / (im*epsilon)
                 end
                 c1[i] = c1_old
-                df[i] += im * imag(dfi)
+                df[i] -= im * imag(dfi)
             end
         end
     elseif fdtype == Val{:central}
@@ -185,7 +185,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             if eltype(df)<:Complex
                 c1[i] += im*epsilon
                 x[i]  -= im*epsilon
-                df[i] += im*imag( (f(c1) - f(x)) / (2*im*epsilon) )
+                df[i] -= im*imag( (f(c1) - f(x)) / (2*im*epsilon) )
                 c1[i] = c1_old
                 x[i] = x_old
             end
@@ -251,7 +251,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
                     end
                     c1[i] = x_old
                 end
-                df[i] += im * imag(dfi)
+                df[i] -= im * imag(dfi)
             end
         end
     elseif fdtype == Val{:central}
@@ -278,7 +278,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
                     dfi -= f(c1)
                     c1[i] = x_old
                 end
-                df[i] += im*imag(dfi / (2*im*epsilon))
+                df[i] -= im*imag(dfi / (2*im*epsilon))
             end
         end
     elseif fdtype==Val{:complex} && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
