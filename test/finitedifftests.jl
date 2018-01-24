@@ -113,7 +113,28 @@ DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central})
 forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
 central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
 
-@time @testset "Gradient of f:vector->scalar complex-valued tests" begin
+@time @testset "Gradient of f : C^N -> C tests" begin
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
+
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
+
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
+end
+
+f(x) = sum(abs2, x)
+x = ones(2) * (1 + im)
+fx = f(x)
+df = zeros(x)
+df_ref = 2*conj.(x)
+DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward})
+DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
+
+@time @testset "Gradient of f : C^N -> R tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
 
