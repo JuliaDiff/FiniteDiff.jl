@@ -130,6 +130,25 @@ function finite_difference_gradient(f,x,
     df
 end
 
+#=
+function f1(df,f,x,epsilon)
+       for i in eachindex(x)
+       x0=x[i]
+       x[i]+=epsilon
+       dfi=f(x)
+       x[i]=x0
+       dfi-=f(x)
+       df[i]=real(dfi/epsilon)
+       x[i]+=im*epsilon
+       dfi=f(x)
+       x[i]=x0
+       dfi-=f(x)
+       df[i]+=im*imag(dfi/(im*epsilon))
+       end
+       df
+       end
+=#
+
 # vector of derivatives of a vector->scalar map by each component of a vector x
 # this ignores the value of "inplace", because it doesn't make much sense
 function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
@@ -144,16 +163,40 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
         copy!(c1,x)
     end
     if fdtype == Val{:forward}
-        @inbounds for i ∈ eachindex(x)
-            epsilon = c2[i]
-            c1_old = c1[i]
-            c1[i] += epsilon
-            if typeof(fx) != Void
-                df[i] = (f(c1) - fx) / epsilon
-            else
-                df[i]  = (f(c1) - f(x)) / epsilon
+        if eltype(df)<:Complex || returntype<:Complex || eltype(x)<:Complex
+            for i ∈ eachindex(x)
+                epsilon = c2[i]
+                c1_old = c1[i]
+                c1[i] += epsilon
+                if typeof(fx) != Void
+                    dfi = (f(c1) - fx) / epsilon
+                else
+                    fx0 = f(x)
+                    dfi = (f(c1) - fx0) / epsilon
+                end
+                df[i] = real(dfi)
+                c1[i] = c1_old
+                c1[i] += im * epsilon
+                if typeof(fx) != Void
+                    dfi = (f(c1) - fx) / (im*epsilon)
+                else
+                    dfi = (f(c1) - fx0) / (im*epsilon)
+                end
+                c1[i] = c1_old
+                df[i] += im * imag(dfi)
             end
-            c1[i] = c1_old
+        else
+            @inbounds for i ∈ eachindex(x)
+                epsilon = c2[i]
+                c1_old = c1[i]
+                c1[i] += epsilon
+                if typeof(fx) != Void
+                    df[i] = (f(c1) - fx) / epsilon
+                else
+                    df[i]  = (f(c1) - f(x)) / epsilon
+                end
+                c1[i] = c1_old
+            end
         end
     elseif fdtype == Val{:central}
         @inbounds for i ∈ eachindex(x)
@@ -191,31 +234,76 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
         epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
     end
     if fdtype == Val{:forward}
-        @inbounds for i ∈ eachindex(x)
-            epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
-            x_old = x[i]
-            x[i] += epsilon
-            dfi = f(x)
-            x[i] = x_old
-            if typeof(fx) != Void
-                dfi -= fx
-            else
-                dfi -= f(x)
+        if eltype(df)<:Complex || returntype<:Complex || eltype(x)<:Complex
+            for i ∈ eachindex(x)
+                epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
+                x_old = x[i]
+                if typeof(fx) != Void
+                    x[i] += epsilon
+                    dfi = (f(x) - fx) / epsilon
+                    x[i] = x_old
+                else
+                    fx0 = f(x)
+                    x[i] += epsilon
+                    dfi = (f(x) - fx0) / epsilon
+                    x[i] = x_old
+                end
+                df[i] = real(dfi)
+                x[i] += im * epsilon
+                if typeof(fx) != Void
+                    dfi = (f(x) - fx) / (im*epsilon)
+                else
+                    dfi = (f(x) - fx0) / (im*epsilon)
+                end
+                x[i] = x_old
+                df[i] += im * imag(dfi)
             end
-            df[i] = dfi / epsilon
+        else
+            @inbounds for i ∈ eachindex(x)
+                epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
+                x_old = x[i]
+                x[i] += epsilon
+                dfi = f(x)
+                x[i] = x_old
+                if typeof(fx) != Void
+                    dfi -= fx
+                else
+                    dfi -= f(x)
+                end
+                df[i] = dfi / epsilon
+            end
         end
     elseif fdtype == Val{:central}
-        @inbounds for i ∈ eachindex(x)
-            epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
-            x_old = x[i]
-            x[i] += epsilon
-            dfi = f(x)
-            x[i] = x_old - epsilon
-            dfi -= f(x)
-            x[i] = x_old
-            df[i] = dfi / (2*epsilon)
+        if eltype(df)<:Complex || returntype<:Complex || eltype(x)<:Complex
+            @inbounds for i ∈ eachindex(x)
+                epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
+                x_old = x[i]
+                x[i] += epsilon
+                dfi = f(x)
+                x[i] = x_old - epsilon
+                dfi -= f(x)
+                x[i] = x_old
+                df[i] = real(dfi / (2*epsilon))
+                x[i] += im*epsilon
+                dfi = f(x)
+                x[i] = x_old - im*epsilon
+                dfi -= f(x)
+                x[i] = x_old
+                df[i] += im*imag(dfi / (2*im*epsilon))
+            end
+        else
+            @inbounds for i ∈ eachindex(x)
+                epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
+                x_old = x[i]
+                x[i] += epsilon
+                dfi = f(x)
+                x[i] = x_old - epsilon
+                dfi -= f(x)
+                x[i] = x_old
+                df[i] = dfi / (2*epsilon)
+            end
         end
-    elseif fdtype == Val{:complex} && returntype <: Real
+    elseif fdtype==Val{:complex} && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
         copy!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
