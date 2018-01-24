@@ -145,6 +145,25 @@ central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:centr
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
 end
 
+f(x) = 2*x[1] + im*x[2]^2
+x = ones(2)
+fx = f(x)
+df = zeros(eltype(fx), size(x))
+df_ref = [2.0, im*2*x[2]]
+forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward},eltype(df))
+central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central},eltype(df))
+
+@time @testset "Gradient of f : R^N -> C tests" begin
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(df)), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(df)), df_ref) < 1e-8
+
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}, eltype(df)), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}, eltype(df)), df_ref) < 1e-8
+
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
+end
+
 f(df,x) = (df[1]=sin(x); df[2]=cos(x); df)
 x = 2π * rand()
 fx = zeros(2)
@@ -228,7 +247,7 @@ epsilon = zeros(real.(x))
 forward_cache = DiffEqDiffTools.JacobianCache(x,similar(x),similar(x),similar(x),Val{:forward})
 central_cache = DiffEqDiffTools.JacobianCache(x,similar(x),similar(x),similar(x))
 
-@time @testset "Jacobian StridedArray complex-valued tests" begin
+@time @testset "Jacobian StridedArray f : C^N -> C^N tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
