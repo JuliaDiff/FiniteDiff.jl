@@ -28,7 +28,7 @@ end
     end
 end
 
-function fdtype_error(funtype::DataType=Float64)
+function fdtype_error(funtype::Type{T}=Float64)
     if funtype<:Real
         error("Unrecognized fdtype: valid values are Val{:forward}, Val{:central} and Val{:complex}.")
     elseif funtype<:Complex
