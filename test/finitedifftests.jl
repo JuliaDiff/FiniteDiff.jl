@@ -1,3 +1,4 @@
+using DiffEqDiffTools, Base.Test
 
 # TODO: add tests for GPUArrays
 # TODO: add tests for DEDataArrays
@@ -162,9 +163,9 @@ x = rand(2)
 fx = f(x)
 df = zeros(2)
 df_ref = [2., 2*x[2]]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
-complex_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:complex})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
+complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
 
 @time @testset "Gradient of f:vector->scalar real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
@@ -185,8 +186,8 @@ x = x + im*x
 fx = f(x)
 df = zeros(x)
 df_ref = conj([2.0+2.0*im, 2.0*x[2]])
-forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
 
 @time @testset "Gradient of f : C^N -> C tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
@@ -204,8 +205,8 @@ x = ones(2) * (1 + im)
 fx = f(x)
 df = zeros(x)
 df_ref = 2*x
-forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
 
 @time @testset "Gradient of f : C^N -> R tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
@@ -223,8 +224,8 @@ x = ones(2)
 fx = f(x)
 df = zeros(eltype(fx), size(x))
 df_ref = [2.0, -im*2*x[2]]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward},eltype(df))
-central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central},eltype(df))
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward},eltype(df))
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central},eltype(df))
 
 @time @testset "Gradient of f : R^N -> C tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(df)), df_ref) < 1e-4
@@ -243,9 +244,10 @@ fx = zeros(2)
 f(fx,x)
 df = zeros(2)
 df_ref = [cos(x), -sin(x)]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
-complex_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:complex})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
+complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
+
 
 @time @testset "Gradient of f:scalar->vector real-valued tests" begin
     @test_broken err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
@@ -268,8 +270,8 @@ fx = zeros(typeof(x), 2)
 f(fx,x)
 df = zeros(fx)
 df_ref = [cos(x), -sin(x)]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,fx,nothing,nothing,Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
 
 @time @testset "Gradient of f:vector->scalar complex-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
