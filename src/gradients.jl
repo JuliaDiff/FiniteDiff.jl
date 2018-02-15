@@ -50,9 +50,9 @@ function GradientCache(
 end
 
 function GradientCache(
+    c1         :: Union{Void,AbstractArray{<:Number}},
+    c2         :: Union{Void,AbstractArray{<:Number}},
     fx         :: Union{Void,<:Number,AbstractArray{<:Number}} = nothing,
-    c1         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    c2         :: Union{Void,AbstractArray{<:Number}} = nothing,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(df),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
@@ -249,7 +249,6 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
                 fx0 = f(x)
                 x[i] += epsilon
                 dfi = (f(x) - fx0) / epsilon
-                @show dfi
                 x[i] = x_old
             end
 

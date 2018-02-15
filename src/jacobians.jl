@@ -99,7 +99,8 @@ function finite_difference_jacobian(f,x,cache::JacobianCache)
     J
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractArray{<:Number},
+function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
+    f,x::AbstractArray{<:Number},
     cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
 
     m, n = size(J)
