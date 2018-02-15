@@ -5,48 +5,83 @@ struct JacobianCache{CacheType1,CacheType2,CacheType3,fdtype,returntype,inplace}
 end
 
 function JacobianCache(
-    x          :: AbstractArray{<:Number},
-    x1         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    fx1        :: Union{Void,AbstractArray{<:Number}} = nothing,
+    x,
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+    if eltype(x) <: Real && fdtype==Val{:complex}
+        x1 = zeros(Complex{eltype(x)}, size(x))
+        _fx = zeros(Complex{eltype(x)}, size(x))
+    else
+        x1 = similar(x)
+        _fx = similar(x)
+    end
+
+    if fdtype==Val{:complex}
+        _fx1  = nothing
+    else
+        _fx1 = similar(x)
+    end
+
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace)
+end
+
+function JacobianCache(
+    x ,
+    fx,
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+
+    if eltype(x) <: Real && fdtype==Val{:complex}
+        x1 = zeros(Complex{eltype(x)}, size(x))
+    else
+        x1 = similar(x)
+    end
+
+    if eltype(fx) <: Real && fdtype==Val{:complex}
+        _fx = zeros(Complex{eltype(x)}, size(fx))
+    else
+        _fx = similar(fx)
+    end
+
+    if fdtype==Val{:complex}
+        _fx1  = nothing
+    else
+        _fx1 = similar(fx)
+    end
+
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace)
+end
+
+function JacobianCache(
+    x1 ,
+    fx ,
+    fx1,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if fdtype==Val{:complex}
-        if !(returntype<:Real)
-            fdtype_error(returntype)
+        !(returntype<:Real) && fdtype_error(returntype)
+
+        if eltype(fx) <: Real
+            _fx = zeros(Complex{eltype(x)}, size(fx))
+        else
+            _fx = fx
         end
-        if eltype(fx)!=Complex{eltype(x)}
-            _fx = zeros(Complex{eltype(x)}, size(x))
-        end
-        if typeof(fx1)!=Void
-            warn("fdtype==Val{:complex} doesn't benefit from caching fx1.")
-        end
-        _fx1 = nothing
-        if eltype(x1) != Complex{eltype(x)}
+        if eltype(x1) <: Real
             _x1 = zeros(Complex{eltype(x)}, size(x))
         else
             _x1 = x1
         end
     else
-        if eltype(x1) != eltype(x)
-            _x1 = similar(x)
-        else
-            _x1 = x1
-        end
-        if eltype(fx) != returntype
-            _fx = zeros(returntype, size(x))
-        else
-            _fx = fx
-        end
-        if eltype(fx1) != returntype
-            _fx1 = zeros(returntype, size(x))
-        else
-            _fx1 = fx1
-        end
+        _x1 = x1
+        @assert eltype(fx) == T2
+        @assert eltype(fx1) == T2
+        _fx = fx
     end
-    JacobianCache{typeof(_x1),typeof(_fx),typeof(_fx1),fdtype,returntype,inplace}(_x1,_fx,_fx1)
+    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),fdtype,returntype,inplace}(_x1,_fx,fx1)
 end
 
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
@@ -54,7 +89,7 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     returntype :: Type{T2}=eltype(x),
     inplace    :: Type{Val{T3}}=Val{true}) where {T1,T2,T3}
 
-    cache = JacobianCache(x,nothing,nothing,nothing,fdtype,returntype,inplace)
+    cache = JacobianCache(x,fdtype,returntype,inplace)
     finite_difference_jacobian(f,x,cache)
 end
 
@@ -81,11 +116,12 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractA
             if inplace == Val{true}
                 f(fx1, x1)
                 f(fx, x)
+                J[:,i] = (vfx1 - vfx) / epsilon
             else
                 fx1 .= f(x1)
                 fx .= f(x)
+                J[:,i] = (vfx1 - vfx) / epsilon
             end
-            @. J[:,i] = (vfx1 - vfx) / epsilon
             x1[i] = x1_save
         end
     elseif fdtype == Val{:central}
@@ -100,11 +136,12 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractA
             if inplace == Val{true}
                 f(fx1, x1)
                 f(fx, x)
+                @. J[:,i] = (vfx1 - vfx) / (2*epsilon)
             else
-                fx1 .= f(x1)
-                fx .= f(x)
+                fx1 = f(x1)
+                fx = f(x)
+                J[:,i] = (vfx1 - vfx) / (2*epsilon)
             end
-            @. J[:,i] = (vfx1 - vfx) / (2*epsilon)
             x1[i] = x1_save
             x[i]  = x_save
         end
@@ -115,10 +152,11 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number}, f,x::AbstractA
             x1[i] += im * epsilon
             if inplace == Val{true}
                 f(fx,x1)
+                @. J[:,i] = imag(vfx) / epsilon
             else
-                fx .= f(x1)
+                fx = f(x1)
+                J[:,i] = imag(vfx) / epsilon
             end
-            @. J[:,i] = imag(vfx) / epsilon
             x1[i] = x1_save
         end
     else
