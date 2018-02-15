@@ -71,7 +71,7 @@ function JacobianCache(
             _fx = fx
         end
         if eltype(x1) <: Real
-            _x1 = zeros(Complex{eltype(x)}, size(x))
+            _x1 = zeros(Complex{eltype(x)}, size(x1))
         else
             _x1 = x1
         end
