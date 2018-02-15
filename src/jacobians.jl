@@ -59,7 +59,7 @@ function JacobianCache(
     fx ,
     fx1,
     fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(x),
+    returntype :: Type{T2} = eltype(fx),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if fdtype==Val{:complex}
