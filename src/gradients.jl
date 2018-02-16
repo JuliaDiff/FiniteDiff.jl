@@ -54,7 +54,7 @@ function GradientCache(
     c2         :: Union{Void,AbstractArray{<:Number}},
     fx         :: Union{Void,<:Number,AbstractArray{<:Number}} = nothing,
     fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(df),
+    returntype :: Type{T2} = eltype(c1),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if fdtype!=Val{:forward} && typeof(fx)!=Void
