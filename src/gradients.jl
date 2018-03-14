@@ -44,20 +44,20 @@ function GradientCache(
         end
     end
 
-    GradientCache{Void,typeof(_c1),typeof(_c2),fdtype,
+    GradientCache{Nothing,typeof(_c1),typeof(_c2),fdtype,
                   returntype,inplace}(nothing,_c1,_c2)
 
 end
 
 function GradientCache(
-    c1         :: Union{Void,AbstractArray{<:Number}},
-    c2         :: Union{Void,AbstractArray{<:Number}},
-    fx         :: Union{Void,<:Number,AbstractArray{<:Number}} = nothing,
+    c1         :: Union{Nothing,AbstractArray{<:Number}},
+    c2         :: Union{Nothing,AbstractArray{<:Number}},
+    fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}} = nothing,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(df),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
-    if fdtype!=Val{:forward} && typeof(fx)!=Void
+    if fdtype!=Val{:forward} && typeof(fx)!=Nothing
         warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
         _fx = nothing
     else
@@ -75,7 +75,7 @@ function GradientCache(
                 else
                     _c1 = nothing
                     _c2 = nothing
-                    if typeof(c1)!=Void || typeof(c2)!=Void
+                    if typeof(c1)!=Nothing || typeof(c2)!=Nothing
                         warn("For StridedVectors, neither c1 nor c2 are necessary.")
                     end
                 end
@@ -107,15 +107,15 @@ end
 
 function finite_difference_gradient(f, x, fdtype::Type{T1}=Val{:central},
     returntype::Type{T2}=eltype(x), inplace::Type{Val{T3}}=Val{true},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing,
-    c1::Union{Void,AbstractArray{<:Number}}=nothing,
-    c2::Union{Void,AbstractArray{<:Number}}=nothing) where {T1,T2,T3}
+    fx::Union{Nothing,AbstractArray{<:Number}}=nothing,
+    c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
+    c2::Union{Nothing,AbstractArray{<:Number}}=nothing) where {T1,T2,T3}
 
     if typeof(x) <: AbstractArray
         df = zeros(returntype, size(x))
     else
         if inplace == Val{true}
-            if typeof(fx)==Void && typeof(c1)==Void && typeof(c2)==Void
+            if typeof(fx)==Nothing && typeof(c1)==Nothing && typeof(c2)==Nothing
                 error("In the scalar->vector in-place map case, at least one of fx, c1 or c2 must be provided, otherwise we cannot infer the return size.")
             else
                 if     c1 != nothing    df = similar(c1)
@@ -133,9 +133,9 @@ end
 
 function finite_difference_gradient!(df, f, x, fdtype::Type{T1}=Val{:central},
     returntype::Type{T2}=eltype(df), inplace::Type{Val{T3}}=Val{true},
-    fx::Union{Void,AbstractArray{<:Number}}=nothing,
-    c1::Union{Void,AbstractArray{<:Number}}=nothing,
-    c2::Union{Void,AbstractArray{<:Number}}=nothing,
+    fx::Union{Nothing,AbstractArray{<:Number}}=nothing,
+    c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
+    c2::Union{Nothing,AbstractArray{<:Number}}=nothing,
     ) where {T1,T2,T3}
 
     cache = GradientCache(df,x,fdtype,returntype,inplace)
@@ -172,7 +172,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             epsilon = c2[i]
             c1_old = c1[i]
             c1[i] += epsilon
-            if typeof(fx) != Void
+            if typeof(fx) != Nothing
                 dfi = (f(c1) - fx) / epsilon
             else
                 fx0 = f(x)
@@ -182,7 +182,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             c1[i] = c1_old
             if eltype(df)<:Complex
                 c1[i] += im * epsilon
-                if typeof(fx) != Void
+                if typeof(fx) != Nothing
                     dfi = (f(c1) - fx) / (im*epsilon)
                 else
                     dfi = (f(c1) - fx0) / (im*epsilon)
@@ -212,7 +212,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     elseif fdtype == Val{:complex} && returntype <: Real
         copy!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
-        # we use c1 here to avoid typing issues with x
+        # we use c1 here to aNothing typing issues with x
         @inbounds for i ∈ eachindex(x)
             c1_old = c1[i]
             c1[i] += im*epsilon_complex
@@ -228,8 +228,8 @@ end
 function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedVector{<:Number},
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
 
-    # c1 is x1 if we need a complex copy of x, otherwise Void
-    # c2 is Void
+    # c1 is x1 if we need a complex copy of x, otherwise Nothing
+    # c2 is Nothing
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
         epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
@@ -241,7 +241,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
         for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], epsilon_factor)
             x_old = x[i]
-            if typeof(fx) != Void
+            if typeof(fx) != Nothing
                 x[i] += epsilon
                 dfi = (f(x) - fx) / epsilon
                 x[i] = x_old
@@ -256,7 +256,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
             if eltype(df)<:Complex
                 if eltype(x)<:Complex
                     x[i] += im * epsilon
-                    if typeof(fx) != Void
+                    if typeof(fx) != Nothing
                         dfi = (f(x) - fx) / (im*epsilon)
                     else
                         dfi = (f(x) - fx0) / (im*epsilon)
@@ -264,7 +264,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
                     x[i] = x_old
                 else
                     c1[i] += im * epsilon
-                    if typeof(fx) != Void
+                    if typeof(fx) != Nothing
                         dfi = (f(c1) - fx) / (im*epsilon)
                     else
                         dfi = (f(c1) - fx0) / (im*epsilon)
@@ -304,7 +304,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
     elseif fdtype==Val{:complex} && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
         copy!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
-        # we use c1 here to avoid typing issues with x
+        # we use c1 here to aNothing typing issues with x
         @inbounds for i ∈ eachindex(x)
             c1_old = c1[i]
             c1[i] += im*epsilon_complex
@@ -334,7 +334,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
         else
             c1 .= f(x+epsilon)
         end
-        if typeof(fx) != Void
+        if typeof(fx) != Nothing
             @. df = (c1 - fx) / epsilon
         else
             if inplace == Val{true}
