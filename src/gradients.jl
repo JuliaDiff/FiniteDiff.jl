@@ -234,7 +234,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
     if fdtype != :complex
         epsilon_factor = compute_epsilon_factor(Val{fdtype}(), eltype(x))
         if eltype(df)<:Complex && !(eltype(x)<:Complex)
-            copy!(c1,x)
+            copyto!(c1,x)
         end
     end
     if fdtype == :forward
@@ -302,7 +302,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
             end
         end
     elseif fdtype==:complex && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
-        copy!(c1,x)
+        copyto!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to aNothing typing issues with x
         @inbounds for i ∈ eachindex(x)

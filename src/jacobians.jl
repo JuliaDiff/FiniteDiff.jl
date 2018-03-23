@@ -59,19 +59,19 @@ function JacobianCache(
     fx ,
     fx1,
                 :: Val{fdtype} = Val{:central}(),
-    returntype  :: Type{T1} = eltype(x),
+    returntype  :: Type{T1} = eltype(x1),
                 :: Val{inplace} = Val{true}()) where {T1,fdtype,inplace}
 
     if fdtype==:complex
         !(returntype<:Real) && fdtype_error(returntype)
 
         if eltype(fx) <: Real
-            _fx = zeros(Complex{eltype(x)}, size(fx))
+            _fx = zeros(Complex{eltype(x1)}, size(fx))
         else
             _fx = fx
         end
         if eltype(x1) <: Real
-            _x1 = zeros(Complex{eltype(x)}, size(x1))
+            _x1 = zeros(Complex{eltype(x1)}, size(x1))
         else
             _x1 = x1
         end
@@ -105,7 +105,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
-    copy!(x1, x)
+    copyto!(x1, x)
     vfx = vec(fx)
     if fdtype == :forward
         vfx1 = vec(fx1)

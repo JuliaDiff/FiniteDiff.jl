@@ -24,7 +24,6 @@ struct DerivativeCache{CacheType1, CacheType2, fdtype, returntype}
     fx      :: CacheType1
     epsilon :: CacheType2
 end
-
 function DerivativeCache(
     x          :: AbstractArray{<:Number},
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
@@ -37,7 +36,7 @@ function DerivativeCache(
     end
 
     if fdtype!=:forward && typeof(fx)!=Nothing
-        warn("Pre-computed function values are only useful for fdtype==Val(:forward).")
+        Compat.@warn "Pre-computed function values are only useful for fdtype==Val(:forward)."
         _fx = nothing
     else
         # more runtime sanity checks?
@@ -45,10 +44,10 @@ function DerivativeCache(
     end
 
     if typeof(epsilon)!=Nothing && typeof(x)<:StridedArray && typeof(fx)<:Union{Nothing,StridedArray} && 1==2
-        warn("StridedArrays don't benefit from pre-allocating epsilon.")
+        Compat.@warn "StridedArrays don't benefit from pre-allocating epsilon."
         _epsilon = nothing
     elseif typeof(epsilon)!=Nothing && fdtype==:complex
-        warn("Val(:complex) makes the epsilon array redundant.")
+        Compat.@warn "Val(:complex) makes the epsilon array redundant."
         _epsilon = nothing
     else
         if typeof(epsilon)==Nothing || eltype(epsilon)!=real(eltype(x))
@@ -58,6 +57,8 @@ function DerivativeCache(
     end
     DerivativeCache{typeof(_fx),typeof(_epsilon),fdtype,returntype}(_fx,_epsilon)
 end
+
+
 
 #=
 Compute the derivative df of a scalar-valued map f at a collection of points x.

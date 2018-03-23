@@ -1,13 +1,14 @@
-using DiffEqDiffTools, Base.Test
+using DiffEqDiffTools
+using Compat, Compat.Test, Compat.LinearAlgebra
 
 # TODO: add tests for GPUArrays
 # TODO: add tests for DEDataArrays
 
 # Derivative tests
-x = collect(linspace(-2π, 2π, 100))
+x = collect(Compat.range(-2π, stop=2π, length=100))
 y = sin.(x)
-df = zeros(100)
-epsilon = zeros(100)
+df = fill(0.0,100)
+epsilon = fill(0.0,100)
 df_ref = cos.(x)
 forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}())
 central_cache = DiffEqDiffTools.DerivativeCache(x, nothing, epsilon, Val{:central}())
@@ -46,7 +47,7 @@ end
 x = x + im*x
 f(x) = sin(x) + cos(x)
 y = f.(x)
-df = zeros(x)
+df = zero(x)
 epsilon = similar(real(x))
 df_ref = cos.(x) - sin.(x)
 forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}())
@@ -80,10 +81,10 @@ end
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, central_cache), df_ref) < 1e-6
 end
 
-x = collect(linspace(-2π, 2π, 100))
+x = collect(Compat.range(-2π, stop=2π, length=100))
 f(x) = sin(x) + im*cos(x)
 y = f.(x)
-df = zeros(Complex{eltype(x)}, size(x))
+df = fill(zero(Complex{eltype(x)}), size(x))
 epsilon = similar(real(x))
 df_ref = cos.(x) - im*sin.(x)
 forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}(), eltype(df))
@@ -121,7 +122,7 @@ end
 x = x + im*x
 f(x) = abs2(x)
 y = f.(x)
-df = zeros(eltype(x), size(x))
+df = zero(eltype(x), size(x))
 epsilon = similar(real(x))
 df_ref = 2*conj.(x)
 forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}, eltype(df))
@@ -161,7 +162,7 @@ end
 f(x) = 2x[1] + x[2]^2
 x = rand(2)
 fx = f(x)
-df = zeros(2)
+df = fill(0.0, 2)
 df_ref = [2., 2*x[2]]
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
 central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
@@ -184,7 +185,7 @@ end
 f(x) = 2x[1] + im*2x[1] + x[2]^2
 x = x + im*x
 fx = f(x)
-df = zeros(x)
+df = zero(x)
 df_ref = conj([2.0+2.0*im, 2.0*x[2]])
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
 central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
@@ -203,7 +204,7 @@ end
 f(x) = sum(abs2, x)
 x = ones(2) * (1 + im)
 fx = f(x)
-df = zeros(x)
+df = zero(x)
 df_ref = 2*x
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
 central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
@@ -222,7 +223,7 @@ end
 f(x) = 2*x[1] + im*x[2]^2
 x = ones(2)
 fx = f(x)
-df = zeros(eltype(fx), size(x))
+df = fill(zero(eltype(fx)), size(x))
 df_ref = [2.0, -im*2*x[2]]
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}(),eltype(df))
 central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}(),eltype(df))
@@ -240,9 +241,9 @@ end
 
 f(df,x) = (df[1]=sin(x); df[2]=cos(x); df)
 x = 2π * rand()
-fx = zeros(2)
+fx = fill(0.0,2)
 f(fx,x)
-df = zeros(2)
+df = fill(0.0,2)
 df_ref = [cos(x), -sin(x)]
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
 central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
@@ -266,9 +267,9 @@ end
 
 f(df,x) = (df[1]=sin(x); df[2]=cos(x); df)
 x = (2π * rand()) * (1 + im)
-fx = zeros(typeof(x), 2)
+fx = fill(zero(typeof(x)), 2)
 f(fx,x)
-df = zeros(fx)
+df = zero(fx)
 df_ref = [cos(x), -sin(x)]
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
 central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
@@ -292,10 +293,10 @@ end
 x = rand(2); y = rand(2)
 f(y,x)
 J_ref = [[-7+x[2]^3 3*(3+x[1])*x[2]^2]; [exp(x[1])*x[2]*cos(1-exp(x[1])*x[2]) exp(x[1])*cos(1-exp(x[1])*x[2])]]
-J = zeros(J_ref)
-df = zeros(x)
+J = zero(J_ref)
+df = zero(x)
 df_ref = diag(J_ref)
-epsilon = zeros(x)
+epsilon = zero(x)
 forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward}())
 central_cache = DiffEqDiffTools.JacobianCache(x)
 complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex}())
@@ -315,10 +316,10 @@ x = rand(2) + im*rand(2)
 y = similar(x)
 f(y,x)
 J_ref = [[im*(-7+x[2]^3) 3*(3+im*x[1])*x[2]^2]; [exp(x[1])*x[2]*cos(1-exp(x[1])*x[2]) exp(x[1])*cos(1-exp(x[1])*x[2])]]
-J = zeros(J_ref)
-df = zeros(x)
+J = zero(J_ref)
+df = zero(x)
 df_ref = diag(J_ref)
-epsilon = zeros(real.(x))
+epsilon = zero(real.(x))
 forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward}())
 central_cache = DiffEqDiffTools.JacobianCache(x)
 
