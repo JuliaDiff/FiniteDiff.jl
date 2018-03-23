@@ -9,34 +9,34 @@ y = sin.(x)
 df = zeros(100)
 epsilon = zeros(100)
 df_ref = cos.(x)
-forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward})
-central_cache = DiffEqDiffTools.DerivativeCache(x, nothing, epsilon, Val{:central})
-complex_cache = DiffEqDiffTools.DerivativeCache(x, nothing, nothing, Val{:complex})
+forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}())
+central_cache = DiffEqDiffTools.DerivativeCache(x, nothing, epsilon, Val{:central}())
+complex_cache = DiffEqDiffTools.DerivativeCache(x, nothing, nothing, Val{:complex}())
 
 err_func(a,b) = maximum(abs.(a-b))
 
 @time @testset "Derivative single point f : R -> R tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:forward}), √2/2) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:central}), √2/2) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:complex}), √2/2) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:forward}()), √2/2) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:central}()), √2/2) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:complex}()), √2/2) < 1e-15
 end
 
 @time @testset "Derivative StridedArray f : R -> R tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:central}), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:central}()), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:complex}()), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:forward}, eltype(x), y, epsilon), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:central}, eltype(x), y, epsilon), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:complex}, eltype(x), y, epsilon), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:forward}(), eltype(x), y, epsilon), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:central}(), eltype(x), y, epsilon), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, x, Val{:complex}(), eltype(x), y, epsilon), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:central}), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:central}()), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:complex}()), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:forward}, eltype(x), y, epsilon), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:central}, eltype(x), y, epsilon), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:complex}, eltype(x), y, epsilon), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:forward}(), eltype(x), y, epsilon), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:central}(), eltype(x), y, epsilon), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, Val{:complex}(), eltype(x), y, epsilon), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, sin, x, central_cache), df_ref) < 1e-8
@@ -49,32 +49,32 @@ y = f.(x)
 df = zeros(x)
 epsilon = similar(real(x))
 df_ref = cos.(x) - sin.(x)
-forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward})
-central_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:central})
+forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}())
+central_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:central}())
 
 @time @testset "Derivative single point f : C -> C tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4+im*π/4, Val{:forward}, Val{:Complex}), cos(π/4+im*π/4)-sin(π/4+im*π/4)) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4+im*π/4, Val{:central}, Val{:Complex}), cos(π/4+im*π/4)-sin(π/4+im*π/4)) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4+im*π/4, Val{:forward}(), Complex{Float64}), cos(π/4+im*π/4)-sin(π/4+im*π/4)) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4+im*π/4, Val{:central}(), Complex{Float64}), cos(π/4+im*π/4)-sin(π/4+im*π/4)) < 1e-7
 end
 
 @time @testset "Derivative StridedArray f : C -> C tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}()), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}()), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, eltype(x), y), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, eltype(x), y), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}(), eltype(x), y), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}(), eltype(x), y), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, eltype(x), y, epsilon), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, eltype(x), y, epsilon), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}(), eltype(x), y, epsilon), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}(), eltype(x), y, epsilon), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, eltype(x)), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, eltype(x)), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}(), eltype(x)), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}(), eltype(x)), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, eltype(x), y), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, eltype(x), y), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}(), eltype(x), y), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}(), eltype(x), y), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, eltype(x), y, epsilon), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, eltype(x), y, epsilon), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}(), eltype(x), y, epsilon), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}(), eltype(x), y, epsilon), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, forward_cache), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, central_cache), df_ref) < 1e-6
@@ -86,32 +86,32 @@ y = f.(x)
 df = zeros(Complex{eltype(x)}, size(x))
 epsilon = similar(real(x))
 df_ref = cos.(x) - im*sin.(x)
-forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}, eltype(df))
-central_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:central}, eltype(df))
+forward_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:forward}(), eltype(df))
+central_cache = DiffEqDiffTools.DerivativeCache(x, y, epsilon, Val{:central}(), eltype(df))
 
 @time @testset "Derivative single point f : R -> C tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4, Val{:forward}, Val{:Complex}), cos(π/4)-im*sin(π/4)) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4, Val{:central}, Val{:Complex}), cos(π/4)-im*sin(π/4)) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4, Val{:forward}(), Complex{Float64}), cos(π/4)-im*sin(π/4)) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, π/4, Val{:central}(), Complex{Float64}), cos(π/4)-im*sin(π/4)) < 1e-7
 end
 
 @time @testset "Derivative StridedArray f : R -> C tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, Complex{eltype(x)}), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}(), Complex{eltype(x)}), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}(), Complex{eltype(x)}), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, y), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, Complex{eltype(x)}, y), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}(), Complex{eltype(x)}, y), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}(), Complex{eltype(x)}, y), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}(), Complex{eltype(x)}, y, epsilon), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}(), Complex{eltype(x)}, y, epsilon), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, Complex{eltype(x)}), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}(), Complex{eltype(x)}), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}(), Complex{eltype(x)}), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, y), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, Complex{eltype(x)}, y), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}(), Complex{eltype(x)}, y), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}(), Complex{eltype(x)}, y), df_ref) < 1e-6
 
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-3
-    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-6
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}(), Complex{eltype(x)}, y, epsilon), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}(), Complex{eltype(x)}, y, epsilon), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, forward_cache), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, central_cache), df_ref) < 1e-6
@@ -163,18 +163,18 @@ x = rand(2)
 fx = f(x)
 df = zeros(2)
 df_ref = [2., 2*x[2]]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
-complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
+complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex}())
 
 @time @testset "Gradient of f:vector->scalar real-valued tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}()), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}()), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}()), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:complex}()), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
@@ -186,15 +186,15 @@ x = x + im*x
 fx = f(x)
 df = zeros(x)
 df_ref = conj([2.0+2.0*im, 2.0*x[2]])
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
 
 @time @testset "Gradient of f : C^N -> C tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}()), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}()), df_ref) < 1e-8
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
@@ -205,15 +205,15 @@ x = ones(2) * (1 + im)
 fx = f(x)
 df = zeros(x)
 df_ref = 2*x
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
 
 @time @testset "Gradient of f : C^N -> R tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}()), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}()), df_ref) < 1e-8
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
@@ -224,15 +224,15 @@ x = ones(2)
 fx = f(x)
 df = zeros(eltype(fx), size(x))
 df_ref = [2.0, -im*2*x[2]]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward},eltype(df))
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central},eltype(df))
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}(),eltype(df))
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}(),eltype(df))
 
 @time @testset "Gradient of f : R^N -> C tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(df)), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(df)), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}(), eltype(df)), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}(), eltype(df)), df_ref) < 1e-8
 
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}, eltype(df)), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}, eltype(df)), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}(), eltype(df)), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}(), eltype(df)), df_ref) < 1e-8
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
@@ -244,20 +244,20 @@ fx = zeros(2)
 f(fx,x)
 df = zeros(2)
 df_ref = [cos(x), -sin(x)]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
-complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
+complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex}())
 
 
 @time @testset "Gradient of f:scalar->vector real-valued tests" begin
-    @test_broken err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}, eltype(x), Val{true}, fx), df_ref) < 1e-15
+    @test_broken err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}(), eltype(x), Val{true}(), fx), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}(), eltype(x), Val{true}(), fx), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}(), eltype(x), Val{true}(), fx), df_ref) < 1e-15
 
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:complex}), df_ref) < 1e-15
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}()), df_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:complex}()), df_ref) < 1e-15
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
@@ -270,15 +270,15 @@ fx = zeros(typeof(x), 2)
 f(fx,x)
 df = zeros(fx)
 df_ref = [cos(x), -sin(x)]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
 
 @time @testset "Gradient of f:vector->scalar complex-valued tests" begin
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}(), eltype(x), Val{true}(), fx), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}(), eltype(x), Val{true}(), fx), df_ref) < 1e-7
 
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}()), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}()), df_ref) < 1e-7
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-7
@@ -296,9 +296,9 @@ J = zeros(J_ref)
 df = zeros(x)
 df_ref = diag(J_ref)
 epsilon = zeros(x)
-forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward})
+forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward}())
 central_cache = DiffEqDiffTools.JacobianCache(x)
-complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex})
+complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex}())
 
 @time @testset "Jacobian StridedArray real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
@@ -319,7 +319,7 @@ J = zeros(J_ref)
 df = zeros(x)
 df_ref = diag(J_ref)
 epsilon = zeros(real.(x))
-forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward})
+forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward}())
 central_cache = DiffEqDiffTools.JacobianCache(x)
 
 @time @testset "Jacobian StridedArray f : C^N -> C^N tests" begin
