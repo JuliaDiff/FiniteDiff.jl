@@ -164,9 +164,9 @@ x = rand(2)
 fx = f(x)
 df = fill(0.0, 2)
 df_ref = [2., 2*x[2]]
-forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward}())
-central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central}())
-complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex}())
+forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
+central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
+complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
 
 @time @testset "Gradient of f:vector->scalar real-valued tests" begin
     @test (@inferred err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref)) < 1e-4
