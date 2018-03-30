@@ -1,6 +1,5 @@
 using DiffEqDiffTools
-using Base.Test
+using Compat, Compat.Test
 
-tic()
-include("finitedifftests.jl")
-toc()
+@time include("finitedifftests.jl")
+@time include("old_interface_tests.jl")
