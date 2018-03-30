@@ -163,7 +163,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != :complex
-        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
+        epsilon_factor = compute_epsilon_factor(Val{fdtype}(), eltype(x))
         @. c2 = compute_epsilon(Val{fdtype}(), x, epsilon_factor)
         copy!(c1,x)
     end
