@@ -36,7 +36,7 @@ variables. This is summarized as:
 
 ```julia
 finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(x), f_x::Union{Void,T}=nothing)
+    returntype::Type{T2}=eltype(x), f_x::Union{Nothing,T}=nothing)
 ```
 
 ## Multi-Point Derivatives
@@ -51,8 +51,8 @@ finite_difference_derivative(
     x          :: AbstractArray{<:Number},
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),      # return type of f
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing)
+    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing)
 
 finite_difference_derivative!(
     df         :: AbstractArray{<:Number},
@@ -60,8 +60,8 @@ finite_difference_derivative!(
     x          :: AbstractArray{<:Number},
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}}   = nothing)
+    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing)
 
 # Cached
 finite_difference_derivative!(df::AbstractArray{<:Number}, f,
@@ -74,8 +74,8 @@ finite_difference_derivative!(df::AbstractArray{<:Number}, f,
 ```julia
 DerivativeCache(
     x          :: AbstractArray{<:Number},
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing,
+    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x))
 ```
@@ -118,9 +118,9 @@ GradientCache(
 
 ```julia
 GradientCache(
-    c1         :: Union{Void,AbstractArray{<:Number}},
-    c2         :: Union{Void,AbstractArray{<:Number}},
-    fx         :: Union{Void,<:Number,AbstractArray{<:Number}} = nothing,
+    c1         :: Union{Nothing,AbstractArray{<:Number}},
+    c2         :: Union{Nothing,AbstractArray{<:Number}},
+    fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}} = nothing,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(df),
     inplace    :: Type{Val{T3}} = Val{true})
