@@ -2,7 +2,7 @@
 Single-point derivatives of scalar->scalar maps.
 =#
 function finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(x), f_x::Union{Void,T}=nothing) where {T<:Number,T1,T2}
+    returntype::Type{T2}=eltype(x), f_x::Union{Nothing,T}=nothing) where {T<:Number,T1,T2}
 
     epsilon = compute_epsilon(fdtype, x)
     if fdtype==Val{:forward}
@@ -27,8 +27,8 @@ end
 
 function DerivativeCache(
     x          :: AbstractArray{<:Number},
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing,
+    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x)) where {T1,T2}
 
@@ -36,7 +36,7 @@ function DerivativeCache(
         fdtype_error(returntype)
     end
 
-    if fdtype!=Val{:forward} && typeof(fx)!=Void
+    if fdtype!=Val{:forward} && typeof(fx)!=Nothing
         warn("Pre-computed function values are only useful for fdtype==Val{:forward}.")
         _fx = nothing
     else
@@ -44,14 +44,14 @@ function DerivativeCache(
         _fx = fx
     end
 
-    if typeof(epsilon)!=Void && typeof(x)<:StridedArray && typeof(fx)<:Union{Void,StridedArray} && 1==2
+    if typeof(epsilon)!=Nothing && typeof(x)<:StridedArray && typeof(fx)<:Union{Nothing,StridedArray} && 1==2
         warn("StridedArrays don't benefit from pre-allocating epsilon.")
         _epsilon = nothing
-    elseif typeof(epsilon)!=Void && fdtype==Val{:complex}
+    elseif typeof(epsilon)!=Nothing && fdtype==Val{:complex}
         warn("Val{:complex} makes the epsilon array redundant.")
         _epsilon = nothing
     else
-        if typeof(epsilon)==Void || eltype(epsilon)!=real(eltype(x))
+        if typeof(epsilon)==Nothing || eltype(epsilon)!=real(eltype(x))
             epsilon = zeros(real(eltype(x)), size(x))
         end
         _epsilon = epsilon
@@ -67,8 +67,8 @@ function finite_difference_derivative(
     x          :: AbstractArray{<:Number},
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),      # return type of f
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}} = nothing) where {T1,T2}
+    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing) where {T1,T2}
 
     df = zeros(returntype, size(x))
     finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon)
@@ -80,8 +80,8 @@ function finite_difference_derivative!(
     x          :: AbstractArray{<:Number},
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
-    fx         :: Union{Void,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Void,AbstractArray{<:Real}}   = nothing) where {T1,T2}
+    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing) where {T1,T2}
 
     cache = DerivativeCache(x, fx, epsilon, fdtype, returntype)
     finite_difference_derivative!(df, f, x, cache)
@@ -91,12 +91,12 @@ function finite_difference_derivative!(df::AbstractArray{<:Number}, f, x::Abstra
     cache::DerivativeCache{T1,T2,fdtype,returntype}) where {T1,T2,fdtype,returntype}
 
     fx, epsilon = cache.fx, cache.epsilon
-    if typeof(epsilon) != Void
+    if typeof(epsilon) != Nothing
         epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
     end
     if fdtype == Val{:forward}
-        if typeof(fx) == Void
+        if typeof(fx) == Nothing
             @. df = (f(x+epsilon) - f(x)) / epsilon
         else
             @. df = (f(x+epsilon) - fx) / epsilon

@@ -14,7 +14,7 @@ end
     eps_cbrt * max(one(real(T)), abs(x))
 end
 
-@inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Void,T}=nothing) where T<:Real
+@inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Nothing,T}=nothing) where T<:Real
     eps(T)
 end
 

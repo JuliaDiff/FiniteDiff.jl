@@ -1,10 +1,10 @@
-using DiffEqDiffTools, Base.Test
+using DiffEqDiffTools, Test
 
 # TODO: add tests for GPUArrays
 # TODO: add tests for DEDataArrays
 
 # Derivative tests
-x = collect(linspace(-2π, 2π, 100))
+x = collect(range(-2π, stop=2π, length=100))
 y = sin.(x)
 df = zeros(100)
 epsilon = zeros(100)
@@ -80,7 +80,7 @@ end
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, central_cache), df_ref) < 1e-6
 end
 
-x = collect(linspace(-2π, 2π, 100))
+x = collect(range(-2π, stop=2π, length=100))
 f(x) = sin(x) + im*cos(x)
 y = f.(x)
 df = zeros(Complex{eltype(x)}, size(x))

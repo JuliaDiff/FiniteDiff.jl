@@ -1,5 +1,5 @@
 using DiffEqDiffTools
-using Base.Test
+using Test
 
 tic()
 include("finitedifftests.jl")
