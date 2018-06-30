@@ -10,8 +10,8 @@ function JacobianCache(
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
     if eltype(x) <: Real && fdtype==Val{:complex}
-        x1 = zeros(Complex{eltype(x)}, size(x))
-        _fx = zeros(Complex{eltype(x)}, size(x))
+        x1 = fill(zero(Complex{eltype(x)}), size(x))
+        _fx = fill(zero(Complex{eltype(x)}), size(x))
     else
         x1 = similar(x)
         _fx = similar(x)
@@ -34,13 +34,13 @@ function JacobianCache(
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
-        x1 = zeros(Complex{eltype(x)}, size(x))
+        x1 = fill(zero(Complex{eltype(x)}), size(x))
     else
         x1 = similar(x)
     end
 
     if eltype(fx) <: Real && fdtype==Val{:complex}
-        _fx = zeros(Complex{eltype(x)}, size(fx))
+        _fx = fill(zero(Complex{eltype(x)}), size(fx))
     else
         _fx = similar(fx)
     end
@@ -66,12 +66,12 @@ function JacobianCache(
         !(returntype<:Real) && fdtype_error(returntype)
 
         if eltype(fx) <: Real
-            _fx = zeros(Complex{eltype(x)}, size(fx))
+            _fx = fill(zero(Complex{eltype(x)}), size(fx))
         else
             _fx = fx
         end
         if eltype(x1) <: Real
-            _x1 = zeros(Complex{eltype(x)}, size(x1))
+            _x1 = fill(zero(Complex{eltype(x)}), size(x1))
         else
             _x1 = x1
         end
@@ -94,7 +94,7 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
 end
 
 function finite_difference_jacobian(f,x,cache::JacobianCache)
-    J = zeros(eltype(x), length(x), length(x))
+    J = fill(zero(eltype(x)), length(x), length(x))
     finite_difference_jacobian!(J,f,x,cache)
     J
 end
@@ -105,7 +105,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
-    copy!(x1, x)
+    copyto!(x1, x)
     vfx = vec(fx)
     if fdtype == Val{:forward}
         vfx1 = vec(fx1)
