@@ -1,6 +1,6 @@
 using DiffEqDiffTools
-using Test
+using Test, LinearAlgebra
 
-tic()
+@time begin
 include("finitedifftests.jl")
-toc()
+end

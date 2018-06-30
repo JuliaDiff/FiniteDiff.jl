@@ -15,7 +15,7 @@ function GradientCache(
         if fdtype!=Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
             if typeof(x)<:StridedVector
                 if eltype(df)<:Complex && !(eltype(x)<:Complex)
-                    _c1 = zeros(Complex{eltype(x)}, size(x))
+                    _c1 = fill(zero(Complex{eltype(x)}), size(x))
                     _c2 = nothing
                 else
                     _c1 = nothing
@@ -23,13 +23,13 @@ function GradientCache(
                 end
             else
                 _c1 = similar(x)
-                _c2 = zeros(real(eltype(x)), size(x))
+                _c2 = fill(zero(real(eltype(x))), size(x))
             end
         else
             if !(returntype<:Real)
                 fdtype_error(returntype)
             else
-                _c1 = x + 0*im
+                _c1 = x .+ 0*im
                 _c2 = nothing
             end
         end
@@ -39,7 +39,7 @@ function GradientCache(
             _c1 = similar(df)
             _c2 = similar(df)
         else
-            _c1 = zeros(Complex{eltype(x)}, size(df))
+            _c1 = fill(zero(Complex{eltype(x)}), size(df))
             _c2 = nothing
         end
     end
@@ -58,7 +58,7 @@ function GradientCache(
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
 
     if fdtype!=Val{:forward} && typeof(fx)!=Nothing
-        warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
+        @warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
         _fx = nothing
     else
         # more runtime sanity checks?
@@ -70,13 +70,13 @@ function GradientCache(
         if fdtype!=Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
             if typeof(x)<:StridedVector
                 if eltype(df)<:Complex && !(eltype(x)<:Complex)
-                    _c1 = zeros(Complex{eltype(x)}, size(x))
+                    _c1 = fill(zero(Complex{eltype(x)}), size(x))
                     _c2 = nothing
                 else
                     _c1 = nothing
                     _c2 = nothing
                     if typeof(c1)!=Nothing || typeof(c2)!=Nothing
-                        warn("For StridedVectors, neither c1 nor c2 are necessary.")
+                        @warn("For StridedVectors, neither c1 nor c2 are necessary.")
                     end
                 end
             else
@@ -112,7 +112,7 @@ function finite_difference_gradient(f, x, fdtype::Type{T1}=Val{:central},
     c2::Union{Nothing,AbstractArray{<:Number}}=nothing) where {T1,T2,T3}
 
     if typeof(x) <: AbstractArray
-        df = zeros(returntype, size(x))
+        df = fill(zero(returntype), size(x))
     else
         if inplace == Val{true}
             if typeof(fx)==Nothing && typeof(c1)==Nothing && typeof(c2)==Nothing
@@ -146,9 +146,9 @@ function finite_difference_gradient(f,x,
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
 
     if typeof(x) <: AbstractArray
-        df = zeros(returntype, size(x))
+        df = fill(zero(returntype), size(x))
     else
-        df = zeros(cache.c1)
+        df = zero(cache.c1)
     end
     finite_difference_gradient!(df,f,x,cache)
     df
@@ -165,14 +165,14 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     if fdtype != Val{:complex}
         epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         @. c2 = compute_epsilon(fdtype, x, epsilon_factor)
-        copy!(c1,x)
+        copyto!(c1,x)
     end
     if fdtype == Val{:forward}
         @inbounds for i ∈ eachindex(x)
             epsilon = c2[i]
             c1_old = c1[i]
             c1[i] += epsilon
-            if typeof(fx) != Void
+            if typeof(fx) != Nothing
                 dfi = (f(c1) - fx) / epsilon
             else
                 fx0 = f(x)
@@ -182,7 +182,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             c1[i] = c1_old
             if eltype(df)<:Complex
                 c1[i] += im * epsilon
-                if typeof(fx) != Void
+                if typeof(fx) != Nothing
                     dfi = (f(c1) - fx) / (im*epsilon)
                 else
                     dfi = (f(c1) - fx0) / (im*epsilon)
@@ -210,7 +210,7 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
             end
         end
     elseif fdtype == Val{:complex} && returntype <: Real
-        copy!(c1,x)
+        copyto!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
         @inbounds for i ∈ eachindex(x)
@@ -228,13 +228,13 @@ end
 function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedVector{<:Number},
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
 
-    # c1 is x1 if we need a complex copy of x, otherwise Void
-    # c2 is Void
+    # c1 is x1 if we need a complex copy of x, otherwise Nothing
+    # c2 is Nothing
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
         epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         if eltype(df)<:Complex && !(eltype(x)<:Complex)
-            copy!(c1,x)
+            copyto!(c1,x)
         end
     end
     if fdtype == Val{:forward}
@@ -302,7 +302,7 @@ function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedV
             end
         end
     elseif fdtype==Val{:complex} && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
-        copy!(c1,x)
+        copyto!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
         @inbounds for i ∈ eachindex(x)

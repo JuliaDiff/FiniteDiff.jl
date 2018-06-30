@@ -37,7 +37,7 @@ function DerivativeCache(
     end
 
     if fdtype!=Val{:forward} && typeof(fx)!=Nothing
-        warn("Pre-computed function values are only useful for fdtype==Val{:forward}.")
+        @warn("Pre-computed function values are only useful for fdtype==Val{:forward}.")
         _fx = nothing
     else
         # more runtime sanity checks?
@@ -45,14 +45,14 @@ function DerivativeCache(
     end
 
     if typeof(epsilon)!=Nothing && typeof(x)<:StridedArray && typeof(fx)<:Union{Nothing,StridedArray} && 1==2
-        warn("StridedArrays don't benefit from pre-allocating epsilon.")
+        @warn("StridedArrays don't benefit from pre-allocating epsilon.")
         _epsilon = nothing
     elseif typeof(epsilon)!=Nothing && fdtype==Val{:complex}
-        warn("Val{:complex} makes the epsilon array redundant.")
+        @warn("Val{:complex} makes the epsilon array redundant.")
         _epsilon = nothing
     else
         if typeof(epsilon)==Nothing || eltype(epsilon)!=real(eltype(x))
-            epsilon = zeros(real(eltype(x)), size(x))
+          epsilon = fill(zero(real(eltype(x))), size(x))
         end
         _epsilon = epsilon
     end
@@ -70,7 +70,7 @@ function finite_difference_derivative(
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
     epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing) where {T1,T2}
 
-    df = zeros(returntype, size(x))
+    df = fill(zero(returntype), size(x))
     finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon)
 end
 
@@ -126,7 +126,7 @@ function finite_difference_derivative!(df::StridedArray, f, x::StridedArray,
         @inbounds for i ∈ eachindex(x)
             epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
             x_plus = x[i] + epsilon
-            if typeof(fx) == Void
+            if typeof(fx) == Nothing
                 df[i] = (f(x_plus) - f(x[i])) / epsilon
             else
                 df[i] = (f(x_plus) - fx[i]) / epsilon
