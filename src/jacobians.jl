@@ -139,8 +139,8 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
                 f(fx, x)
                 @. J[:,i] = (vfx1 - vfx) / (2*epsilon)
             else
-                fx1 = f(x1)
-                fx = f(x)
+                fx1 .= f(x1)
+                fx .= f(x)
                 J[:,i] = (vfx1 - vfx) / (2*epsilon)
             end
             x1[i] = x1_save
@@ -155,7 +155,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
                 f(fx,x1)
                 @. J[:,i] = imag(vfx) / epsilon
             else
-                fx = f(x1)
+                fx .= f(x1)
                 J[:,i] = imag(vfx) / epsilon
             end
             x1[i] = x1_save
