@@ -40,6 +40,7 @@ function (ff::ParamJacobianWrapper)(du1,p)
 end
 
 function (ff::ParamJacobianWrapper)(p)
-  du1 = similar(uprev)
+  du1 = similar(p, size(ff.u))
   ff.f(du1,ff.u,p,ff.t)
+  return du1
 end
