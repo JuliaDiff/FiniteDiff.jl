@@ -9,6 +9,7 @@ function JacobianCache(
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+
     if eltype(x) <: Real && fdtype==Val{:complex}
         x1 = fill(zero(Complex{eltype(x)}), size(x))
         _fx = fill(zero(Complex{eltype(x)}), size(x))
@@ -66,12 +67,12 @@ function JacobianCache(
         !(returntype<:Real) && fdtype_error(returntype)
 
         if eltype(fx) <: Real
-            _fx = fill(zero(Complex{eltype(x)}), size(fx))
+            _fx = fill(zero(Complex{eltype(x1)}), size(fx))
         else
             _fx = fx
         end
         if eltype(x1) <: Real
-            _x1 = fill(zero(Complex{eltype(x)}), size(x1))
+            _x1 = fill(zero(Complex{eltype(x1)}), size(x1))
         else
             _x1 = x1
         end
@@ -87,21 +88,23 @@ end
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:central},
     returntype :: Type{T2}=eltype(x),
-    inplace    :: Type{Val{T3}}=Val{true}) where {T1,T2,T3}
+    inplace    :: Type{Val{T3}}=Val{true},
+    f_in       :: Union{T2,Nothing}=nothing) where {T1,T2,T3}
 
     cache = JacobianCache(x,fdtype,returntype,inplace)
-    finite_difference_jacobian(f,x,cache)
+    finite_difference_jacobian(f,x,cache,f_in)
 end
 
-function finite_difference_jacobian(f,x,cache::JacobianCache)
+function finite_difference_jacobian(f,x,cache::JacobianCache,f_in=nothing)
     J = fill(zero(eltype(x)), length(x), length(x))
-    finite_difference_jacobian!(J,f,x,cache)
+    finite_difference_jacobian!(J,f,x,cache,f_in)
     J
 end
 
 function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
     f,x::AbstractArray{<:Number},
-    cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
+    cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace},
+    f_in::Union{T2,Nothing}=nothing) where {T1,T2,T3,fdtype,returntype,inplace}
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
@@ -116,11 +119,19 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
             x1[i] += epsilon
             if inplace == Val{true}
                 f(fx1, x1)
-                f(fx, x)
+                if f_in isa Nothing
+                    f(fx, x)
+                else
+                    vfx = vec(f_in)
+                end
                 J[:,i] = (vfx1 - vfx) / epsilon
             else
                 fx1 .= f(x1)
-                fx .= f(x)
+                if f_in isa Nothing
+                    fx .= f(x)
+                else
+                    vfx = vec(f_in)
+                end
                 J[:,i] = (vfx1 - vfx) / epsilon
             end
             x1[i] = x1_save

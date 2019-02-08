@@ -5,7 +5,7 @@ struct GradientCache{CacheType1, CacheType2, CacheType3, fdtype, returntype, inp
 end
 
 function GradientCache(
-    df         :: Union{<:Number,AbstractArray{<:Number}},
+    df         :: Union{<:Number, AbstractArray{<:Number}},
     x          :: Union{<:Number, AbstractArray{<:Number}},
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(df),

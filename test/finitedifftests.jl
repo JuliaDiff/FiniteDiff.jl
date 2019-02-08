@@ -299,9 +299,11 @@ epsilon = zero(x)
 forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward})
 central_cache = DiffEqDiffTools.JacobianCache(x)
 complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex})
+f_in = copy(y)
 
 @time @testset "Jacobian StridedArray real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, complex_cache), J_ref) < 1e-14
@@ -321,9 +323,11 @@ df_ref = diag(J_ref)
 epsilon = zero(real.(x))
 forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward})
 central_cache = DiffEqDiffTools.JacobianCache(x)
+f_in = copy(y)
 
 @time @testset "Jacobian StridedArray f : C^N -> C^N tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
 end
