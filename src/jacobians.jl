@@ -124,7 +124,7 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
                 else
                     vfx = vec(f_in)
                 end
-                J[:,i] = (vfx1 - vfx) / epsilon
+                @. J[:,i] = (vfx1 - vfx) / epsilon
             else
                 fx1 .= f(x1)
                 if f_in isa Nothing
