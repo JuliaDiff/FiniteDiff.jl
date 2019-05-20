@@ -89,22 +89,32 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:central},
     returntype :: Type{T2}=eltype(x),
     inplace    :: Type{Val{T3}}=Val{true},
-    f_in       :: Union{T2,Nothing}=nothing) where {T1,T2,T3}
+    f_in       :: Union{T2,Nothing}=nothing;
+    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3}
 
-    cache = JacobianCache(x,fdtype,returntype,inplace)
-    finite_difference_jacobian(f,x,cache,f_in)
+    cache = JacobianCache(x, fdtype, returntype, inplace)
+    finite_difference_jacobian(f, x, cache, f_in; epsilon_factor=epsilon_factor)
 end
 
-function finite_difference_jacobian(f,x,cache::JacobianCache,f_in=nothing)
+function finite_difference_jacobian(
+    f,
+    x,
+    cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace},
+    f_in=nothing;
+    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3,fdtype,returntype,inplace}
+
     J = fill(zero(eltype(x)), length(x), length(x))
-    finite_difference_jacobian!(J,f,x,cache,f_in)
+    finite_difference_jacobian!(J, f, x, cache, f_in; epsilon_factor=epsilon_factor)
     J
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
-    f,x::AbstractArray{<:Number},
+function finite_difference_jacobian!(
+    J::AbstractMatrix{<:Number},
+    f,
+    x::AbstractArray{<:Number},
     cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace},
-    f_in::Union{T2,Nothing}=nothing) where {T1,T2,T3,fdtype,returntype,inplace}
+    f_in::Union{T2,Nothing}=nothing;
+    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3,fdtype,returntype,inplace}
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
@@ -112,7 +122,6 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
     vfx = vec(fx)
     if fdtype == Val{:forward}
         vfx1 = vec(fx1)
-        epsilon_factor = compute_epsilon_factor(Val{:forward}, eltype(x))
         @inbounds for i ∈ 1:n
             epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
             x1_save = x1[i]
@@ -138,7 +147,6 @@ function finite_difference_jacobian!(J::AbstractMatrix{<:Number},
         end
     elseif fdtype == Val{:central}
         vfx1 = vec(fx1)
-        epsilon_factor = compute_epsilon_factor(Val{:central}, eltype(x))
         @inbounds for i ∈ 1:n
             epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
             x1_save = x1[i]

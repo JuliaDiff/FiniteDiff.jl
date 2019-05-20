@@ -51,7 +51,8 @@ DiffEqDiffTools.finite_difference_derivative(
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),      # return type of f
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing)
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing;
+    [epsilon_factor])
 
 DiffEqDiffTools.finite_difference_derivative!(
     df         :: AbstractArray{<:Number},
@@ -60,12 +61,16 @@ DiffEqDiffTools.finite_difference_derivative!(
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing)
+    epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing;
+    [epsilon_factor])
 
 # Cached
-DiffEqDiffTools.finite_difference_derivative!(df::AbstractArray{<:Number}, f,
-                              x::AbstractArray{<:Number},
-                              cache::DerivativeCache{T1,T2,fdtype,returntype})
+DiffEqDiffTools.finite_difference_derivative!(
+    df::AbstractArray{<:Number},
+    f,
+    x::AbstractArray{<:Number},
+    cache::DerivativeCache{T1,T2,fdtype,returntype};
+    [epsilon_factor])
 ```
 
 ### Allocating and Non-Allocating Constructor
@@ -150,15 +155,26 @@ into the differencing algorithm here.
 
 ```julia
 # Cache-less
-DiffEqDiffTools.finite_difference_jacobian(f, x::AbstractArray{<:Number},
-                           fdtype     :: Type{T1}=Val{:central},
-                           returntype :: Type{T2}=eltype(x),
-                           inplace    :: Type{Val{T3}}=Val{true})
+DiffEqDiffTools.finite_difference_jacobian(
+    f,
+    x          :: AbstractArray{<:Number},
+    fdtype     :: Type{T1}=Val{:central},
+    returntype :: Type{T2}=eltype(x),
+    inplace    :: Type{Val{T3}}=Val{true};
+    [epsilon_factor])
 
 # Cached
-DiffEqDiffTools.finite_difference_jacobian(f,x,cache::JacobianCache)
-DiffEqDiffTools.finite_difference_jacobian!(J::AbstractMatrix{<:Number},f,
-                            x::AbstractArray{<:Number},cache::JacobianCache)
+DiffEqDiffTools.finite_difference_jacobian(
+    f,
+    x,
+    cache::JacobianCache;
+    [epsilon_factor])
+DiffEqDiffTools.finite_difference_jacobian!(
+    J::AbstractMatrix{<:Number},
+    f,
+    x::AbstractArray{<:Number},
+    cache::JacobianCache;
+    [epsilon_factor])
 ```
 
 ### Allocating Cache Constructor

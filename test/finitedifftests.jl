@@ -96,24 +96,31 @@ end
 
 @time @testset "Derivative StridedArray f : R -> C tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, Complex{eltype(x)}), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, y), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, Complex{eltype(x)}, y), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative(f, x, Val{:central}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, Complex{eltype(x)}), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, y), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, Complex{eltype(x)}, y), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:forward}, Complex{eltype(x)}, y, epsilon, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, Val{:central}, Complex{eltype(x)}, y, epsilon), df_ref) < 1e-6
 
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, forward_cache), df_ref) < 1e-3
+    @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, forward_cache, epsilon_factor=sqrt(eps())), df_ref) < 1e-3
     @test err_func(DiffEqDiffTools.finite_difference_derivative!(df, f, x, central_cache), df_ref) < 1e-6
 end
 
@@ -309,6 +316,7 @@ f_in = copy(y)
 
 @time @testset "Jacobian StridedArray real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, epsilon_factor=sqrt(eps())), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
@@ -333,6 +341,7 @@ f_in = copy(y)
 
 @time @testset "Jacobian StridedArray f : C^N -> C^N tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, epsilon_factor=sqrt(eps())), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
