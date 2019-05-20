@@ -89,17 +89,29 @@ This allocates either `fx` or `epsilon` if these are nothing and they are needed
 
 ```julia
 # Cache-less
-DiffEqDiffTools.finite_difference_gradient(f, x, fdtype::Type{T1}=Val{:central},
-                           returntype::Type{T2}=eltype(x),
-                           inplace::Type{Val{T3}}=Val{true})
-DiffEqDiffTools.finite_difference_gradient!(df, f, x, fdtype::Type{T1}=Val{:central},
-                            returntype::Type{T2}=eltype(df),
-                            inplace::Type{Val{T3}}=Val{true})
+DiffEqDiffTools.finite_difference_gradient(
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x),
+    inplace::Type{Val{T3}}=Val{true};
+    [epsilon_factor])
+DiffEqDiffTools.finite_difference_gradient!(
+    df,
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(df),
+    inplace::Type{Val{T3}}=Val{true};
+    [epsilon_factor])
 
 # Cached
-DiffEqDiffTools.finite_difference_gradient!(df::AbstractArray{<:Number}, f,
-                            x::AbstractArray{<:Number},
-                            cache::GradientCache)
+DiffEqDiffTools.finite_difference_gradient!(
+    df::AbstractArray{<:Number},
+    f,
+    x::AbstractArray{<:Number},
+    cache::GradientCache;
+    [epsilon_factor])
 ```
 
 ### Allocating Cache Constructor
