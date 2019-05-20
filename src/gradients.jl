@@ -105,11 +105,16 @@ function GradientCache(
     GradientCache{typeof(_fx),typeof(_c1),typeof(_c2),fdtype,returntype,inplace}(_fx,_c1,_c2)
 end
 
-function finite_difference_gradient(f, x, fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(x), inplace::Type{Val{T3}}=Val{true},
+function finite_difference_gradient(
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x),
+    inplace::Type{Val{T3}}=Val{true},
     fx::Union{Nothing,AbstractArray{<:Number}}=nothing,
     c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    c2::Union{Nothing,AbstractArray{<:Number}}=nothing) where {T1,T2,T3}
+    c2::Union{Nothing,AbstractArray{<:Number}}=nothing;
+    epsilon_factor=compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3}
 
     if typeof(x) <: AbstractArray
         df = fill(zero(returntype), size(x))
@@ -127,43 +132,54 @@ function finite_difference_gradient(f, x, fdtype::Type{T1}=Val{:central},
             df = similar(f(x))
         end
     end
-    cache = GradientCache(df,x,fdtype,returntype,inplace)
-    finite_difference_gradient!(df,f,x,cache)
+    cache = GradientCache(df, x, fdtype, returntype, inplace)
+    finite_difference_gradient!(df, f, x, cache, epsilon_factor=epsilon_factor)
 end
 
-function finite_difference_gradient!(df, f, x, fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(df), inplace::Type{Val{T3}}=Val{true},
+function finite_difference_gradient!(
+    df,
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(df),
+    inplace::Type{Val{T3}}=Val{true},
     fx::Union{Nothing,AbstractArray{<:Number}}=nothing,
     c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    c2::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    ) where {T1,T2,T3}
+    c2::Union{Nothing,AbstractArray{<:Number}}=nothing;
+    epsilon_factor=compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3}
 
-    cache = GradientCache(df,x,fdtype,returntype,inplace)
-    finite_difference_gradient!(df,f,x,cache)
+    cache = GradientCache(df, x, fdtype, returntype, inplace)
+    finite_difference_gradient!(df, f, x, cache, epsilon_factor=epsilon_factor)
 end
 
-function finite_difference_gradient(f,x,
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
+function finite_difference_gradient(
+    f,
+    x,
+    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    epsilon_factor=compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3,fdtype,returntype,inplace}
 
     if typeof(x) <: AbstractArray
         df = fill(zero(returntype), size(x))
     else
         df = zero(cache.c1)
     end
-    finite_difference_gradient!(df,f,x,cache)
+    finite_difference_gradient!(df, f, x, cache, epsilon_factor=epsilon_factor)
     df
 end
 
 # vector of derivatives of a vector->scalar map by each component of a vector x
 # this ignores the value of "inplace", because it doesn't make much sense
-function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::AbstractArray{<:Number},
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
+function finite_difference_gradient!(
+    df::AbstractArray{<:Number},
+    f,
+    x::AbstractArray{<:Number},
+    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    epsilon_factor=compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
-        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         @. c2 = compute_epsilon(fdtype, x, epsilon_factor)
         copyto!(c1,x)
     end
@@ -225,14 +241,18 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Abstract
     df
 end
 
-function finite_difference_gradient!(df::StridedVector{<:Number}, f, x::StridedVector{<:Number},
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
+function finite_difference_gradient!(
+    df::StridedVector{<:Number},
+    f,
+    x::StridedVector{<:Number},
+    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    epsilon_factor=compute_epsilon_factor(fdtype, eltype(x)),
+    ) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # c1 is x1 if we need a complex copy of x, otherwise Nothing
     # c2 is Nothing
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
-        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         if eltype(df)<:Complex && !(eltype(x)<:Complex)
             copyto!(c1,x)
         end
@@ -319,15 +339,19 @@ end
 
 # vector of derivatives of a scalar->vector map
 # this is effectively a vector of partial derivatives, but we still call it a gradient
-function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace}) where {T1,T2,T3,fdtype,returntype,inplace}
+function finite_difference_gradient!(
+    df::AbstractArray{<:Number},
+    f,
+    x::Number,
+    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    epsilon_factor=compute_epsilon_factor(fdtype, eltype(x))
+    ) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a scalar, we need two arrays for fx1 and fx2
     # c1 denotes fx1, c2 is fx2, sizes guaranteed by the cache constructor
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
 
     if fdtype == Val{:forward}
-        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         epsilon = compute_epsilon(Val{:forward}, x, epsilon_factor)
         if inplace == Val{true}
             f(c1, x+epsilon)
@@ -345,7 +369,6 @@ function finite_difference_gradient!(df::AbstractArray{<:Number}, f, x::Number,
             @. df = (c1 - c2) / epsilon
         end
     elseif fdtype == Val{:central}
-        epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))
         epsilon = compute_epsilon(Val{:central}, x, epsilon_factor)
         if inplace == Val{true}
             f(c1, x+epsilon)
