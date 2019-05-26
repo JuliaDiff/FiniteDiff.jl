@@ -1,10 +1,16 @@
 #=
 Single-point derivatives of scalar->scalar maps.
 =#
-function finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(x), f_x::Union{Nothing,T}=nothing) where {T<:Number,T1,T2}
+function finite_difference_derivative(
+    f,
+    x::T,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x),
+    f_x::Union{Nothing,T}=nothing;
+    relstep=default_relstep(fdtype, T),
+    absstep=relstep) where {T<:Number,T1,T2}
 
-    epsilon = compute_epsilon(fdtype, x)
+    epsilon = compute_epsilon(fdtype, x, relstep, absstep)
     if fdtype==Val{:forward}
         return (f(x+epsilon) - f(x)) / epsilon
     elseif fdtype==Val{:central}
@@ -69,10 +75,11 @@ function finite_difference_derivative(
     returntype :: Type{T2} = eltype(x),      # return type of f
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
     epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing;
-    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2}
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep) where {T1,T2}
 
     df = fill(zero(returntype), size(x))
-    finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon; epsilon_factor=epsilon_factor)
+    finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon; relstep=relstep, absstep=absstep)
 end
 
 function finite_difference_derivative!(
@@ -83,10 +90,11 @@ function finite_difference_derivative!(
     returntype :: Type{T2} = eltype(x),
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
     epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing;
-    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2}
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep) where {T1,T2}
 
     cache = DerivativeCache(x, fx, epsilon, fdtype, returntype)
-    finite_difference_derivative!(df, f, x, cache; epsilon_factor=epsilon_factor)
+    finite_difference_derivative!(df, f, x, cache; relstep=relstep, absstep=absstep)
 end
 
 function finite_difference_derivative!(
@@ -94,11 +102,12 @@ function finite_difference_derivative!(
     f,
     x::AbstractArray{<:Number},
     cache::DerivativeCache{T1,T2,fdtype,returntype};
-    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,fdtype,returntype}
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep) where {T1,T2,fdtype,returntype}
 
     fx, epsilon = cache.fx, cache.epsilon
     if typeof(epsilon) != Nothing
-        @. epsilon = compute_epsilon(fdtype, x, epsilon_factor)
+        @. epsilon = compute_epsilon(fdtype, x, relstep, absstep)
     end
     if fdtype == Val{:forward}
         if typeof(fx) == Nothing
@@ -127,12 +136,13 @@ function finite_difference_derivative!(
     f,
     x::StridedArray,
     cache::DerivativeCache{T1,T2,fdtype,returntype};
-    epsilon_factor = compute_epsilon_factor(fdtype, eltype(x))) where {T1,T2,fdtype,returntype}
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep) where {T1,T2,fdtype,returntype}
 
     if fdtype == Val{:forward}
         fx = cache.fx
         @inbounds for i ∈ eachindex(x)
-            epsilon = compute_epsilon(Val{:forward}, x[i], epsilon_factor)
+            epsilon = compute_epsilon(Val{:forward}, x[i], relstep, absstep)
             x_plus = x[i] + epsilon
             if typeof(fx) == Nothing
                 df[i] = (f(x_plus) - f(x[i])) / epsilon
@@ -142,7 +152,7 @@ function finite_difference_derivative!(
         end
     elseif fdtype == Val{:central}
         @inbounds for i ∈ eachindex(x)
-            epsilon = compute_epsilon(Val{:central}, x[i], epsilon_factor)
+            epsilon = compute_epsilon(Val{:central}, x[i], relstep, absstep)
             epsilon_double_inv = one(typeof(epsilon)) / (2*epsilon)
             x_plus, x_minus = x[i]+epsilon, x[i]-epsilon
             df[i] = (f(x_plus) - f(x_minus)) * epsilon_double_inv
