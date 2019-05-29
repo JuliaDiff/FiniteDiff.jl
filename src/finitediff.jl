@@ -7,11 +7,11 @@ Compute the finite difference interval epsilon.
 Reference: Numerical Recipes, chapter 5.7.
 =#
 @inline function compute_epsilon(::Type{Val{:forward}}, x::T, relstep::Real, absstep::Real) where T<:Number
-    return relstep*abs(x) + absstep
+    return max(relstep*abs(x), absstep)
 end
 
 @inline function compute_epsilon(::Type{Val{:central}}, x::T, relstep::Real, absstep::Real) where T<:Number
-    return relstep*abs(x) + absstep
+    return max(relstep*abs(x), absstep)
 end
 
 @inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Nothing,T}=nothing, ::Union{Nothing,T}=nothing) where T<:Real
