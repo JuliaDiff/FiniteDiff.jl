@@ -134,17 +134,22 @@ function finite_difference_jacobian!(
         vfx1 = vec(fx1)
         @inbounds for color_i ∈ 1:maximum(color)
 
-            tmp = zero(x[1])
-            for i in 1:n
-                if color[i] == color_i
-                    tmp += abs2(x1[i])
+            if color isa UnitRange # Dense matrix
+                epsilon = compute_epsilon(Val{:forward}, x1[color_i], relstep, absstep)
+                save_x1 = x1[i]
+                x1[i] += epsilon
+            else # Perturb along the color vector
+                tmp = zero(x[1])
+                for i in 1:n
+                    if color[i] == color_i
+                        tmp += abs2(x1[i])
+                    end
                 end
-            end
+                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep)
 
-            epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep)
-
-            for i in 1:n
-                color[i] == color_i && (x1[i] += epsilon)
+                for i in 1:n
+                    color[i] == color_i && (x1[i] += epsilon)
+                end
             end
 
             if inplace == Val{true}
@@ -154,7 +159,17 @@ function finite_difference_jacobian!(
                 else
                     vfx = vec(f_in)
                 end
-                @. J[:,color_i] = (vfx1 - vfx) / epsilon
+
+                if J isa Matrix
+                    # J is dense, so either it is truly dense or this is the
+                    # compressed form of the coloring, so write into it.
+                    @. J[:,color_i] = (vfx1 - vfx) / epsilon
+                else
+                    # J is a sparse matrix, so decompress on the fly
+                    @. vfx1 = (vfx1 - vfx) / epsilon
+                    # vfx1 is the compressed Jacobian column
+                    # TODO
+                end
             else
                 fx1 .= f(x1)
                 if f_in isa Nothing
@@ -162,12 +177,27 @@ function finite_difference_jacobian!(
                 else
                     vfx = vec(f_in)
                 end
-                J[:,color_i] = (vfx1 - vfx) / epsilon
+                if J isa Matrix
+                    # J is dense, so either it is truly dense or this is the
+                    # compressed form of the coloring, so write into it.
+                    J[:,color_i] = (vfx1 - vfx) / epsilon
+                else
+                    # J is a sparse matrix, so decompress on the fly
+                    vfx1 = (vfx1 - vfx) / epsilon
+                    # vfx1 is the compressed Jacobian column
+                    # TODO
+                end
             end
 
-            for i in 1:n
-                color[i] == color_i && (x1[i] -= epsilon)
+            # Now return x1 back to its original value
+            if color isa UnitRange #Dense matrix
+                x1[i] = save_x1
+            else
+                for i in 1:n
+                    color[i] == color_i && (x1[i] -= epsilon)
+                end
             end
+
         end
     elseif fdtype == Val{:central}
         vfx1 = vec(fx1)
