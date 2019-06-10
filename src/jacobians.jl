@@ -1,14 +1,16 @@
-struct JacobianCache{CacheType1,CacheType2,CacheType3,fdtype,returntype,inplace}
+struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,fdtype,returntype,inplace}
     x1  :: CacheType1
     fx  :: CacheType2
     fx1 :: CacheType3
+    color :: ColorType
 end
 
 function JacobianCache(
     x,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
-    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+    inplace    :: Type{Val{T3}} = Val{true};
+    color = 1:length(x)) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
         x1 = fill(zero(Complex{eltype(x)}), size(x))
@@ -24,7 +26,7 @@ function JacobianCache(
         _fx1 = similar(x)
     end
 
-    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace)
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;color=color)
 end
 
 function JacobianCache(
@@ -32,7 +34,8 @@ function JacobianCache(
     fx,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
-    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+    inplace    :: Type{Val{T3}} = Val{true};
+    color = 1:length(x)) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
         x1 = fill(zero(Complex{eltype(x)}), size(x))
@@ -52,7 +55,7 @@ function JacobianCache(
         _fx1 = similar(fx)
     end
 
-    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace)
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;color=color)
 end
 
 function JacobianCache(
@@ -61,7 +64,8 @@ function JacobianCache(
     fx1,
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(fx),
-    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+    inplace    :: Type{Val{T3}} = Val{true};
+    color = 1:length(x1)) where {T1,T2,T3}
 
     if fdtype==Val{:complex}
         !(returntype<:Real) && fdtype_error(returntype)
@@ -82,7 +86,7 @@ function JacobianCache(
         @assert eltype(fx1) == T2
         _fx = fx
     end
-    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),fdtype,returntype,inplace}(_x1,_fx,fx1)
+    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(color),fdtype,returntype,inplace}(_x1,_fx,fx1,color)
 end
 
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
@@ -91,22 +95,24 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     inplace    :: Type{Val{T3}}=Val{true},
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3}
+    absstep=relstep,
+    color = 1:length(x)) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
-    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep)
+    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
 end
 
 function finite_difference_jacobian(
     f,
     x,
-    cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace},
+    cache::JacobianCache{T1,T2,T3,cType,fdtype,returntype,inplace},
     f_in=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3,fdtype,returntype,inplace}
+    absstep=relstep,
+    color = cache.color) where {T1,T2,T3,cType,fdtype,returntype,inplace}
 
     J = fill(zero(eltype(x)), length(x), length(x))
-    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep)
+    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
     J
 end
 
@@ -114,10 +120,11 @@ function finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
     f,
     x::AbstractArray{<:Number},
-    cache::JacobianCache{T1,T2,T3,fdtype,returntype,inplace},
+    cache::JacobianCache{T1,T2,T3,cType,fdtype,returntype,inplace},
     f_in::Union{T2,Nothing}=nothing;
     relstep = default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3,fdtype,returntype,inplace}
+    absstep=relstep,
+    color = cache.color) where {T1,T2,T3,cType,fdtype,returntype,inplace}
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
@@ -125,10 +132,21 @@ function finite_difference_jacobian!(
     vfx = vec(fx)
     if fdtype == Val{:forward}
         vfx1 = vec(fx1)
-        @inbounds for i ∈ 1:n
-            epsilon = compute_epsilon(Val{:forward}, x[i], relstep, absstep)
-            x1_save = x1[i]
-            x1[i] += epsilon
+        @inbounds for color_i ∈ 1:maximum(color)
+
+            tmp = zero(x[1])
+            for i in 1:n
+                if color[i] == color_i
+                    tmp += abs2(x1[i])
+                end
+            end
+
+            epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep)
+
+            for i in 1:n
+                color[i] == color_i && (x1[i] += epsilon)
+            end
+
             if inplace == Val{true}
                 f(fx1, x1)
                 if f_in isa Nothing
@@ -136,7 +154,7 @@ function finite_difference_jacobian!(
                 else
                     vfx = vec(f_in)
                 end
-                @. J[:,i] = (vfx1 - vfx) / epsilon
+                @. J[:,color_i] = (vfx1 - vfx) / epsilon
             else
                 fx1 .= f(x1)
                 if f_in isa Nothing
@@ -144,9 +162,12 @@ function finite_difference_jacobian!(
                 else
                     vfx = vec(f_in)
                 end
-                J[:,i] = (vfx1 - vfx) / epsilon
+                J[:,color_i] = (vfx1 - vfx) / epsilon
             end
-            x1[i] = x1_save
+
+            for i in 1:n
+                color[i] == color_i && (x1[i] -= epsilon)
+            end
         end
     elseif fdtype == Val{:central}
         vfx1 = vec(fx1)
