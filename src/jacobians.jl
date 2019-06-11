@@ -35,7 +35,7 @@ function JacobianCache(
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true};
-    color = 1:length(x)) where {T1,T2,T3}
+    color = eachindex(x)) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
         x1 = fill(zero(Complex{eltype(x)}), size(x))
@@ -96,7 +96,7 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = 1:length(x)) where {T1,T2,T3}
+    color = eachindex(x)) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
     finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
