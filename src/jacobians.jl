@@ -10,7 +10,7 @@ function JacobianCache(
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true};
-    color = 1:length(x)) where {T1,T2,T3}
+    color = eachindex(x)) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
         x1 = fill(zero(Complex{eltype(x)}), size(x))
