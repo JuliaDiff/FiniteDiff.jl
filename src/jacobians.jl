@@ -168,7 +168,13 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     @. vfx1 = (vfx1 - vfx) / epsilon
                     # vfx1 is the compressed Jacobian column
-                    # TODO
+                    (rows_index, cols_index, val) = findnz(SparseMatrix)
+
+                    for i in 1:length(cols_index)
+                        if color[cols_index[i]] == color_i
+                            J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                        end
+                    end
                 end
             else
                 fx1 .= f(x1)
@@ -185,7 +191,13 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     vfx1 = (vfx1 - vfx) / epsilon
                     # vfx1 is the compressed Jacobian column
-                    # TODO
+                    (rows_index, cols_index, val) = findnz(SparseMatrix)
+
+                    for i in 1:length(cols_index)
+                        if color[cols_index[i]] == color_i
+                            J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                        end
+                    end
                 end
             end
 
@@ -196,7 +208,7 @@ function finite_difference_jacobian!(
                 for i in 1:n
                     color[i] == color_i && (x1[i] -= epsilon)
                 end
-            end
+            end #for ends here
 
         end
     elseif fdtype == Val{:central}
