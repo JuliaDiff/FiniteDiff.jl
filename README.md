@@ -30,6 +30,10 @@ variables. This is summarized as:
 - Have cache variables around from your own algorithm and want to re-use them
   in the differencing functions? Use the non-allocating cache construction
   and pass the cache to the differencing function.
+  
+## f Definitions
+
+In all functions, the inplace form is `f!(dx,x)` while the out of place form is `dx = f(x)`.
 
 ## Scalar Derivatives
 
