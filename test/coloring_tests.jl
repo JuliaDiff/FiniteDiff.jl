@@ -11,7 +11,17 @@ function f(dx,x)
   nothing
 end
 
+function second_derivative_stencil(N)
+  A = zeros(N,N)
+  for i in 1:N, j in 1:N
+      (j-i==-1 || j-i==1) && (A[i,j]=1)
+      j-i==0 && (A[i,j]=-2)
+  end
+  A
+end
+
 J = DiffEqDiffTools.finite_difference_jacobian(f,rand(30))
+@test J ≈ second_derivative_stencil(30)
 _J = sparse(J)
 @test fcalls == 31
 
