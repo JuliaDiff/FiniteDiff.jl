@@ -194,9 +194,9 @@ function finite_difference_jacobian!(
                     end
                 end
             else
-                fx1 .= f(x1)
+                fx1 = f(x1)
                 if f_in isa Nothing
-                    fx .= f(x)
+                    fx = f(x)
                 else
                     vfx = vec(f_in)
                 end
@@ -278,8 +278,8 @@ function finite_difference_jacobian!(
                 end
 
             else
-                fx1 .= f(x1)
-                fx .= f(x)
+                fx1 = f(x1)
+                fx = f(x)
 
                 if J isa Matrix
                     # J is dense, so either it is truly dense or this is the
@@ -345,7 +345,7 @@ function finite_difference_jacobian!(
                 end
 
             else
-                fx .= f(x1)
+                fx = f(x1)
                 if J isa Matrix
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
