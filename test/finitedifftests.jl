@@ -288,13 +288,13 @@ central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central})
 
 @time @testset "Gradient of f:vector->scalar complex-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 3e-7
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 3e-7
 
     @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
-    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-7
+    @test err_func(DiffEqDiffTools.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 3e-7
 end
 
 # Jacobian tests
@@ -310,7 +310,7 @@ df = zero(x)
 df_ref = diag(J_ref)
 epsilon = zero(x)
 forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward})
-central_cache = DiffEqDiffTools.JacobianCache(x)
+central_cache = DiffEqDiffTools.JacobianCache(x,Val{:central})
 complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex})
 f_in = copy(y)
 
@@ -319,7 +319,7 @@ f_in = copy(y)
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, complex_cache), J_ref) < 1e-14
 end
 
@@ -336,7 +336,7 @@ df = zero(x)
 df_ref = diag(J_ref)
 epsilon = zero(real.(x))
 forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward})
-central_cache = DiffEqDiffTools.JacobianCache(x)
+central_cache = DiffEqDiffTools.JacobianCache(x,Val{:central})
 f_in = copy(y)
 
 @time @testset "Jacobian StridedArray f : C^N -> C^N tests" begin
@@ -344,5 +344,5 @@ f_in = copy(y)
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
-    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}), J_ref) < 1e-8
 end

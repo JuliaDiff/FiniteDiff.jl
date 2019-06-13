@@ -2,7 +2,7 @@ __precompile__()
 
 module DiffEqDiffTools
 
-using LinearAlgebra
+using LinearAlgebra, SparseArrays
 
 include("function_wrappers.jl")
 include("finitediff.jl")

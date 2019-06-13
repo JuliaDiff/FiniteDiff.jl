@@ -7,7 +7,7 @@ end
 
 function JacobianCache(
     x,
-    fdtype     :: Type{T1} = Val{:central},
+    fdtype     :: Type{T1} = Val{:forward},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true};
     color = eachindex(x)) where {T1,T2,T3}
@@ -32,7 +32,7 @@ end
 function JacobianCache(
     x ,
     fx,
-    fdtype     :: Type{T1} = Val{:central},
+    fdtype     :: Type{T1} = Val{:forward},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true};
     color = eachindex(x)) where {T1,T2,T3}
@@ -62,7 +62,7 @@ function JacobianCache(
     x1 ,
     fx ,
     fx1,
-    fdtype     :: Type{T1} = Val{:central},
+    fdtype     :: Type{T1} = Val{:forward},
     returntype :: Type{T2} = eltype(fx),
     inplace    :: Type{Val{T3}} = Val{true};
     color = 1:length(x1)) where {T1,T2,T3}
@@ -89,8 +89,23 @@ function JacobianCache(
     JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(color),fdtype,returntype,inplace}(_x1,_fx,fx1,color)
 end
 
+function finite_difference_jacobian!(J::AbstractMatrix,
+    f,
+    x::AbstractArray{<:Number},
+    fdtype     :: Type{T1}=Val{:forward},
+    returntype :: Type{T2}=eltype(x),
+    inplace    :: Type{Val{T3}}=Val{true},
+    f_in       :: Union{T2,Nothing}=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    color = eachindex(x)) where {T1,T2,T3}
+
+    cache = JacobianCache(x, fdtype, returntype, inplace)
+    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
+end
+
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
-    fdtype     :: Type{T1}=Val{:central},
+    fdtype     :: Type{T1}=Val{:forward},
     returntype :: Type{T2}=eltype(x),
     inplace    :: Type{Val{T3}}=Val{true},
     f_in       :: Union{T2,Nothing}=nothing;
@@ -132,6 +147,13 @@ function finite_difference_jacobian!(
     vfx = vec(fx)
     if fdtype == Val{:forward}
         vfx1 = vec(fx1)
+
+        if f_in isa Nothing
+            f(fx, x)
+        else
+            vfx = vec(f_in)
+        end
+
         @inbounds for color_i ∈ 1:maximum(color)
 
             if color isa UnitRange # Dense matrix
@@ -154,11 +176,6 @@ function finite_difference_jacobian!(
 
             if inplace == Val{true}
                 f(fx1, x1)
-                if f_in isa Nothing
-                    f(fx, x)
-                else
-                    vfx = vec(f_in)
-                end
 
                 if J isa Matrix
                     # J is dense, so either it is truly dense or this is the
@@ -168,7 +185,7 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     @. vfx1 = (vfx1 - vfx) / epsilon
                     # vfx1 is the compressed Jacobian column
-                    (rows_index, cols_index, val) = findnz(SparseMatrix)
+                    (rows_index, cols_index, val) = findnz(J)
 
                     for i in 1:length(cols_index)
                         if color[cols_index[i]] == color_i
