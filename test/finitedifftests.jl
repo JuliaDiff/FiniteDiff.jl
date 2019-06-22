@@ -346,3 +346,20 @@ f_in = copy(y)
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}), J_ref) < 1e-8
 end
+
+# Hessian tests
+
+f(x) = sin(x[1]) + cos(x[2])
+x = rand(2)
+H_ref = [-sin(x[1]) 0.0; 0.0 -cos(x[2])]
+hcache = DiffEqDiffTools.HessianCache(x)
+hcache_oop = DiffEqDiffTools.HessianCache(x,Val{:hcentral},Val{false})
+H = similar(H_ref)
+
+@time @testset "Hessian StridedArray f : R^N -> R tests" begin
+    @test err_func(DiffEqDiffTools.finite_difference_hessian(f, x), H_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_hessian(f, x, hcache), H_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_hessian(f, x, hcache_oop), H_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_hessian!(H, f, x), H_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_hessian!(H, f, x, hcache), H_ref) < 1e-4
+end

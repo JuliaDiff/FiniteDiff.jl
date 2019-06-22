@@ -14,6 +14,10 @@ end
     return max(relstep*abs(x), absstep)
 end
 
+@inline function compute_epsilon(::Type{Val{:hcentral}}, x::T, relstep::Real, absstep::Real) where T<:Number
+    return max(relstep*abs(x), absstep)
+end
+
 @inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Nothing,T}=nothing, ::Union{Nothing,T}=nothing) where T<:Real
     return eps(T)
 end
@@ -23,6 +27,8 @@ end
         return sqrt(eps(real(T)))
     elseif fdtype==Val{:central}
         return cbrt(eps(real(T)))
+    elseif fdtype==Val{:hcentral}
+        eps(T)^(1/4)
     else
         return one(real(T))
     end

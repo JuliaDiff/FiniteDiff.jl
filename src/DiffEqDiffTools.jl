@@ -9,6 +9,7 @@ include("finitediff.jl")
 include("derivatives.jl")
 include("gradients.jl")
 include("jacobians.jl")
+include("hessians.jl")
 
 # Piracy
 function Base.setindex(x::Array,v,i::Int)
