@@ -115,7 +115,8 @@ function finite_difference_gradient(
     c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
     c2::Union{Nothing,AbstractArray{<:Number}}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3}
+    absstep=relstep,
+    dir=true) where {T1,T2,T3}
 
     if typeof(x) <: AbstractArray
         df = fill(zero(returntype), size(x))
@@ -134,7 +135,7 @@ function finite_difference_gradient(
         end
     end
     cache = GradientCache(df, x, fdtype, returntype, inplace)
-    finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep)
+    finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep, dir=dir)
 end
 
 function finite_difference_gradient!(
@@ -159,14 +160,15 @@ function finite_difference_gradient(
     x,
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3,fdtype,returntype,inplace}
+    absstep=relstep,
+    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
 
     if typeof(x) <: AbstractArray
         df = fill(zero(returntype), size(x))
     else
         df = zero(cache.c1)
     end
-    finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep)
+    finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep, dir=dir)
     df
 end
 
@@ -178,18 +180,19 @@ function finite_difference_gradient!(
     x::AbstractArray{<:Number},
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3,fdtype,returntype,inplace}
+    absstep=relstep,
+    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
-        @. c2 = compute_epsilon(fdtype, x, relstep, absstep)
+        @. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
         copyto!(c1,x)
     end
     if fdtype == Val{:forward}
         @inbounds for i ∈ eachindex(x)
-            epsilon = c2[i]
+            epsilon = c2[i]*dir
             c1_old = c1[i]
             c1[i] += epsilon
             if typeof(fx) != Nothing
@@ -251,7 +254,8 @@ function finite_difference_gradient!(
     x::StridedVector{<:Number},
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3,fdtype,returntype,inplace}
+    absstep=relstep,
+    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # c1 is x1 if we need a complex copy of x, otherwise Nothing
     # c2 is Nothing
@@ -263,7 +267,7 @@ function finite_difference_gradient!(
     end
     if fdtype == Val{:forward}
         for i ∈ eachindex(x)
-            epsilon = compute_epsilon(fdtype, x[i], relstep, absstep)
+            epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
             if typeof(fx) != Nothing
                 x[i] += epsilon
@@ -300,7 +304,7 @@ function finite_difference_gradient!(
         end
     elseif fdtype == Val{:central}
         @inbounds for i ∈ eachindex(x)
-            epsilon = compute_epsilon(fdtype, x[i], relstep, absstep)
+            epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
             x[i] += epsilon
             dfi = f(x)
@@ -349,14 +353,15 @@ function finite_difference_gradient!(
     x::Number,
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3,fdtype,returntype,inplace}
+    absstep=relstep,
+    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a scalar, we need two arrays for fx1 and fx2
     # c1 denotes fx1, c2 is fx2, sizes guaranteed by the cache constructor
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
 
     if fdtype == Val{:forward}
-        epsilon = compute_epsilon(Val{:forward}, x, relstep, absstep)
+        epsilon = compute_epsilon(Val{:forward}, x, relstep, absstep, dir)
         if inplace == Val{true}
             f(c1, x+epsilon)
         else
@@ -373,7 +378,7 @@ function finite_difference_gradient!(
             @. df = (c1 - c2) / epsilon
         end
     elseif fdtype == Val{:central}
-        epsilon = compute_epsilon(Val{:central}, x, relstep, absstep)
+        epsilon = compute_epsilon(Val{:central}, x, relstep, absstep, dir)
         if inplace == Val{true}
             f(c1, x+epsilon)
             f(c2, x-epsilon)

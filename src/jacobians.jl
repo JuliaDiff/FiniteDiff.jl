@@ -132,10 +132,11 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x)) where {T1,T2,T3}
+    color = eachindex(x),
+    dir=true) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
-    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
+    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, dir=dir)
 end
 
 function finite_difference_jacobian(
@@ -145,10 +146,11 @@ function finite_difference_jacobian(
     f_in=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = cache.color) where {T1,T2,T3,cType,fdtype,returntype,inplace}
+    color = cache.color,
+    dir=true) where {T1,T2,T3,cType,fdtype,returntype,inplace}
     _J = false .* x .* x'
     _J isa SMatrix ? J = MArray(_J) : J = _J
-    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
+    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, dir=dir)
     _J isa SMatrix ? SArray(J) : J
 end
 
@@ -160,7 +162,8 @@ function finite_difference_jacobian!(
     f_in::Union{T2,Nothing}=nothing;
     relstep = default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = cache.color) where {T1,T2,T3,cType,fdtype,returntype,inplace}
+    color = cache.color,
+    dir = true) where {T1,T2,T3,cType,fdtype,returntype,inplace}
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
@@ -190,7 +193,7 @@ function finite_difference_jacobian!(
         @inbounds for color_i ∈ 1:maximum(color)
 
             if color isa Base.OneTo || color isa StaticArrays.SOneTo # Dense matrix
-                epsilon = compute_epsilon(Val{:forward}, x1[color_i], relstep, absstep)
+                epsilon = compute_epsilon(Val{:forward}, x1[color_i], relstep, absstep, dir)
                 x1_save = x1[color_i]
                 if inplace == Val{true}
                     x1[color_i] += epsilon
@@ -204,7 +207,7 @@ function finite_difference_jacobian!(
                         tmp += abs2(x1[i])
                     end
                 end
-                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep)
+                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
 
                 if inplace != Val{true}
                     _x1 = copy(x1)
@@ -275,7 +278,7 @@ function finite_difference_jacobian!(
         @inbounds for color_i ∈ 1:maximum(color)
 
             if color isa Base.OneTo || color isa StaticArrays.SOneTo # Dense matrix
-                epsilon = compute_epsilon(Val{:central}, x[color_i], relstep, absstep)
+                epsilon = compute_epsilon(Val{:central}, x[color_i], relstep, absstep, dir)
                 x1_save = x1[color_i]
                 x_save = x[color_i]
                 if inplace == Val{true}
@@ -292,7 +295,7 @@ function finite_difference_jacobian!(
                         tmp += abs2(x1[i])
                     end
                 end
-                epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep)
+                epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep, dir)
 
                 if inplace != Val{true}
                     _x1 = copy(x1)

@@ -6,19 +6,19 @@ Very heavily inspired by Calculus.jl, but with an emphasis on performance and Di
 Compute the finite difference interval epsilon.
 Reference: Numerical Recipes, chapter 5.7.
 =#
-@inline function compute_epsilon(::Type{Val{:forward}}, x::T, relstep::Real, absstep::Real) where T<:Number
+@inline function compute_epsilon(::Type{Val{:forward}}, x::T, relstep::Real, absstep::Real, dir::Real) where T<:Number
+    return max(relstep*abs(x), absstep)*dir
+end
+
+@inline function compute_epsilon(::Type{Val{:central}}, x::T, relstep::Real, absstep::Real, dir=nothing) where T<:Number
     return max(relstep*abs(x), absstep)
 end
 
-@inline function compute_epsilon(::Type{Val{:central}}, x::T, relstep::Real, absstep::Real) where T<:Number
+@inline function compute_epsilon(::Type{Val{:hcentral}}, x::T, relstep::Real, absstep::Real, dir=nothing) where T<:Number
     return max(relstep*abs(x), absstep)
 end
 
-@inline function compute_epsilon(::Type{Val{:hcentral}}, x::T, relstep::Real, absstep::Real) where T<:Number
-    return max(relstep*abs(x), absstep)
-end
-
-@inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Nothing,T}=nothing, ::Union{Nothing,T}=nothing) where T<:Real
+@inline function compute_epsilon(::Type{Val{:complex}}, x::T, ::Union{Nothing,T}=nothing, ::Union{Nothing,T}=nothing, dir=nothing) where T<:Real
     return eps(T)
 end
 
