@@ -17,6 +17,8 @@ err_func(a,b) = maximum(abs.(a-b))
 
 @time @testset "Derivative single point f : R -> R tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:forward}), √2/2) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_derivative(x->x > π/4 ? error() : sin(x), π/4, Val{:forward}, dir=-1), √2/2) < 1e-4
+    @test_throws Any err_func(DiffEqDiffTools.finite_difference_derivative(x->x >= π/4 ? error() : sin(x), π/4, Val{:forward}), √2/2) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:central}), √2/2) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_derivative(sin, π/4, Val{:complex}), √2/2) < 1e-15
 end
@@ -167,6 +169,8 @@ end
 # Gradient tests
 f(x) = 2x[1] + x[2]^2
 x = rand(2)
+z = copy(x)
+ff(k) = !all(k .<= z) ? error() : f(k)
 fx = f(x)
 df = fill(0.,2)
 df_ref = [2., 2*x[2]]
@@ -176,6 +180,8 @@ complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
 
 @time @testset "Gradient of f:vector->scalar real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(ff, x, Val{:forward}, dir=-1), df_ref) < 1e-4
+    @test_throws Any err_func(DiffEqDiffTools.finite_difference_gradient(ff, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, relstep=sqrt(eps())), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}), df_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}), df_ref) < 1e-15
@@ -252,9 +258,10 @@ central_cache = DiffEqDiffTools.GradientCache(df,x,Val{:central},eltype(df))
 end
 
 f(df,x) = (df[1]=sin(x); df[2]=cos(x); df)
-x = 2π * rand()
+z = x = 2π * rand()
 fx = fill(0.,2)
 f(fx,x)
+ff(df, x) = !all(x .<= z) ? error() : f(df, x)
 df = fill(0.,2)
 df_ref = [cos(x), -sin(x)]
 forward_cache = DiffEqDiffTools.GradientCache(df,x,Val{:forward})
@@ -265,6 +272,8 @@ complex_cache = DiffEqDiffTools.GradientCache(df,x,Val{:complex})
 @time @testset "Gradient of f:scalar->vector real-valued tests" begin
     @test_broken err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_gradient(ff, x, Val{:forward}, eltype(x), Val{true}, fx, dir=-1), df_ref) < 1e-4
+    @test_throws Any err_func(DiffEqDiffTools.finite_difference_gradient(ff, x, Val{:forward}), df_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_gradient(f, x, Val{:complex}, eltype(x), Val{true}, fx), df_ref) < 1e-15
 
@@ -303,6 +312,8 @@ function f(fvec,x)
     fvec[2] = sin(x[2]*exp(x[1])-1)
 end
 x = rand(2); y = rand(2)
+z = copy(x)
+ff(df, x) = !all(x .<= z) ? error() : f(df, x)
 f(y,x)
 J_ref = [[-7+x[2]^3 3*(3+x[1])*x[2]^2]; [exp(x[1])*x[2]*cos(1-exp(x[1])*x[2]) exp(x[1])*cos(1-exp(x[1])*x[2])]]
 J = zero(J_ref)
@@ -316,6 +327,8 @@ f_in = copy(y)
 
 @time @testset "Jacobian StridedArray real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache), J_ref) < 1e-4
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(ff, x, forward_cache, dir=-1), J_ref) < 1e-4
+    @test_throws Any err_func(DiffEqDiffTools.finite_difference_jacobian(ff, x, forward_cache), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(f, x, central_cache), J_ref) < 1e-8
