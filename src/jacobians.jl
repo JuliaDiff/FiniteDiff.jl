@@ -1,4 +1,4 @@
-struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,fdtype,returntype,inplace}
+mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,fdtype,returntype,inplace}
     x1  :: CacheType1
     fx  :: CacheType2
     fx1 :: CacheType3
@@ -446,4 +446,12 @@ function finite_difference_jacobian!(
         fdtype_error(returntype)
     end
     J
+end
+
+function resize!(cache::JacobianCache, i::Int)
+    resize!(cache.x1,  i)
+    resize!(cache.fx,  i)
+    cache.fx1 != nothing && resize!(cache.fx1, i)
+    cache.color = 1:i
+    nothing
 end
