@@ -4,6 +4,8 @@ module DiffEqDiffTools
 
 using LinearAlgebra, SparseArrays, StaticArrays
 
+import Base: resize!
+
 include("function_wrappers.jl")
 include("finitediff.jl")
 include("derivatives.jl")
