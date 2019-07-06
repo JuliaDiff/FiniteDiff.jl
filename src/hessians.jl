@@ -34,7 +34,7 @@ function finite_difference_hessian(
     _H = false .* x .* x'
     _H isa SMatrix ? H = MArray(_H) : H = _H
     finite_difference_hessian!(H, f, x, cache; relstep=relstep, absstep=absstep)
-    _H isa SMatrix ? SArray(H) : H
+    _H isa SMatrix ? Symmetric(SArray(H)) : Symmetric(H)
 end
 
 function finite_difference_hessian!(H::AbstractMatrix,f,
@@ -120,5 +120,5 @@ function finite_difference_hessian!(H,f,x,
         end
 
     end
-    Symmetric(LinearAlgebra.copytri!(H,'U'))
+    LinearAlgebra.copytri!(H,'U')
 end
