@@ -120,5 +120,5 @@ function finite_difference_hessian!(H,f,x,
         end
 
     end
-    LinearAlgebra.copytri!(H,'U')
+    Symmetric(LinearAlgebra.copytri!(H,'U'))
 end
