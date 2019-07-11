@@ -1,8 +1,9 @@
-mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,fdtype,returntype,inplace}
+mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,SparsityType,fdtype,returntype,inplace}
     x1  :: CacheType1
     fx  :: CacheType2
     fx1 :: CacheType3
     color :: ColorType
+    sparsity :: SparsityType
 end
 
 function JacobianCache(
@@ -10,7 +11,8 @@ function JacobianCache(
     fdtype     :: Type{T1} = Val{:forward},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true};
-    color = eachindex(x)) where {T1,T2,T3}
+    color = eachindex(x),
+    sparsity = nothing) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
         if x isa StaticArray
@@ -31,7 +33,7 @@ function JacobianCache(
         _fx1 = copy(x)
     end
 
-    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;color=color)
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;color=color,sparsity=sparsity)
 end
 
 function JacobianCache(
@@ -40,7 +42,8 @@ function JacobianCache(
     fdtype     :: Type{T1} = Val{:forward},
     returntype :: Type{T2} = eltype(x),
     inplace    :: Type{Val{T3}} = Val{true};
-    color = eachindex(x)) where {T1,T2,T3}
+    color = eachindex(x),
+    sparsity = nothing) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
         if x1 isa StaticArray
@@ -68,7 +71,7 @@ function JacobianCache(
         _fx1 = copy(fx)
     end
 
-    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;color=color)
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;color=color,sparsity=sparsity)
 end
 
 function JacobianCache(
@@ -78,7 +81,8 @@ function JacobianCache(
     fdtype     :: Type{T1} = Val{:forward},
     returntype :: Type{T2} = eltype(fx),
     inplace    :: Type{Val{T3}} = Val{true};
-    color = 1:length(x1)) where {T1,T2,T3}
+    color = 1:length(x1),
+    sparsity = nothing) where {T1,T2,T3}
 
     if fdtype==Val{:complex}
         !(returntype<:Real) && fdtype_error(returntype)
@@ -107,7 +111,7 @@ function JacobianCache(
         @assert eltype(fx1) == T2
         _fx = fx
     end
-    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(color),fdtype,returntype,inplace}(_x1,_fx,fx1,color)
+    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(color),typeof(sparsity),fdtype,returntype,inplace}(_x1,_fx,fx1,color,sparsity)
 end
 
 function finite_difference_jacobian!(J::AbstractMatrix,
@@ -119,10 +123,11 @@ function finite_difference_jacobian!(J::AbstractMatrix,
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x)) where {T1,T2,T3}
+    color = eachindex(x),
+    sparsity = nothing) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
-    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color)
+    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, sparsity=sparsity)
 end
 
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
@@ -133,24 +138,26 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     color = eachindex(x),
+    sparsity = nothing,
     dir=true) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
-    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, dir=dir)
+    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, sparsity=sparsity, dir=dir)
 end
 
 function finite_difference_jacobian(
     f,
     x,
-    cache::JacobianCache{T1,T2,T3,cType,fdtype,returntype,inplace},
+    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype,inplace},
     f_in=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     color = cache.color,
-    dir=true) where {T1,T2,T3,cType,fdtype,returntype,inplace}
+    sparsity = cache.sparsity,
+    dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
     _J = false .* x .* x'
     _J isa SMatrix ? J = MArray(_J) : J = _J
-    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, dir=dir)
+    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, sparsity=sparsity, dir=dir)
     _J isa SMatrix ? SArray(J) : J
 end
 
@@ -158,12 +165,13 @@ function finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
     f,
     x::AbstractArray{<:Number},
-    cache::JacobianCache{T1,T2,T3,cType,fdtype,returntype,inplace},
+    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype,inplace},
     f_in::Union{T2,Nothing}=nothing;
     relstep = default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     color = cache.color,
-    dir = true) where {T1,T2,T3,cType,fdtype,returntype,inplace}
+    sparsity::Union{SparseMatrixCSC,Nothing} = cache.sparsity,
+    dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
 
     m, n = size(J)
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
@@ -172,8 +180,8 @@ function finite_difference_jacobian!(
     end
     vfx = vec(fx)
 
-    if J isa SparseMatrixCSC
-        (rows_index, cols_index, val) = findnz(J)
+    if sparsity isa SparseMatrixCSC
+        (rows_index, cols_index, val) = findnz(sparsity)
     end
 
     if fdtype == Val{:forward}
@@ -227,7 +235,7 @@ function finite_difference_jacobian!(
             if inplace == Val{true}
                 f(fx1, x1)
 
-                if J isa Matrix || J isa MMatrix
+                if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
                     @. J[:,color_i] = (vfx1 - vfx) / epsilon
@@ -244,7 +252,7 @@ function finite_difference_jacobian!(
             else
                 fx1 = f(_x1)
                 vfx1 = vec(fx1)
-                if J isa Matrix || J isa MMatrix
+                if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
                     J[:,color_i] = (vfx1 - vfx) / epsilon
@@ -319,7 +327,7 @@ function finite_difference_jacobian!(
                 f(fx1, x1)
                 f(fx, x)
 
-                if J isa Matrix || J isa MMatrix
+                if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
                     @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
@@ -340,7 +348,7 @@ function finite_difference_jacobian!(
                 vfx1 = vec(fx1)
                 vfx  = vec(fx)
 
-                if J isa Matrix || J isa MMatrix
+                if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
                     J[:,color_i] = (vfx1 - vfx) / 2epsilon
@@ -400,7 +408,7 @@ function finite_difference_jacobian!(
 
             if inplace == Val{true}
                 f(fx,x1)
-                if J isa Matrix || J isa MMatrix
+                if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
                     @. J[:,color_i] = imag(vfx) / epsilon
@@ -418,7 +426,7 @@ function finite_difference_jacobian!(
             else
                 fx = f(_x1)
                 vfx = vec(fx)
-                if J isa Matrix || J isa MMatrix
+                if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
                     J[:,color_i] = imag(vfx) / epsilon
