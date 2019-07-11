@@ -124,7 +124,7 @@ function finite_difference_jacobian!(J::AbstractMatrix,
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     color = eachindex(x),
-    sparsity = nothing) where {T1,T2,T3}
+    sparsity = J isa SparseMatrixCSC ? J : nothing) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
     finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, sparsity=sparsity)
