@@ -192,7 +192,8 @@ DiffEqDiffTools.finite_difference_jacobian(
     inplace    :: Type{Val{T3}}=Val{true};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x))
+    color = eachindex(x),
+    sparsity = nothing)
 
 finite_difference_jacobian!(J::AbstractMatrix,
     f,
@@ -203,7 +204,8 @@ finite_difference_jacobian!(J::AbstractMatrix,
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x))
+    color = eachindex(x),
+    sparsity = J isa SparseMatrixCSC ? J : nothing)
 
 # Cached
 DiffEqDiffTools.finite_difference_jacobian(
@@ -212,7 +214,8 @@ DiffEqDiffTools.finite_difference_jacobian(
     cache::JacobianCache;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x))
+    color = eachindex(x),
+    sparsity = nothing)
 
 DiffEqDiffTools.finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
@@ -221,7 +224,8 @@ DiffEqDiffTools.finite_difference_jacobian!(
     cache::JacobianCache;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x))
+    color = cache.color,
+    sparsity = cache.sparsity)
 ```
 
 ### Allocating Cache Constructor
@@ -232,7 +236,8 @@ DiffEqDiffTools.JacobianCache(
               fdtype     :: Type{T1} = Val{:central},
               returntype :: Type{T2} = eltype(x),
               inplace    :: Type{Val{T3}} = Val{true};
-              color = eachindex(x))
+              color = eachindex(x)
+              sparsity = nothing)
 ```
 
 This assumes the Jacobian is square.
@@ -247,7 +252,8 @@ DiffEqDiffTools.JacobianCache(
               fdtype     :: Type{T1} = Val{:central},
               returntype :: Type{T2} = eltype(fx),
               inplace    :: Type{Val{T3}} = Val{true};
-              color = eachindex(x))
+              color = eachindex(x),
+              sparsity = nothing)
 ```
 
 ## Hessians
