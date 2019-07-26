@@ -124,7 +124,7 @@ function finite_difference_jacobian!(J::AbstractMatrix,
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     color = eachindex(x),
-    sparsity = J isa SparseMatrixCSC ? J : nothing) where {T1,T2,T3}
+    sparsity = has_sparsestruct(J) ? J : nothing) where {T1,T2,T3}
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
     finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, color=color, sparsity=sparsity)
@@ -170,7 +170,7 @@ function finite_difference_jacobian!(
     relstep = default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     color = cache.color,
-    sparsity::Union{SparseMatrixCSC,Nothing} = cache.sparsity,
+    sparsity::Union{AbstractArray,Nothing} = cache.sparsity,
     dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
 
     m, n = size(J)
@@ -180,8 +180,8 @@ function finite_difference_jacobian!(
     end
     vfx = vec(fx)
 
-    if sparsity isa SparseMatrixCSC
-        (rows_index, cols_index, val) = findnz(sparsity)
+    if has_sparsestruct(sparsity)
+        rows_index, cols_index = findstructralnz(sparsity)
     end
 
     if fdtype == Val{:forward}

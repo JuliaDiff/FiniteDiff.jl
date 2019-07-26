@@ -1,4 +1,4 @@
-using DiffEqDiffTools, LinearAlgebra, SparseArrays, Test
+using DiffEqDiffTools, LinearAlgebra, SparseArrays, Test, LinearAlgebra
 
 fcalls = 0
 function f(dx,x)
@@ -63,3 +63,21 @@ fcalls = 0
 DiffEqDiffTools.finite_difference_jacobian!(_denseJ2,f,rand(30),Val{:complex},color=repeat(1:3,10),sparsity=_J2)
 @test fcalls == 3
 @test sparse(_denseJ2) ≈ _J
+
+_J2 = similar(Tridiagonal(_J))
+fcalls = 0
+DiffEqDiffTools.finite_difference_jacobian!(_J2,f,rand(30),color=repeat(1:3,10))
+@test fcalls == 4
+@test _J2 ≈ _J
+
+_J2 = similar(_J2)
+fcalls = 0
+DiffEqDiffTools.finite_difference_jacobian!(_J2,f,rand(30),Val{:central},color=repeat(1:3,10))
+@test fcalls == 6
+@test _J2 ≈ _J
+
+_J2 = similar(_J2)
+fcalls = 0
+DiffEqDiffTools.finite_difference_jacobian!(_J2,f,rand(30),Val{:complex},color=repeat(1:3,10))
+@test fcalls == 3
+@test _J2 ≈ _J
