@@ -221,8 +221,8 @@ function finite_difference_jacobian!(
                         end
                     end
                 else
-                    @.. fx = x1 * (color == color_i)
-                    tmp = norm(fx)
+                    @.. fx1 = x1 * (color == color_i)
+                    tmp = norm(fx1)
                 end
 
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -343,8 +343,8 @@ function finite_difference_jacobian!(
                         end
                     end
                 else
-                    @.. fx = x1 * (color == color_i)
-                    tmp = norm(fx)
+                    @.. fx1 = x1 * (color == color_i)
+                    tmp = norm(fx1)
                 end
                 epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep, dir)
 
