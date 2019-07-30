@@ -187,7 +187,7 @@ function finite_difference_gradient!(
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
     if fdtype != Val{:complex}
-        @. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
+        @.. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
         copyto!(c1,x)
     end
     if fdtype == Val{:forward}
@@ -368,14 +368,14 @@ function finite_difference_gradient!(
             c1 .= f(x+epsilon)
         end
         if typeof(fx) != Nothing
-            @. df = (c1 - fx) / epsilon
+            @.. df = (c1 - fx) / epsilon
         else
             if inplace == Val{true}
                 f(c2, x)
             else
                 c2 .= f(x)
             end
-            @. df = (c1 - c2) / epsilon
+            @.. df = (c1 - c2) / epsilon
         end
     elseif fdtype == Val{:central}
         epsilon = compute_epsilon(Val{:central}, x, relstep, absstep, dir)
@@ -386,7 +386,7 @@ function finite_difference_gradient!(
             c1 .= f(x+epsilon)
             c2 .= f(x-epsilon)
         end
-        @. df = (c1 - c2) / (2*epsilon)
+        @.. df = (c1 - c2) / (2*epsilon)
     elseif fdtype == Val{:complex} && returntype <: Real
         epsilon_complex = eps(real(eltype(x)))
         if inplace == Val{true}
@@ -394,7 +394,7 @@ function finite_difference_gradient!(
         else
             c1 .= f(x+im*epsilon_complex)
         end
-        @. df = imag(c1) / epsilon_complex
+        @.. df = imag(c1) / epsilon_complex
     else
         fdtype_error(returntype)
     end
