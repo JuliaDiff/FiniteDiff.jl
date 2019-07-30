@@ -238,15 +238,25 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                if J isa SparseMatrixCSC
+                                    J.nzval[i] = vfx1[rows_index[i]]
+                                else
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                end
                             end
                         end
                     else
                         #=
+                        J.nzval[rows_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        or
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        if J isa SparseMatrixCSC
+                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                        else
+                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        end
                     end
                 end
             else
@@ -263,15 +273,25 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                if J isa SparseMatrixCSC
+                                    J.nzval[i] = vfx1[rows_index[i]]
+                                else
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                end
                             end
                         end
                     else
                         #=
+                        J.nzval[rows_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        or
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        if J isa SparseMatrixCSC
+                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                        else
+                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        end
                     end
                 end
             end
@@ -330,15 +350,25 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                if J isa SparseMatrixCSC
+                                    J.nzval[i] = vfx1[rows_index[i]]
+                                else
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                end
                             end
                         end
                     else
                         #=
+                        J.nzval[rows_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        or
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        if J isa SparseMatrixCSC
+                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                        else
+                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        end
                     end
                 end
 
@@ -360,15 +390,25 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                if J isa SparseMatrixCSC
+                                    J.nzval[i] = vfx1[rows_index[i]]
+                                else
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                end
                             end
                         end
                     else
                         #=
+                        J.nzval[rows_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        or
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        if J isa SparseMatrixCSC
+                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                        else
+                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        end
                     end
                 end
             end
@@ -416,15 +456,25 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+                                if J isa SparseMatrixCSC
+                                    J.nzval[i] = vfx[rows_index[i]]
+                                else
+                                    J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+                                end
                             end
                         end
                     else
                         #=
-                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        J.nzval[rows_index] .+= (color[cols_index] .== color_i) .* vfx[rows_index]
+                        or
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
+                        if J isa SparseMatrixCSC
+                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index)
+                        else
+                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
+                        end
                     end
                 end
 
@@ -442,15 +492,25 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+                                if J isa SparseMatrixCSC
+                                    J.nzval[i] = vfx1[rows_index[i]]
+                                else
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                end
                             end
                         end
                     else
                         #=
+                        J.nzval[rows_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        or
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
+                        if J isa SparseMatrixCSC
+                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                        else
+                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        end
                     end
                 end
             end
