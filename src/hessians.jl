@@ -59,23 +59,27 @@ function finite_difference_hessian!(H,f,x,
     fx = f(x)
 
     for i = 1:n
-        xi = x[i]
+        xi = ArrayInterface.allowed_getindex(x,i)
         epsilon = compute_epsilon(Val{:hcentral}, xi, relstep, absstep)
 
         if inplace === Val{true}
-            xpp[i], xmm[i] = xi + epsilon, xi - epsilon
+            ArrayInterface.allowed_setindex!(xpp,xi + epsilon,i)
+            ArrayInterface.allowed_setindex!(xmm,xi - epsilon,i)
         else
             xpp = Base.setindex(xpp,xi + epsilon, i)
             xmm = Base.setindex(xmm,xi - epsilon, i)
         end
 
-        H[i, i] = (f(xpp) - 2*fx + f(xmm)) / epsilon^2
+        ArrayInterface.allowed_setindex!(H,(f(xpp) - 2*fx + f(xmm)) / epsilon^2,i,i)
         epsiloni = compute_epsilon(Val{:central}, xi, relstep, absstep)
         xp = xi + epsiloni
         xm = xi - epsiloni
 
         if inplace === Val{true}
-            xpp[i], xpm[i], xmp[i], xmm[i] = xp, xp, xm, xm
+            ArrayInterface.allowed_setindex!(xpp,xp,i)
+            ArrayInterface.allowed_setindex!(xpm,xp,i)
+            ArrayInterface.allowed_setindex!(xmp,xm,i)
+            ArrayInterface.allowed_setindex!(xmm,xm,i)
         else
             xpp = Base.setindex(xpp,xp,i)
             xpm = Base.setindex(xpm,xp,i)
@@ -84,13 +88,16 @@ function finite_difference_hessian!(H,f,x,
         end
 
         for j = i+1:n
-            xj = x[j]
+            xj = ArrayInterface.allowed_getindex(x,j)
             epsilonj = compute_epsilon(Val{:central}, xj, relstep, absstep)
             xp = xj + epsilonj
             xm = xj - epsilonj
 
             if inplace === Val{true}
-                xpp[j], xpm[j], xmp[j], xmm[j] = xp, xm, xp, xm
+                ArrayInterface.allowed_setindex!(xpp,xp,i)
+                ArrayInterface.allowed_setindex!(xpm,xm,i)
+                ArrayInterface.allowed_setindex!(xmp,xp,i)
+                ArrayInterface.allowed_setindex!(xmm,xm,i)
             else
                 xpp = Base.setindex(xpp,xp,j)
                 xpm = Base.setindex(xpm,xm,j)
@@ -98,10 +105,13 @@ function finite_difference_hessian!(H,f,x,
                 xmm = Base.setindex(xmm,xm,j)
             end
 
-            H[i, j] = (f(xpp) - f(xpm) - f(xmp) + f(xmm))/(4*epsiloni*epsilonj)
+            ArrayInterface.allowed_setindex!(H,(f(xpp) - f(xpm) - f(xmp) + f(xmm))/(4*epsiloni*epsilonj),i,j)
 
             if inplace === Val{true}
-                xpp[j], xpm[j], xmp[j], xmm[j] = xj, xj, xj, xj
+                ArrayInterface.allowed_setindex!(xpp,xj,j)
+                ArrayInterface.allowed_setindex!(xpm,xj,j)
+                ArrayInterface.allowed_setindex!(xmp,xj,j)
+                ArrayInterface.allowed_setindex!(xmm,xj,j)
             else
                 xpp = Base.setindex(xpp,xj,j)
                 xpm = Base.setindex(xpm,xj,j)
@@ -111,14 +121,16 @@ function finite_difference_hessian!(H,f,x,
         end
 
         if inplace === Val{true}
-            xpp[i], xpm[i], xmp[i], xmm[i] = xi, xi, xi, xi
+            ArrayInterface.allowed_setindex!(xpp,xi,i)
+            ArrayInterface.allowed_setindex!(xpm,xi,i)
+            ArrayInterface.allowed_setindex!(xmp,xi,i)
+            ArrayInterface.allowed_setindex!(xmm,xi,i)
         else
             xpp = Base.setindex(xpp,xi,i)
             xpm = Base.setindex(xpm,xi,i)
             xmp = Base.setindex(xmp,xi,i)
             xmm = Base.setindex(xmm,xi,i)
         end
-
     end
     LinearAlgebra.copytri!(H,'U')
 end
