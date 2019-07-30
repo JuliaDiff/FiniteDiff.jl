@@ -213,40 +213,14 @@ function finite_difference_jacobian!(
                     _x1 = Base.setindex(x1,x1_save+epsilon,color_i)
                 end
             else # Perturb along the color vector
-                if ArrayInterface.fast_scalar_indexing(x1)
-                    tmp = zero(x[1])
-                    for i in 1:n
-                        if color[i] == color_i
-                            tmp += abs2(x1[i])
-                        end
-                    end
-                else
-                    @.. fx1 = x1 * (color == color_i)
-                    tmp = norm(fx1)
-                end
-
+                @.. fx1 = x1 * (color == color_i)
+                tmp = norm(fx1)
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
 
-                if inplace != Val{true}
-                    _x1 = copy(x1)
-                end
-
-                if ArrayInterface.fast_scalar_indexing(x1)
-                    for i in 1:n
-                        if color[i] == color_i
-                            if inplace == Val{true}
-                                x1[i] += epsilon
-                            else
-                                _x1 = Base.setindex(_x1,_x1[i]+epsilon,i)
-                            end
-                        end
-                    end
+                if inplace == Val{true}
+                    @.. x1 = x1 + epsilon * (color == color_i)
                 else
-                    if inplace == Val{true}
-                        @.. x1 += epsilon * (color == color_i)
-                    else
-                        _x1 = @.. _x1 + epsilon * (color == color_i)
-                    end
+                    _x1 = @.. _x1 + epsilon * (color == color_i)
                 end
             end
 
@@ -307,13 +281,7 @@ function finite_difference_jacobian!(
                 if color isa Base.OneTo || color isa UnitRange || color isa StaticArrays.SOneTo #Dense matrix
                     ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
                 else
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        for i in 1:n
-                            color[i] == color_i && (x1[i] -= epsilon)
-                        end
-                    else
-                        @.. x1 -= epsilon * (color == color_i)
-                    end
+                    @.. x1 = x1 - epsilon * (color == color_i)
                 end
             end
 
@@ -335,44 +303,15 @@ function finite_difference_jacobian!(
                     _x  = Base.setindex(x, x_save-epsilon, color_i)
                 end
             else # Perturb along the color vector
-                if ArrayInterface.fast_scalar_indexing(x1)
-                    tmp = zero(x[1])
-                    for i in 1:n
-                        if color[i] == color_i
-                            tmp += abs2(x1[i])
-                        end
-                    end
-                else
-                    @.. fx1 = x1 * (color == color_i)
-                    tmp = norm(fx1)
-                end
+                @.. fx1 = x1 * (color == color_i)
+                tmp = norm(fx1)
                 epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep, dir)
-
-                if inplace != Val{true}
-                    _x1 = copy(x1)
-                    _x  = copy(x)
-                end
-
-                if ArrayInterface.fast_scalar_indexing(x)
-                    for i in 1:n
-                        if color[i] == color_i
-                            if inplace == Val{true}
-                                x1[i] += epsilon
-                                x[i]  -= epsilon
-                            else
-                                _x1 = Base.setindex(_x1,_x1[i]+epsilon,i)
-                                _x  = Base.setindex(_x,_x[i]-epsilon,i)
-                            end
-                        end
-                    end
+                if inplace == Val{true}
+                    @.. x1 = x1 + epsilon * (color == color_i)
+                    @.. x  = x  - epsilon * (color == color_i)
                 else
-                    if inplace == Val{true}
-                        @.. x1 += epsilon * (color == color_i)
-                        @.. x  -= epsilon * (color == color_i)
-                    else
-                        _x1 = @.. _x1 + epsilon * (color == color_i)
-                        _x  = @.. _x  - epsilon * (color == color_i)
-                    end
+                    _x1 = @.. _x1 + epsilon * (color == color_i)
+                    _x  = @.. _x  - epsilon * (color == color_i)
                 end
             end
 
@@ -440,15 +379,8 @@ function finite_difference_jacobian!(
                     ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
                     ArrayInterface.allowed_setindex!(x,x_save,color_i)
                 else
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        for i in 1:n
-                            color[i] == color_i && (x1[i] -= epsilon)
-                            color[i] == color_i && (x[i]  += epsilon)
-                        end
-                    else
-                        @.. x1 -= epsilon * (color == color_i)
-                        @.. x  += epsilon * (color == color_i)
-                    end
+                    @.. x1 = x1 - epsilon * (color == color_i)
+                    @.. x  = x  + epsilon * (color == color_i)
                 end
             end
         end
@@ -464,25 +396,10 @@ function finite_difference_jacobian!(
                     _x1 = setindex(x1,x1_save+im*epsilon,color_i)
                 end
             else # Perturb along the color vector
-                if inplace != Val{true}
-                    _x1 = copy(x1)
-                end
-                if ArrayInterface.fast_scalar_indexing(x1)
-                    for i in 1:n
-                        if color[i] == color_i
-                            if inplace == Val{true}
-                                x1[i] += im*epsilon
-                            else
-                                _x1 = setindex(_x1,_x1[i]+im*epsilon,i)
-                            end
-                        end
-                    end
+                if inplace == Val{true}
+                    @.. x1 = x1 + im * epsilon * (color == color_i)
                 else
-                    if inplace == Val{true}
-                        @.. x1 += im * epsilon * (color == color_i)
-                    else
-                        _x1 = @.. x1 + im * epsilon * (color == color_i)
-                    end
+                    _x1 = @.. x1 + im * epsilon * (color == color_i)
                 end
             end
 
@@ -543,13 +460,7 @@ function finite_difference_jacobian!(
                 if color isa Base.OneTo || color isa StaticArrays.SOneTo #Dense matrix
                     ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
                 else
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        for i in 1:n
-                            color[i] == color_i && (x1[i] -= im*epsilon)
-                        end
-                    else
-                        @.. x1 -= im * epsilon * (color == color_i)
-                    end
+                    @.. x1 = x1 - im * epsilon * (color == color_i)
                 end
             end
         end
