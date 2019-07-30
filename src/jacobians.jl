@@ -184,6 +184,10 @@ function finite_difference_jacobian!(
         rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
     end
 
+    if sparsity !== nothing && !ArrayInterface.fast_scalar_indexing(x1)
+        fill!(J,false)
+    end
+
     if fdtype == Val{:forward}
         vfx1 = vec(fx1)
 
@@ -257,10 +261,18 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     @. vfx1 = (vfx1 - vfx) / epsilon
 
-                    for i in 1:length(cols_index)
-                        if color[cols_index[i]] == color_i
-                            J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                    if ArrayInterface.fast_scalar_indexing(x1)
+                        for i in 1:length(cols_index)
+                            if color[cols_index[i]] == color_i
+                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                            end
                         end
+                    else
+                        #=
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        += means requires a zero'd out start
+                        =#
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
             else
@@ -274,10 +286,18 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     _vfx1 = (vfx1 - vfx) / epsilon
 
-                    for i in 1:length(cols_index)
-                        if color[cols_index[i]] == color_i
-                            J[rows_index[i],cols_index[i]] = _vfx1[rows_index[i]]
+                    if ArrayInterface.fast_scalar_indexing(x1)
+                        for i in 1:length(cols_index)
+                            if color[cols_index[i]] == color_i
+                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                            end
                         end
+                    else
+                        #=
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        += means requires a zero'd out start
+                        =#
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
             end
@@ -368,10 +388,18 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     @. vfx1 = (vfx1 - vfx) / 2epsilon
 
-                    for i in 1:length(cols_index)
-                        if color[cols_index[i]] == color_i
-                            J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                    if ArrayInterface.fast_scalar_indexing(x1)
+                        for i in 1:length(cols_index)
+                            if color[cols_index[i]] == color_i
+                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                            end
                         end
+                    else
+                        #=
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        += means requires a zero'd out start
+                        =#
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
 
@@ -390,10 +418,18 @@ function finite_difference_jacobian!(
                     vfx1 = (vfx1 - vfx) / 2epsilon
                     # vfx1 is the compressed Jacobian column
 
-                    for i in 1:length(cols_index)
-                        if color[cols_index[i]] == color_i
-                            J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                    if ArrayInterface.fast_scalar_indexing(x1)
+                        for i in 1:length(cols_index)
+                            if color[cols_index[i]] == color_i
+                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                            end
                         end
+                    else
+                        #=
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        += means requires a zero'd out start
+                        =#
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
             end
@@ -460,10 +496,18 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     @. vfx = imag(vfx) / epsilon
 
-                    for i in 1:length(cols_index)
-                        if color[cols_index[i]] == color_i
-                            J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+                    if ArrayInterface.fast_scalar_indexing(x1)
+                        for i in 1:length(cols_index)
+                            if color[cols_index[i]] == color_i
+                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                            end
                         end
+                    else
+                        #=
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        += means requires a zero'd out start
+                        =#
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
 
@@ -478,10 +522,18 @@ function finite_difference_jacobian!(
                     # J is a sparse matrix, so decompress on the fly
                     vfx = imag(vfx) / epsilon
 
-                    for i in 1:length(cols_index)
-                        if color[cols_index[i]] == color_i
-                            J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+                    if ArrayInterface.fast_scalar_indexing(x1)
+                        for i in 1:length(cols_index)
+                            if color[cols_index[i]] == color_i
+                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                            end
                         end
+                    else
+                        #=
+                        J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
+                        += means requires a zero'd out start
+                        =#
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
             end
