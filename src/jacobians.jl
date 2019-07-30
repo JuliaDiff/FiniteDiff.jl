@@ -184,7 +184,7 @@ function finite_difference_jacobian!(
         rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
     end
 
-    if sparsity !== nothing && !ArrayInterface.fast_scalar_indexing(x1)
+    if sparsity !== nothing
         fill!(J,false)
     end
 
@@ -230,7 +230,7 @@ function finite_difference_jacobian!(
                 if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
-                    @.. J[:,color_i] = (vfx1 - vfx) / epsilon
+                    @. J[:,color_i] = (vfx1 - vfx) / epsilon
                 else
                     # J is a sparse matrix, so decompress on the fly
                     @.. vfx1 = (vfx1 - vfx) / epsilon
@@ -322,7 +322,7 @@ function finite_difference_jacobian!(
                 if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
-                    @.. J[:,color_i] = (vfx1 - vfx) / 2epsilon
+                    @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
                 else
                     # J is a sparse matrix, so decompress on the fly
                     @.. vfx1 = (vfx1 - vfx) / 2epsilon
@@ -408,7 +408,7 @@ function finite_difference_jacobian!(
                 if sparsity isa Nothing
                     # J is dense, so either it is truly dense or this is the
                     # compressed form of the coloring, so write into it.
-                    @.. J[:,color_i] = imag(vfx) / epsilon
+                    @. J[:,color_i] = imag(vfx) / epsilon
                 else
                     # J is a sparse matrix, so decompress on the fly
                     @.. vfx = imag(vfx) / epsilon
@@ -416,7 +416,7 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
                             end
                         end
                     else
@@ -424,7 +424,7 @@ function finite_difference_jacobian!(
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
                     end
                 end
 
@@ -442,7 +442,7 @@ function finite_difference_jacobian!(
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
                             if color[cols_index[i]] == color_i
-                                J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
+                                J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
                             end
                         end
                     else
@@ -450,7 +450,7 @@ function finite_difference_jacobian!(
                         J[rows_index, cols_index] .+= (color[cols_index] .== color_i) .* vfx1[rows_index]
                         += means requires a zero'd out start
                         =#
-                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                        @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
                     end
                 end
             end
