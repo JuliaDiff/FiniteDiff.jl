@@ -3,10 +3,11 @@ __precompile__()
 module DiffEqDiffTools
 
 using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface
+using DiffEqBase
+using DiffEqBase: @..
 
 import Base: resize!
 
-include("diffeqfastbc.jl")
 include("function_wrappers.jl")
 include("finitediff.jl")
 include("derivatives.jl")
