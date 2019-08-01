@@ -1,6 +1,6 @@
 name = "DiffEqDiffTools"
 uuid = "01453d9d-ee7c-5054-8395-0335cb756afa"
-version = "1.0.0"
+version = "1.1.0"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
