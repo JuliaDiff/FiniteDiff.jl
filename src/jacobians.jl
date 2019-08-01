@@ -213,14 +213,14 @@ function finite_difference_jacobian!(
                     _x1 = Base.setindex(x1,x1_save+epsilon,color_i)
                 end
             else # Perturb along the color vector
-                @.. fx1 = x1 * (color == color_i)
+                @. fx1 = x1 * (color == color_i)
                 tmp = norm(fx1)
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
 
                 if inplace == Val{true}
-                    @.. x1 = x1 + epsilon * (color == color_i)
+                    @. x1 = x1 + epsilon * (color == color_i)
                 else
-                    _x1 = @.. _x1 + epsilon * (color == color_i)
+                    _x1 = @. _x1 + epsilon * (color == color_i)
                 end
             end
 
@@ -233,7 +233,7 @@ function finite_difference_jacobian!(
                     @. J[:,color_i] = (vfx1 - vfx) / epsilon
                 else
                     # J is a sparse matrix, so decompress on the fly
-                    @.. vfx1 = (vfx1 - vfx) / epsilon
+                    @. vfx1 = (vfx1 - vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
@@ -253,9 +253,9 @@ function finite_difference_jacobian!(
                         += means requires a zero'd out start
                         =#
                         if J isa SparseMatrixCSC
-                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                         else
-                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                         end
                     end
                 end
@@ -288,9 +288,9 @@ function finite_difference_jacobian!(
                         += means requires a zero'd out start
                         =#
                         if J isa SparseMatrixCSC
-                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                         else
-                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                         end
                     end
                 end
@@ -301,7 +301,7 @@ function finite_difference_jacobian!(
                 if color isa Base.OneTo || color isa UnitRange || color isa StaticArrays.SOneTo #Dense matrix
                     ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
                 else
-                    @.. x1 = x1 - epsilon * (color == color_i)
+                    @. x1 = x1 - epsilon * (color == color_i)
                 end
             end
 
@@ -323,15 +323,15 @@ function finite_difference_jacobian!(
                     _x  = Base.setindex(x, x_save-epsilon, color_i)
                 end
             else # Perturb along the color vector
-                @.. fx1 = x1 * (color == color_i)
+                @. fx1 = x1 * (color == color_i)
                 tmp = norm(fx1)
                 epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep, dir)
                 if inplace == Val{true}
-                    @.. x1 = x1 + epsilon * (color == color_i)
-                    @.. x  = x  - epsilon * (color == color_i)
+                    @. x1 = x1 + epsilon * (color == color_i)
+                    @. x  = x  - epsilon * (color == color_i)
                 else
-                    _x1 = @.. _x1 + epsilon * (color == color_i)
-                    _x  = @.. _x  - epsilon * (color == color_i)
+                    _x1 = @. _x1 + epsilon * (color == color_i)
+                    _x  = @. _x  - epsilon * (color == color_i)
                 end
             end
 
@@ -345,7 +345,7 @@ function finite_difference_jacobian!(
                     @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
                 else
                     # J is a sparse matrix, so decompress on the fly
-                    @.. vfx1 = (vfx1 - vfx) / 2epsilon
+                    @. vfx1 = (vfx1 - vfx) / 2epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
@@ -365,9 +365,9 @@ function finite_difference_jacobian!(
                         += means requires a zero'd out start
                         =#
                         if J isa SparseMatrixCSC
-                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                         else
-                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                         end
                     end
                 end
@@ -405,9 +405,9 @@ function finite_difference_jacobian!(
                         += means requires a zero'd out start
                         =#
                         if J isa SparseMatrixCSC
-                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                         else
-                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                         end
                     end
                 end
@@ -419,8 +419,8 @@ function finite_difference_jacobian!(
                     ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
                     ArrayInterface.allowed_setindex!(x,x_save,color_i)
                 else
-                    @.. x1 = x1 - epsilon * (color == color_i)
-                    @.. x  = x  + epsilon * (color == color_i)
+                    @. x1 = x1 - epsilon * (color == color_i)
+                    @. x  = x  + epsilon * (color == color_i)
                 end
             end
         end
@@ -437,9 +437,9 @@ function finite_difference_jacobian!(
                 end
             else # Perturb along the color vector
                 if inplace == Val{true}
-                    @.. x1 = x1 + im * epsilon * (color == color_i)
+                    @. x1 = x1 + im * epsilon * (color == color_i)
                 else
-                    _x1 = @.. x1 + im * epsilon * (color == color_i)
+                    _x1 = @. x1 + im * epsilon * (color == color_i)
                 end
             end
 
@@ -451,7 +451,7 @@ function finite_difference_jacobian!(
                     @. J[:,color_i] = imag(vfx) / epsilon
                 else
                     # J is a sparse matrix, so decompress on the fly
-                    @.. vfx = imag(vfx) / epsilon
+                    @. vfx = imag(vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         for i in 1:length(cols_index)
@@ -471,9 +471,9 @@ function finite_difference_jacobian!(
                         += means requires a zero'd out start
                         =#
                         if J isa SparseMatrixCSC
-                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index)
+                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index)
                         else
-                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
+                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
                         end
                     end
                 end
@@ -507,9 +507,9 @@ function finite_difference_jacobian!(
                         += means requires a zero'd out start
                         =#
                         if J isa SparseMatrixCSC
-                            @.. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
+                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                         else
-                            @.. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
+                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                         end
                     end
                 end
@@ -520,7 +520,7 @@ function finite_difference_jacobian!(
                 if color isa Base.OneTo || color isa StaticArrays.SOneTo #Dense matrix
                     ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
                 else
-                    @.. x1 = x1 - im * epsilon * (color == color_i)
+                    @. x1 = x1 - im * epsilon * (color == color_i)
                 end
             end
         end

@@ -109,19 +109,19 @@ function finite_difference_derivative!(
 
     fx, epsilon = cache.fx, cache.epsilon
     if typeof(epsilon) != Nothing
-        @.. epsilon = compute_epsilon(fdtype, x, relstep, absstep, dir)
+        @. epsilon = compute_epsilon(fdtype, x, relstep, absstep, dir)
     end
     if fdtype == Val{:forward}
         if typeof(fx) == Nothing
-            @.. df = (f(x+epsilon) - f(x)) / epsilon
+            @. df = (f(x+epsilon) - f(x)) / epsilon
         else
-            @.. df = (f(x+epsilon) - fx) / epsilon
+            @. df = (f(x+epsilon) - fx) / epsilon
         end
     elseif fdtype == Val{:central}
-        @.. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
+        @. df = (f(x+epsilon) - f(x-epsilon)) / (2 * epsilon)
     elseif fdtype == Val{:complex} && returntype<:Real
         epsilon_complex = eps(eltype(x))
-        @.. df = imag(f(x+im*epsilon_complex)) / epsilon_complex
+        @. df = imag(f(x+im*epsilon_complex)) / epsilon_complex
     else
         fdtype_error(returntype)
     end

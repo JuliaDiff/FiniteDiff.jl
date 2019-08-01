@@ -6,7 +6,6 @@ using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface
 
 import Base: resize!
 
-include("diffeqfastbc.jl")
 include("function_wrappers.jl")
 include("finitediff.jl")
 include("derivatives.jl")
