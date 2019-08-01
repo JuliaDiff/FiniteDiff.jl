@@ -15,13 +15,8 @@ function JacobianCache(
     sparsity = nothing) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
-        if x isa StaticArray
-            x1  = zeros(SVector{length(x),Complex{eltype(x)}})
-            _fx = zeros(SVector{length(x),Complex{eltype(x)}})
-        else
-            x1 = fill(zero(Complex{eltype(x)}), size(x))
-            _fx = fill(zero(Complex{eltype(x)}), size(x))
-        end
+        x1  = false .* im .* x
+        _fx = false .* im .* x
     else
         x1 = copy(x)
         _fx = copy(x)
@@ -46,21 +41,13 @@ function JacobianCache(
     sparsity = nothing) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
-        if x1 isa StaticArray
-            x1 = zeros(SVector{length(x),Complex{eltype(x)}})
-        else
-            x1 = fill(zero(Complex{eltype(x)}), size(x))
-        end
+        x1  = false .* im .* x
     else
         x1 = copy(x)
     end
 
     if eltype(fx) <: Real && fdtype==Val{:complex}
-        if x1 isa StaticArray
-            _fx = zeros(SVector{length(fx),Complex{eltype(x)}})
-        else
-            _fx = fill(zero(Complex{eltype(x)}), size(fx))
-        end
+        _fx = false .* im .* fx
     else
         _fx = copy(fx)
     end
@@ -88,20 +75,12 @@ function JacobianCache(
         !(returntype<:Real) && fdtype_error(returntype)
 
         if eltype(fx) <: Real
-            if x1 isa StaticArray
-                _fx = zeros(SVector{length(fx),Complex{eltype(x1)}})
-            else
-                _fx = fill(zero(Complex{eltype(x1)}), size(fx))
-            end
+            _fx  = false .* im .* fx
         else
             _fx = fx
         end
         if eltype(x1) <: Real
-            if x1 isa StaticArray
-                _x1 = zeros(SVector{length(x1),Complex{eltype(x1)}})
-            else
-                _x1 = fill(zero(Complex{eltype(x1)}), size(x1))
-            end
+            _x1  = false .* im .* x1
         else
             _x1 = x1
         end
