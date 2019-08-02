@@ -20,19 +20,19 @@ J = DiffEqDiffTools.finite_difference_jacobian(f,x, Val{:forward}, eltype(x), Va
 @test J ≈ second_derivative_stencil(30)
 _J = sparse(J)
 DiffEqDiffTools.finite_difference_jacobian!(_J, f,x, Val{:forward}, eltype(x), Val{false},
-    color=repeat(1:3,10))
+    colorvec=repeat(1:3,10))
 @test _J ≈ second_derivative_stencil(30)
 
 J = DiffEqDiffTools.finite_difference_jacobian(f,x, Val{:central}, eltype(x), Val{false})
 @test J ≈ second_derivative_stencil(30)
 _J = sparse(J)
 DiffEqDiffTools.finite_difference_jacobian!(_J, f,x, Val{:central}, eltype(x), Val{false},
-    color=repeat(1:3,10))
+    colorvec=repeat(1:3,10))
 @test _J ≈ second_derivative_stencil(30)
 
 J = DiffEqDiffTools.finite_difference_jacobian(f,x, Val{:complex}, eltype(x), Val{false})
 @test J ≈ second_derivative_stencil(30)
 _J = sparse(J)
 DiffEqDiffTools.finite_difference_jacobian!(_J, f,x, Val{:complex}, eltype(x), Val{false},
-    color=repeat(1:3,10))
+    colorvec=repeat(1:3,10))
 @test _J ≈ second_derivative_stencil(30)
