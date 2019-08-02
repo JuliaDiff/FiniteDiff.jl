@@ -161,7 +161,7 @@ function finite_difference_jacobian!(
     end
     vfx = vec(fx)
 
-    if ArrayInterface.has_sparsestruct(sparsity)
+    if ArrayInterface.has_sparsestruct(sparsity) & !ArrayInterface.fast_column_indexing(sparsity)
         rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
     end
 
@@ -217,10 +217,18 @@ function finite_difference_jacobian!(
                     @. vfx1 = (vfx1 - vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        for col_index in 1:n
-                            if color[col_index] == color_i
-                                for row_index in ArrayInterface.findstructralnz(J,col_index)
-                                    J[row_index,col_index]=vfx1[row_index]
+                        if ArrayInterface.fast_column_indexing(J)
+                            for col_index in 1:n
+                                if color[col_index] == color_i
+                                    for row_index in ArrayInterface.findstructralnz(J,col_index)
+                                        J[row_index,col_index]=vfx1[row_index]
+                                    end
+                                end
+                            end
+                        else
+                            for i in 1:length(cols_index)
+                                if color[cols_index[i]] == color_i
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
                                 end
                             end
                         end
@@ -250,10 +258,18 @@ function finite_difference_jacobian!(
                     _vfx1 = (vfx1 - vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        for col_index in 1:n
-                            if color[col_index] == color_i
-                                for row_index in ArrayInterface.findstructralnz(J,col_index)
-                                    J[row_index,col_index]=vfx1[row_index]
+                        if ArrayInterface.fast_column_indexing(J)
+                            for col_index in 1:n
+                                if color[col_index] == color_i
+                                    for row_index in ArrayInterface.findstructralnz(J,col_index)
+                                        J[row_index,col_index]=vfx1[row_index]
+                                    end
+                                end
+                            end
+                        else
+                            for i in 1:length(cols_index)
+                                if color[cols_index[i]] == color_i
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
                                 end
                             end
                         end
@@ -325,10 +341,18 @@ function finite_difference_jacobian!(
                     @. vfx1 = (vfx1 - vfx) / 2epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        for col_index in 1:n
-                            if color[col_index] == color_i
-                                for row_index in ArrayInterface.findstructralnz(J,col_index)
-                                    J[row_index,col_index]=vfx1[row_index]
+                        if ArrayInterface.fast_column_indexing(J)
+                            for col_index in 1:n
+                                if color[col_index] == color_i
+                                    for row_index in ArrayInterface.findstructralnz(J,col_index)
+                                        J[row_index,col_index]=vfx1[row_index]
+                                    end
+                                end
+                            end
+                        else
+                            for i in 1:length(cols_index)
+                                if color[cols_index[i]] == color_i
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
                                 end
                             end
                         end
@@ -363,10 +387,18 @@ function finite_difference_jacobian!(
                     # vfx1 is the compressed Jacobian column
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        for col_index in 1:n
-                            if color[col_index] == color_i
-                                for row_index in ArrayInterface.findstructralnz(J,col_index)
-                                    J[row_index,col_index]=vfx1[row_index]
+                        if ArrayInterface.fast_column_indexing(J)
+                            for col_index in 1:n
+                                if color[col_index] == color_i
+                                    for row_index in ArrayInterface.findstructralnz(J,col_index)
+                                        J[row_index,col_index]=vfx1[row_index]
+                                    end
+                                end
+                            end
+                        else
+                            for i in 1:length(cols_index)
+                                if color[cols_index[i]] == color_i
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
                                 end
                             end
                         end
@@ -427,10 +459,18 @@ function finite_difference_jacobian!(
                     @. vfx = imag(vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        for col_index in 1:n
-                            if color[col_index] == color_i
-                                for row_index in ArrayInterface.findstructralnz(J,col_index)
-                                    J[row_index,col_index]=vfx[row_index]
+                        if ArrayInterface.fast_column_indexing(J)
+                            for col_index in 1:n
+                                if color[col_index] == color_i
+                                    for row_index in ArrayInterface.findstructralnz(J,col_index)
+                                        J[row_index,col_index]=vfx[row_index]
+                                    end
+                                end
+                            end
+                        else
+                            for i in 1:length(cols_index)
+                                if color[cols_index[i]] == color_i
+                                    J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
                                 end
                             end
                         end
@@ -461,10 +501,18 @@ function finite_difference_jacobian!(
                     vfx = imag(vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        for col_index in 1:n
-                            if color[col_index] == color_i
-                                for row_index in ArrayInterface.findstructralnz(J,col_index)
-                                    J[row_index,col_index]=vfx1[row_index]
+                        if ArrayInterface.fast_column_indexing(J)
+                            for col_index in 1:n
+                                if color[col_index] == color_i
+                                    for row_index in ArrayInterface.findstructralnz(J,col_index)
+                                        J[row_index,col_index]=vfx1[row_index]
+                                    end
+                                end
+                            end
+                        else
+                            for i in 1:length(cols_index)
+                                if color[cols_index[i]] == color_i
+                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
                                 end
                             end
                         end
