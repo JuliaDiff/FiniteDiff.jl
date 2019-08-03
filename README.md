@@ -43,12 +43,12 @@ variables. This is summarized as:
 
 In all functions, the inplace form is `f!(dx,x)` while the out of place form is `dx = f(x)`.
 
-## Color Vectors
+## colorvec Vectors
 
-Color vectors are allowed to be supplied to the Jacobian routines, and these are
+colorvec vectors are allowed to be supplied to the Jacobian routines, and these are
 the directional derivatives for constructing the Jacobian. For example, an accurate
 NxN tridiagonal Jacobian can be computed in just 4 `f` calls by using
-`color=repeat(1:3,N÷3)`. For information on automatically generating color
+`colorvec=repeat(1:3,N÷3)`. For information on automatically generating colorvec
 vectors of sparse matrices, see [SparseDiffTools.jl](https://github.com/JuliaDiffEq/SparseDiffTools.jl).
 
 Hessian coloring support is coming soon!
@@ -192,7 +192,7 @@ DiffEqDiffTools.finite_difference_jacobian(
     inplace    :: Type{Val{T3}}=Val{true};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x),
+    colorvec = eachindex(x),
     sparsity = nothing)
 
 finite_difference_jacobian!(J::AbstractMatrix,
@@ -204,7 +204,7 @@ finite_difference_jacobian!(J::AbstractMatrix,
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x),
+    colorvec = eachindex(x),
     sparsity = J isa SparseMatrixCSC ? J : nothing)
 
 # Cached
@@ -214,7 +214,7 @@ DiffEqDiffTools.finite_difference_jacobian(
     cache::JacobianCache;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = eachindex(x),
+    colorvec = eachindex(x),
     sparsity = nothing)
 
 DiffEqDiffTools.finite_difference_jacobian!(
@@ -224,7 +224,7 @@ DiffEqDiffTools.finite_difference_jacobian!(
     cache::JacobianCache;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    color = cache.color,
+    colorvec = cache.colorvec,
     sparsity = cache.sparsity)
 ```
 
@@ -236,7 +236,7 @@ DiffEqDiffTools.JacobianCache(
               fdtype     :: Type{T1} = Val{:central},
               returntype :: Type{T2} = eltype(x),
               inplace    :: Type{Val{T3}} = Val{true};
-              color = eachindex(x)
+              colorvec = eachindex(x)
               sparsity = nothing)
 ```
 
@@ -252,7 +252,7 @@ DiffEqDiffTools.JacobianCache(
               fdtype     :: Type{T1} = Val{:central},
               returntype :: Type{T2} = eltype(fx),
               inplace    :: Type{Val{T3}} = Val{true};
-              color = eachindex(x),
+              colorvec = eachindex(x),
               sparsity = nothing)
 ```
 
