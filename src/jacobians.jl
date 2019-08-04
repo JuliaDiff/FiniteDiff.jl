@@ -124,6 +124,30 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, dir=dir)
 end
 
+macro _colorediteration(mode,vfx)
+    if mode.value==:columniteration
+        return esc(quote
+            for col_index in 1:n
+                if colorvec[col_index] == color_i
+                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
+                        J[row_index,col_index]=$vfx[row_index]
+                    end
+                end
+            end
+        end)
+    elseif mode.value==:indexing
+        return esc(quote
+        for i in 1:length(cols_index)
+            if colorvec[cols_index[i]] == color_i
+                J[rows_index[i],cols_index[i]] = $vfx[rows_index[i]]
+            end
+        end
+        end)
+    else
+        throw(ErrorException("Can't recognize mode: $mode"))
+    end
+end
+
 function finite_difference_jacobian(
     f,
     x,
@@ -218,19 +242,9 @@ function finite_difference_jacobian!(
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         if ArrayInterface.fast_column_indexing(sparsity)
-                            for col_index in 1:n
-                                if colorvec[col_index] == color_i
-                                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                                        J[row_index,col_index]=vfx1[row_index]
-                                    end
-                                end
-                            end
+                            @_colorediteration(:columniteration,vfx1)
                         else
-                            for i in 1:length(cols_index)
-                                if colorvec[cols_index[i]] == color_i
-                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
-                                end
-                            end
+                            @_colorediteration(:indexing,vfx1)
                         end
                     else
                         #=
@@ -259,19 +273,9 @@ function finite_difference_jacobian!(
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         if ArrayInterface.fast_column_indexing(sparsity)
-                            for col_index in 1:n
-                                if colorvec[col_index] == color_i
-                                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                                        J[row_index,col_index]=vfx1[row_index]
-                                    end
-                                end
-                            end
+                            @_colorediteration(:columniteration,vfx1)
                         else
-                            for i in 1:length(cols_index)
-                                if colorvec[cols_index[i]] == color_i
-                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
-                                end
-                            end
+                            @_colorediteration(:indexing,vfx1)
                         end
                     else
                         #=
@@ -342,19 +346,9 @@ function finite_difference_jacobian!(
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         if ArrayInterface.fast_column_indexing(sparsity)
-                            for col_index in 1:n
-                                if colorvec[col_index] == color_i
-                                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                                        J[row_index,col_index]=vfx1[row_index]
-                                    end
-                                end
-                            end
+                            @_colorediteration(:columniteration,vfx1)
                         else
-                            for i in 1:length(cols_index)
-                                if colorvec[cols_index[i]] == color_i
-                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
-                                end
-                            end
+                            @_colorediteration(:indexing,vfx1)
                         end
                     else
                         #=
@@ -388,19 +382,9 @@ function finite_difference_jacobian!(
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         if ArrayInterface.fast_column_indexing(sparsity)
-                            for col_index in 1:n
-                                if colorvec[col_index] == color_i
-                                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                                        J[row_index,col_index]=vfx1[row_index]
-                                    end
-                                end
-                            end
+                            @_colorediteration(:columniteration,vfx1)
                         else
-                            for i in 1:length(cols_index)
-                                if colorvec[cols_index[i]] == color_i
-                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
-                                end
-                            end
+                            @_colorediteration(:indexing,vfx1)
                         end
                     else
                         #=
@@ -460,19 +444,9 @@ function finite_difference_jacobian!(
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         if ArrayInterface.fast_column_indexing(sparsity)
-                            for col_index in 1:n
-                                if colorvec[col_index] == color_i
-                                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                                        J[row_index,col_index]=vfx[row_index]
-                                    end
-                                end
-                            end
+                            @_colorediteration(:columniteration,vfx)
                         else
-                            for i in 1:length(cols_index)
-                                if colorvec[cols_index[i]] == color_i
-                                    J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
-                                end
-                            end
+                            @_colorediteration(:indexing,vfx)
                         end
                     else
                         #=
@@ -502,19 +476,9 @@ function finite_difference_jacobian!(
 
                     if ArrayInterface.fast_scalar_indexing(x1)
                         if ArrayInterface.fast_column_indexing(sparsity)
-                            for col_index in 1:n
-                                if colorvec[col_index] == color_i
-                                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                                        J[row_index,col_index]=vfx1[row_index]
-                                    end
-                                end
-                            end
+                            @_colorediteration(:columniteration,vfx1)
                         else
-                            for i in 1:length(cols_index)
-                                if colorvec[cols_index[i]] == color_i
-                                    J[rows_index[i],cols_index[i]] = vfx1[rows_index[i]]
-                                end
-                            end
+                            @_colorediteration(:indexing,vfx1)
                         end
                     else
                         #=
