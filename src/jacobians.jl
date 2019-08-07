@@ -124,27 +124,49 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, dir=dir)
 end
 
-macro _colorediteration(mode,vfx)
-    if mode.value==:columniteration
-        return esc(quote
-            for col_index in 1:n
-                if colorvec[col_index] == color_i
-                    for row_index in ArrayInterface.findstructralnz(sparsity,col_index)
-                        J[row_index,col_index]=$vfx[row_index]
+@inline function _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,ncols)
+    @inbounds for i in 1:length(cols_index)
+        if colorvec[cols_index[i]] == color_i
+            J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+        end
+    end
+end
+
+@inline function _colorediteration!(J,sparsity::SparseMatrixCSC,rows_index,cols_index,vfx,colorvec,color_i,ncols)
+    @inbounds for col_index in 1:ncols
+        if colorvec[col_index] == color_i
+            @inbounds for row_index in view(sparsity.rowval,sparsity.colptr[col_index]:sparsity.colptr[col_index+1]-1)
+                J[row_index,col_index]=vfx[row_index]
+            end
+        end
+    end
+end
+
+@inline function _colorediteration!(Jac::BlockBandedMatrices.BandedBlockBandedMatrix,
+                                    sparsity::BlockBandedMatrices.BandedBlockBandedMatrix,
+                                    rows_index,cols_index,vfx,colorvec,color_i,ncols)
+    λ,μ = subblockbandwidths(Jac)
+    rs = BlockBandedMatrices.BlockSizes((BlockBandedMatrices.cumulsizes(Jac,1),)) # column block sizes
+    cs = BlockBandedMatrices.BlockSizes((BlockBandedMatrices.cumulsizes(Jac,2),))
+    b = BlockBandedMatrices.BlockArray(vfx,rs)
+    c = BlockBandedMatrices.BlockArray(colorvec,cs)
+    @inbounds for J=Block.(1:BlockBandedMatrices.nblocks(Jac,2))
+        c_v = c.blocks[J.n[1]]
+        @inbounds for K=BlockBandedMatrices.blockcolrange(Jac,J)
+            V = view(Jac,K,J)
+            b_v = b.blocks[K.n[1]]
+            data = BlockBandedMatrices.bandeddata(V)
+            p = pointer(data)
+            st = stride(data,2)
+            m,n = size(V)
+            @inbounds for j=1:n
+                if c_v[j] == color_i
+                    @inbounds for k=max(1,j-μ):min(m,j+λ)
+                        unsafe_store!(p, b_v[k], (j-1)*st + μ + k - j + 1)
                     end
                 end
             end
-        end)
-    elseif mode.value==:indexing
-        return esc(quote
-        for i in 1:length(cols_index)
-            if colorvec[cols_index[i]] == color_i
-                J[rows_index[i],cols_index[i]] = $vfx[rows_index[i]]
-            end
         end
-        end)
-    else
-        throw(ErrorException("Can't recognize mode: $mode"))
     end
 end
 
@@ -163,6 +185,11 @@ function finite_difference_jacobian(
     finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, dir=dir)
     _J isa SMatrix ? SArray(J) : J
 end
+
+#override default setting of using findstructralnz
+_use_findstructralnz(sparsity) = ArrayInterface.has_sparsestruct(sparsity)
+_use_findstructralnz(::SparseMatrixCSC) = false
+_use_findstructralnz(::BlockBandedMatrices.BandedBlockBandedMatrix) = false
 
 function finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
@@ -185,7 +212,9 @@ function finite_difference_jacobian!(
     end
     vfx = vec(fx)
 
-    if ArrayInterface.has_sparsestruct(sparsity) & !ArrayInterface.fast_column_indexing(sparsity)
+    rows_index = nothing
+    cols_index = nothing
+    if _use_findstructralnz(sparsity)
         rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
     end
 
@@ -241,11 +270,7 @@ function finite_difference_jacobian!(
                     @. vfx1 = (vfx1 - vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        if ArrayInterface.fast_column_indexing(sparsity)
-                            @_colorediteration(:columniteration,vfx1)
-                        else
-                            @_colorediteration(:indexing,vfx1)
-                        end
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                     else
                         #=
                         J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
@@ -272,11 +297,7 @@ function finite_difference_jacobian!(
                     _vfx1 = (vfx1 - vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        if ArrayInterface.fast_column_indexing(sparsity)
-                            @_colorediteration(:columniteration,vfx1)
-                        else
-                            @_colorediteration(:indexing,vfx1)
-                        end
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                     else
                         #=
                         J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
@@ -345,11 +366,7 @@ function finite_difference_jacobian!(
                     @. vfx1 = (vfx1 - vfx) / 2epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        if ArrayInterface.fast_column_indexing(sparsity)
-                            @_colorediteration(:columniteration,vfx1)
-                        else
-                            @_colorediteration(:indexing,vfx1)
-                        end
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                     else
                         #=
                         J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
@@ -381,11 +398,7 @@ function finite_difference_jacobian!(
                     # vfx1 is the compressed Jacobian column
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        if ArrayInterface.fast_column_indexing(sparsity)
-                            @_colorediteration(:columniteration,vfx1)
-                        else
-                            @_colorediteration(:indexing,vfx1)
-                        end
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                     else
                         #=
                         J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
@@ -443,11 +456,7 @@ function finite_difference_jacobian!(
                     @. vfx = imag(vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        if ArrayInterface.fast_column_indexing(sparsity)
-                            @_colorediteration(:columniteration,vfx)
-                        else
-                            @_colorediteration(:indexing,vfx)
-                        end
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,n)
                     else
                         #=
                         J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx[rows_index]
@@ -475,11 +484,7 @@ function finite_difference_jacobian!(
                     vfx = imag(vfx) / epsilon
 
                     if ArrayInterface.fast_scalar_indexing(x1)
-                        if ArrayInterface.fast_column_indexing(sparsity)
-                            @_colorediteration(:columniteration,vfx1)
-                        else
-                            @_colorediteration(:indexing,vfx1)
-                        end
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                     else
                         #=
                         J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]

@@ -2,7 +2,7 @@ __precompile__()
 
 module DiffEqDiffTools
 
-using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface
+using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface, BlockBandedMatrices
 
 import Base: resize!
 
