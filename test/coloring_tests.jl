@@ -1,4 +1,4 @@
-using DiffEqDiffTools, LinearAlgebra, SparseArrays, Test, LinearAlgebra, BlockBandedMatrices, ArrayInterface
+using DiffEqDiffTools, LinearAlgebra, SparseArrays, Test, LinearAlgebra, BlockBandedMatrices, ArrayInterface, BandedMatrices
 
 fcalls = 0
 function f(dx,x)
@@ -94,9 +94,17 @@ function f(out, x)
 	return vec(out)
 end
 x = rand(10000)
-J = BandedBlockBandedMatrix(Ones(10000, 10000), (fill(100, 100), fill(100, 100)), (1, 1), (1, 1))
-Jsparse = sparse(J)
-colors = ArrayInterface.matrix_colors(J)
-DiffEqDiffTools.finite_difference_jacobian!(J, f, x, colorvec=colors)
-DiffEqDiffTools.finite_difference_jacobian!(Jsparse, f, x, colorvec=colors)
-@test J ≈ Jsparse
+Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), (fill(100, 100), fill(100, 100)), (1, 1), (1, 1))
+Jsparse = sparse(Jbbb)
+colorsbbb = ArrayInterface.matrix_colors(Jbbb)
+DiffEqDiffTools.finite_difference_jacobian!(Jbbb, f, x, colorvec=colorsbbb)
+DiffEqDiffTools.finite_difference_jacobian!(Jsparse, f, x, colorvec=colorsbbb)
+@test Jbbb ≈ Jsparse
+Jbb = BlockBandedMatrix(similar(Jsparse),(fill(100, 100), fill(100, 100)),(1,1));
+colorsbb = ArrayInterface.matrix_colors(Jbb)
+DiffEqDiffTools.finite_difference_jacobian!(Jbb, f, x, colorvec=colorsbb)
+@test Jbb ≈ Jsparse
+Jb = BandedMatrices.BandedMatrix(similar(Jsparse),(1,1))
+colorsb = ArrayInterface.matrix_colors(Jb)
+DiffEqDiffTools.finite_difference_jacobian!(Jb, f, x, colorvec=colorsb)
+@test Jb ≈ Jsparse

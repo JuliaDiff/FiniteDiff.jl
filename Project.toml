@@ -16,6 +16,7 @@ ArrayInterface = "1.1"
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
+BandedMatrices="aae01518-5342-5314-be14-df237901396f"
 
 [targets]
-test = ["Test","BlockBandedMatrices"]
+test = ["Test","BlockBandedMatrices","BandedMatrices"]
