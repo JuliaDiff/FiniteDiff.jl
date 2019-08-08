@@ -142,27 +142,37 @@ end
     end
 end
 
-@inline function _colorediteration!(Jac::BlockBandedMatrices.BandedBlockBandedMatrix,
-                                    sparsity::BlockBandedMatrices.BandedBlockBandedMatrix,
-                                    rows_index,cols_index,vfx,colorvec,color_i,ncols)
-    λ,μ = subblockbandwidths(Jac)
-    rs = BlockBandedMatrices.BlockSizes((BlockBandedMatrices.cumulsizes(Jac,1),)) # column block sizes
-    cs = BlockBandedMatrices.BlockSizes((BlockBandedMatrices.cumulsizes(Jac,2),))
-    b = BlockBandedMatrices.BlockArray(vfx,rs)
-    c = BlockBandedMatrices.BlockArray(colorvec,cs)
-    @inbounds for J=Block.(1:BlockBandedMatrices.nblocks(Jac,2))
-        c_v = c.blocks[J.n[1]]
-        @inbounds for K=BlockBandedMatrices.blockcolrange(Jac,J)
-            V = view(Jac,K,J)
-            b_v = b.blocks[K.n[1]]
-            data = BlockBandedMatrices.bandeddata(V)
-            p = pointer(data)
-            st = stride(data,2)
-            m,n = size(V)
-            @inbounds for j=1:n
-                if c_v[j] == color_i
-                    @inbounds for k=max(1,j-μ):min(m,j+λ)
-                        unsafe_store!(p, b_v[k], (j-1)*st + μ + k - j + 1)
+#override default setting of using findstructralnz
+_use_findstructralnz(sparsity) = ArrayInterface.has_sparsestruct(sparsity)
+_use_findstructralnz(::SparseMatrixCSC) = false
+
+function __init__()
+    @require BlockBandedMatrices="ffab5731-97b5-5995-9138-79e8c1846df0" begin
+        _use_findstructralnz(::BlockBandedMatrices.BandedBlockBandedMatrix) = false
+
+        @inline function _colorediteration!(Jac::BlockBandedMatrices.BandedBlockBandedMatrix,
+                                            sparsity::BlockBandedMatrices.BandedBlockBandedMatrix,
+                                            rows_index,cols_index,vfx,colorvec,color_i,ncols)
+            λ,μ = BlockBandedMatrices.subblockbandwidths(Jac)
+            rs = BlockBandedMatrices.BlockSizes((BlockBandedMatrices.cumulsizes(Jac,1),)) # column block sizes
+            cs = BlockBandedMatrices.BlockSizes((BlockBandedMatrices.cumulsizes(Jac,2),))
+            b = BlockBandedMatrices.BlockArray(vfx,rs)
+            c = BlockBandedMatrices.BlockArray(colorvec,cs)
+            @inbounds for J=BlockBandedMatrices.Block.(1:BlockBandedMatrices.nblocks(Jac,2))
+                c_v = c.blocks[J.n[1]]
+                @inbounds for K=BlockBandedMatrices.blockcolrange(Jac,J)
+                    V = view(Jac,K,J)
+                    b_v = b.blocks[K.n[1]]
+                    data = BlockBandedMatrices.bandeddata(V)
+                    p = pointer(data)
+                    st = stride(data,2)
+                    m,n = size(V)
+                    @inbounds for j=1:n
+                        if c_v[j] == color_i
+                            @inbounds for k=max(1,j-μ):min(m,j+λ)
+                                unsafe_store!(p, b_v[k], (j-1)*st + μ + k - j + 1)
+                            end
+                        end
                     end
                 end
             end
@@ -185,11 +195,6 @@ function finite_difference_jacobian(
     finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, dir=dir)
     _J isa SMatrix ? SArray(J) : J
 end
-
-#override default setting of using findstructralnz
-_use_findstructralnz(sparsity) = ArrayInterface.has_sparsestruct(sparsity)
-_use_findstructralnz(::SparseMatrixCSC) = false
-_use_findstructralnz(::BlockBandedMatrices.BandedBlockBandedMatrix) = false
 
 function finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
