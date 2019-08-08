@@ -6,6 +6,7 @@ using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface, Requires
 
 import Base: resize!
 
+include("iteration_utils.jl")
 include("function_wrappers.jl")
 include("finitediff.jl")
 include("derivatives.jl")
