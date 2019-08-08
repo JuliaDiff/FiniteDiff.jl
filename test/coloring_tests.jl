@@ -82,6 +82,14 @@ DiffEqDiffTools.finite_difference_jacobian!(_J2,f,rand(30),Val{:complex},colorve
 @test fcalls == 3
 @test _J2 ≈ _J
 
+_Jb = BandedMatrices.BandedMatrix(similar(_J2),(1,1))
+DiffEqDiffTools.finite_difference_jacobian!(_Jb, f, rand(30), colorvec=colorvec=repeat(1:3,10))
+@test _Jb ≈ _J
+
+_Jtri = Tridiagonal(similar(_J2))
+DiffEqDiffTools.finite_difference_jacobian!(_Jtri, f, rand(30), colorvec=colorvec=repeat(1:3,10))
+@test _Jtri ≈ _J
+
 #https://github.com/JuliaDiffEq/DiffEqDiffTools.jl/issues/67#issuecomment-516871956
 function f(out, x)
 	x = reshape(x, 100, 100)
@@ -104,7 +112,3 @@ Jbb = BlockBandedMatrix(similar(Jsparse),(fill(100, 100), fill(100, 100)),(1,1))
 colorsbb = ArrayInterface.matrix_colors(Jbb)
 DiffEqDiffTools.finite_difference_jacobian!(Jbb, f, x, colorvec=colorsbb)
 @test Jbb ≈ Jsparse
-Jb = BandedMatrices.BandedMatrix(similar(Jsparse),(1,1))
-colorsb = ArrayInterface.matrix_colors(Jb)
-DiffEqDiffTools.finite_difference_jacobian!(Jb, f, x, colorvec=colorsb)
-@test Jb ≈ Jsparse
