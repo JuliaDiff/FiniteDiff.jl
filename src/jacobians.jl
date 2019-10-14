@@ -93,6 +93,150 @@ function JacobianCache(
     JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype,inplace}(_x1,_fx,fx1,colorvec,sparsity)
 end
 
+function _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+    pick_inds = [i for i in 1:length(rows_index) if colorvec[cols_index[i]] == color_i]
+    rows_index_c = rows_index[pick_inds]
+    cols_index_c = cols_index[pick_inds]
+    len_rows = length(pick_inds)
+    unused_rows = setdiff(1:nrows,rows_index_c)
+    perm_rows = sortperm(vcat(rows_index_c,unused_rows))
+    cols_index_c = vcat(cols_index_c,zeros(Int,nrows-len_rows))[perm_rows]
+    Ji = [j==cols_index_c[i] ? dx[i] : false for i in 1:nrows, j in 1:ncols]
+    Ji
+end
+
+function Base.vec(x::Number)
+    x
+end
+
+function finite_difference_jacobian(f, x::AbstractArray{<:Number},
+    fdtype     :: Type{T1}=Val{:forward},
+    returntype :: Type{T2}=eltype(x),
+    f_in       :: Union{T2,Nothing}=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = eachindex(x),
+    sparsity = nothing,
+    jac_prototype = nothing,
+    dir=true) where {T1,T2,T3}
+
+    if f_in isa Nothing
+        fx = f(x)
+    else
+        fx = f_in
+    end
+    cache = JacobianCache(x, fx, fdtype, returntype, Val{false})
+    finite_difference_jacobian(f, x, cache, fx; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, jac_prototype=jac_prototype, dir=dir)
+end
+
+function finite_difference_jacobian(
+    f,
+    x,
+    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype,inplace},
+    f_in=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = cache.colorvec,
+    sparsity = cache.sparsity,
+    jac_prototype = nothing,
+    dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
+    
+    x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
+    
+    if !(f_in isa Nothing)
+        vecfx = vec(f_in)
+    elseif fdtype == Val{:forward}
+        vecfx = vec(f(x))
+    elseif fdtype == Val{:complex} && returntype <: Real
+        vecfx = real(fx)
+    else
+        vecfx = vec(fx)
+    end
+    vecx = vec(x)
+    vecx1 = vec(x1)
+    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*x' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    nrows, ncols = size(J)
+    
+    if !(sparsity isa Nothing)
+        rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
+        rows_index = [rows_index[i] for i in 1:length(rows_index)]
+        cols_index = [cols_index[i] for i in 1:length(cols_index)]
+    end
+    
+    if fdtype == Val{:forward}
+        @inbounds for color_i ∈ 1:maximum(colorvec)
+            if sparsity isa Nothing
+                x_save = vecx[color_i]
+                epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
+                _vecx1 = Base.setindex(vecx,x_save+epsilon,color_i)
+                _x1 = reshape(_vecx1,size(x))
+                vecfx1 = vec(f(_x1))
+                dx = (vecfx1-vecfx)/epsilon
+                J = J + mapreduce(i -> i==color_i ? dx : zeros(eltype(x),nrows), hcat, 1:ncols)
+            else
+                tmp = norm(vecx .* (colorvec .== color_i))
+                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                _vecx = @. vecx + epsilon * (colorvec == color_i)
+                _x = reshape(_vecx,size(x))
+                vecfx1 = vec(f(_x))
+                dx = (vecfx1-vecfx)/epsilon
+                Ji = _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                J = J + Ji
+            end
+        end
+    elseif fdtype == Val{:central}
+        @inbounds for color_i ∈ 1:maximum(colorvec)
+            if sparsity isa Nothing
+                x1_save = vecx1[color_i]
+                x_save = vecx[color_i]
+                epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
+                _vecx1 = Base.setindex(vecx1,x1_save+epsilon,color_i)
+                _vecx = Base.setindex(vecx,x_save-epsilon,color_i)
+                _x1 = reshape(_vecx1,size(x))
+                _x = reshape(_vecx,size(x))
+                vecfx1 = vec(f(_x1))
+                vecfx = vec(f(_x))
+                dx = (vecfx1-vecfx)/(2epsilon)
+                J = J + mapreduce(i -> i==color_i ? dx : zeros(eltype(x),nrows), hcat, 1:ncols)
+            else
+                tmp = norm(vecx1 .* (colorvec .== color_i))
+                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
+                _vecx = @. vecx - epsilon * (colorvec == color_i)
+                _x1 = reshape(_vecx1,size(x))
+                _x = reshape(_vecx, size(x))
+                vecfx1 = vec(f(_x1))
+                vecfx = vec(f(_x))
+                dx = (vecfx1-vecfx)/(2epsilon)
+                Ji = _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                J = J + Ji
+            end
+        end
+    elseif fdtype == Val{:complex} && returntype <: Real
+        epsilon = eps(eltype(x))
+        @inbounds for color_i ∈ 1:maximum(colorvec)
+            if sparsity isa Nothing
+                x_save = vecx[color_i]
+                _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,color_i)
+                _x = reshape(_vecx,size(x))
+                vecfx = vec(f(_x))
+                dx = imag(vecfx)/epsilon
+                J = J + mapreduce(i -> i==color_i ? dx : zeros(eltype(x),nrows), hcat, 1:ncols)
+            else
+                _vecx = @. vecx + im * epsilon * (colorvec == color_i)
+                _x = reshape(_vecx,size(x))
+                vecfx = vec(f(_x))
+                dx = imag(vecfx)/epsilon
+                Ji = _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                J = J + Ji
+            end
+        end
+    else
+        fdtype_error(returntype)
+    end
+    J
+end
+
 function finite_difference_jacobian!(J::AbstractMatrix,
     f,
     x::AbstractArray{<:Number},
@@ -107,37 +251,6 @@ function finite_difference_jacobian!(J::AbstractMatrix,
 
     cache = JacobianCache(x, fdtype, returntype, inplace)
     finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity)
-end
-
-function finite_difference_jacobian(f, x::AbstractArray{<:Number},
-    fdtype     :: Type{T1}=Val{:forward},
-    returntype :: Type{T2}=eltype(x),
-    inplace    :: Type{Val{T3}}=Val{true},
-    f_in       :: Union{T2,Nothing}=nothing;
-    relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep,
-    colorvec = eachindex(x),
-    sparsity = nothing,
-    dir=true) where {T1,T2,T3}
-
-    cache = JacobianCache(x, fdtype, returntype, inplace)
-    finite_difference_jacobian(f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, dir=dir)
-end
-
-function finite_difference_jacobian(
-    f,
-    x,
-    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype,inplace},
-    f_in=nothing;
-    relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep,
-    colorvec = cache.colorvec,
-    sparsity = cache.sparsity,
-    dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
-    _J = false .* x .* x'
-    _J isa SMatrix ? J = MArray(_J) : J = _J
-    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, dir=dir)
-    _J isa SMatrix ? SArray(J) : J
 end
 
 function finite_difference_jacobian!(
@@ -203,7 +316,7 @@ function finite_difference_jacobian!(
                 if inplace == Val{true}
                     @. x1 = x1 + epsilon * (_color == color_i)
                 else
-                    _x1 = @. _x1 + epsilon * (_color == color_i)
+                    _x1 = @. x1 + epsilon * (_color == color_i)
                 end
             end
 
@@ -297,8 +410,8 @@ function finite_difference_jacobian!(
                     @. x1 = x1 + epsilon * (_color == color_i)
                     @. x  = x  - epsilon * (_color == color_i)
                 else
-                    _x1 = @. _x1 + epsilon * (_color == color_i)
-                    _x  = @. _x  - epsilon * (_color == color_i)
+                    _x1 = @. x1 + epsilon * (_color == color_i)
+                    _x  = @. x  - epsilon * (_color == color_i)
                 end
             end
 
