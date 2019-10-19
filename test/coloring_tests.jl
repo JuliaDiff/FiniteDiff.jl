@@ -10,6 +10,10 @@ function f(dx,x)
   dx[end] = x[end-1] - 2x[end]
   nothing
 end
+function oopf(x)
+  global fcalls += 1
+  vcat([-2x[1]+x[2]],[x[i-1]-2x[i]+x[i+1] for i in 2:length(x)-1],[x[end-1]-2x[end]])
+end
 
 function second_derivative_stencil(N)
   A = zeros(N,N)
@@ -20,7 +24,7 @@ function second_derivative_stencil(N)
   A
 end
 
-J = DiffEqDiffTools.finite_difference_jacobian(f,rand(30))
+J = DiffEqDiffTools.finite_difference_jacobian(oopf,rand(30))
 @test J ≈ second_derivative_stencil(30)
 _J = sparse(J)
 @test fcalls == 31
@@ -83,11 +87,11 @@ DiffEqDiffTools.finite_difference_jacobian!(_J2,f,rand(30),Val{:complex},colorve
 @test _J2 ≈ _J
 
 _Jb = BandedMatrices.BandedMatrix(similar(_J2),(1,1))
-DiffEqDiffTools.finite_difference_jacobian!(_Jb, f, rand(30), colorvec=colorvec=repeat(1:3,10))
+DiffEqDiffTools.finite_difference_jacobian!(_Jb, f, rand(30), colorvec=repeat(1:3,10))
 @test _Jb ≈ _J
 
 _Jtri = Tridiagonal(similar(_J2))
-DiffEqDiffTools.finite_difference_jacobian!(_Jtri, f, rand(30), colorvec=colorvec=repeat(1:3,10))
+DiffEqDiffTools.finite_difference_jacobian!(_Jtri, f, rand(30), colorvec=repeat(1:3,10))
 @test _Jtri ≈ _J
 
 #https://github.com/JuliaDiffEq/DiffEqDiffTools.jl/issues/67#issuecomment-516871956
