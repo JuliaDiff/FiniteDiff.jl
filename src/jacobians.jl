@@ -1,4 +1,4 @@
-mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,SparsityType,fdtype,returntype,inplace}
+mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,SparsityType,fdtype,returntype}
     x1  :: CacheType1
     fx  :: CacheType2
     fx1 :: CacheType3
@@ -9,9 +9,9 @@ end
 function JacobianCache(
     x,
     fdtype     :: Type{T1} = Val{:forward},
-    returntype :: Type{T2} = eltype(x),
-    inplace    :: Type{Val{T3}} = Val{true};
-    colorvec = eachindex(x),
+    returntype :: Type{T2} = eltype(x);
+    inplace    :: Type{Val{T3}} = Val{true},
+    colorvec = 1:length(x),
     sparsity = nothing) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
@@ -28,16 +28,16 @@ function JacobianCache(
         _fx1 = copy(x)
     end
 
-    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;colorvec=colorvec,sparsity=sparsity)
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype;colorvec=colorvec,sparsity=sparsity)
 end
 
 function JacobianCache(
     x ,
     fx,
     fdtype     :: Type{T1} = Val{:forward},
-    returntype :: Type{T2} = eltype(x),
-    inplace    :: Type{Val{T3}} = Val{true};
-    colorvec = eachindex(x),
+    returntype :: Type{T2} = eltype(x);
+    inplace    :: Type{Val{T3}} = Val{true},
+    colorvec = 1:length(x),
     sparsity = nothing) where {T1,T2,T3}
 
     if eltype(x) <: Real && fdtype==Val{:complex}
@@ -58,7 +58,7 @@ function JacobianCache(
         _fx1 = copy(fx)
     end
 
-    JacobianCache(x1,_fx,_fx1,fdtype,returntype,inplace;colorvec=colorvec,sparsity=sparsity)
+    JacobianCache(x1,_fx,_fx1,fdtype,returntype;colorvec=colorvec,sparsity=sparsity)
 end
 
 function JacobianCache(
@@ -66,8 +66,8 @@ function JacobianCache(
     fx ,
     fx1,
     fdtype     :: Type{T1} = Val{:forward},
-    returntype :: Type{T2} = eltype(fx),
-    inplace    :: Type{Val{T3}} = Val{true};
+    returntype :: Type{T2} = eltype(fx);
+    inplace    :: Type{Val{T3}} = Val{true},
     colorvec = 1:length(x1),
     sparsity = nothing) where {T1,T2,T3}
 
@@ -90,7 +90,7 @@ function JacobianCache(
         @assert eltype(fx1) == T2
         _fx = fx
     end
-    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype,inplace}(_x1,_fx,fx1,colorvec,sparsity)
+    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_fx,fx1,colorvec,sparsity)
 end
 
 function _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
@@ -115,7 +115,7 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    colorvec = eachindex(x),
+    colorvec = 1:length(x),
     sparsity = nothing,
     jac_prototype = nothing,
     dir=true) where {T1,T2,T3}
@@ -125,21 +125,21 @@ function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     else
         fx = f_in
     end
-    cache = JacobianCache(x, fx, fdtype, returntype, Val{false})
+    cache = JacobianCache(x, fx, fdtype, returntype)
     finite_difference_jacobian(f, x, cache, fx; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity, jac_prototype=jac_prototype, dir=dir)
 end
 
 function finite_difference_jacobian(
     f,
     x,
-    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype,inplace},
+    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype},
     f_in=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = cache.colorvec,
     sparsity = cache.sparsity,
     jac_prototype = nothing,
-    dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
+    dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype}
     
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
     
@@ -242,14 +242,12 @@ function finite_difference_jacobian!(J::AbstractMatrix,
     x::AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:forward},
     returntype :: Type{T2}=eltype(x),
-    inplace    :: Type{Val{T3}}=Val{true},
     f_in       :: Union{T2,Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    colorvec = eachindex(x),
+    colorvec = 1:length(x),
     sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing) where {T1,T2,T3}
-
-    cache = JacobianCache(x, fdtype, returntype, inplace)
+    cache = JacobianCache(x, fdtype, returntype)
     finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity)
 end
 
@@ -257,21 +255,19 @@ function finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
     f,
     x::AbstractArray{<:Number},
-    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype,inplace},
+    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype},
     f_in::Union{T2,Nothing}=nothing;
     relstep = default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = cache.colorvec,
     sparsity::Union{AbstractArray,Nothing} = cache.sparsity,
-    dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype,inplace}
+    dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype}
 
     m, n = size(J)
     _color = reshape(colorvec,size(x)...)
 
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
-    if inplace == Val{true}
-        copyto!(x1, x)
-    end
+    copyto!(x1, x)
     vfx = vec(fx)
 
     rows_index = nothing
@@ -288,294 +284,115 @@ function finite_difference_jacobian!(
         vfx1 = vec(fx1)
 
         if f_in isa Nothing
-            if inplace == Val{true}
-                f(fx, x)
-            else
-                fx = f(x)
-                vfx = vec(fx)
-            end
+            f(fx, x)
+            vfx = vec(fx)
         else
             vfx = vec(f_in)
         end
 
         @inbounds for color_i ∈ 1:maximum(colorvec)
-
-            if colorvec isa Base.OneTo || colorvec isa UnitRange || colorvec isa StaticArrays.SOneTo # Dense matrix
+            if sparsity isa Nothing
                 x1_save = ArrayInterface.allowed_getindex(x1,color_i)
                 epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
-                if inplace == Val{true}
-                    ArrayInterface.allowed_setindex!(x1,x1_save + epsilon,color_i)
-                else
-                    _x1 = Base.setindex(x1,x1_save+epsilon,color_i)
-                end
+                ArrayInterface.allowed_setindex!(x1,x1_save + epsilon,color_i)
+                f(fx1, x1)
+                # J is dense, so either it is truly dense or this is the
+                # compressed form of the coloring, so write into it.
+                @. J[:,color_i] = (vfx1 - vfx) / epsilon
+                # Now return x1 back to its original value
+                ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
             else # Perturb along the colorvec vector
                 @. fx1 = x1 * (_color == color_i)
                 tmp = norm(fx1)
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
-
-                if inplace == Val{true}
-                    @. x1 = x1 + epsilon * (_color == color_i)
-                else
-                    _x1 = @. x1 + epsilon * (_color == color_i)
-                end
-            end
-
-            if inplace == Val{true}
+                @. x1 = x1 + epsilon * (_color == color_i)
                 f(fx1, x1)
-
-                if sparsity isa Nothing
-                    # J is dense, so either it is truly dense or this is the
-                    # compressed form of the coloring, so write into it.
-                    @. J[:,color_i] = (vfx1 - vfx) / epsilon
+                # J is a sparse matrix, so decompress on the fly
+                @. vfx1 = (vfx1 - vfx) / epsilon
+                if ArrayInterface.fast_scalar_indexing(x1)
+                    _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                 else
-                    # J is a sparse matrix, so decompress on the fly
-                    @. vfx1 = (vfx1 - vfx) / epsilon
-
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
+                    #=
+                    J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
+                    or
+                    J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
+                    += means requires a zero'd out start
+                    =#
+                    if J isa SparseMatrixCSC
+                        @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                     else
-                        #=
-                        J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        or
-                        J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        += means requires a zero'd out start
-                        =#
-                        if J isa SparseMatrixCSC
-                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
-                        else
-                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
-                        end
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
-            else
-                fx1 = f(_x1)
-                vfx1 = vec(fx1)
-                if sparsity isa Nothing
-                    # J is dense, so either it is truly dense or this is the
-                    # compressed form of the coloring, so write into it.
-                    J[:,color_i] = (vfx1 - vfx) / epsilon
-                else
-                    # J is a sparse matrix, so decompress on the fly
-                    _vfx1 = (vfx1 - vfx) / epsilon
-
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
-                    else
-                        #=
-                        J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        or
-                        J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        += means requires a zero'd out start
-                        =#
-                        if J isa SparseMatrixCSC
-                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
-                        else
-                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
-                        end
-                    end
-                end
+                # Now return x1 back to its original value
+                @. x1 = x1 - epsilon * (_color == color_i)
             end
-
-            # Now return x1 back to its original value
-            if inplace == Val{true}
-                if colorvec isa Base.OneTo || colorvec isa UnitRange || colorvec isa StaticArrays.SOneTo #Dense matrix
-                    ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
-                else
-                    @. x1 = x1 - epsilon * (_color == color_i)
-                end
-            end
-
         end #for ends here
     elseif fdtype == Val{:central}
         vfx1 = vec(fx1)
-
         @inbounds for color_i ∈ 1:maximum(colorvec)
-
-            if colorvec isa Base.OneTo || colorvec isa UnitRange || colorvec isa StaticArrays.SOneTo # Dense matrix
+            if sparsity isa Nothing 
                 x_save = ArrayInterface.allowed_getindex(x,color_i)
                 x1_save = ArrayInterface.allowed_getindex(x1,color_i)
                 epsilon = compute_epsilon(Val{:central}, x_save, relstep, absstep, dir)
-                if inplace == Val{true}
-                    ArrayInterface.allowed_setindex!(x1,x1_save+epsilon,color_i)
-                    ArrayInterface.allowed_setindex!(x,x_save-epsilon,color_i)
-                else
-                    _x1 = Base.setindex(x1,x1_save+epsilon,color_i)
-                    _x  = Base.setindex(x, x_save-epsilon, color_i)
-                end
+                ArrayInterface.allowed_setindex!(x1,x1_save+epsilon,color_i)
+                ArrayInterface.allowed_setindex!(x,x_save-epsilon,color_i)
+                f(fx1, x1)
+                f(fx, x)
+                @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
+                ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
+                ArrayInterface.allowed_setindex!(x,x_save,color_i)
             else # Perturb along the colorvec vector
                 @. fx1 = x1 * (_color == color_i)
                 tmp = norm(fx1)
                 epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep, dir)
-                if inplace == Val{true}
-                    @. x1 = x1 + epsilon * (_color == color_i)
-                    @. x  = x  - epsilon * (_color == color_i)
-                else
-                    _x1 = @. x1 + epsilon * (_color == color_i)
-                    _x  = @. x  - epsilon * (_color == color_i)
-                end
-            end
-
-            if inplace == Val{true}
+                @. x1 = x1 + epsilon * (_color == color_i)
+                @. x  = x  - epsilon * (_color == color_i)
                 f(fx1, x1)
                 f(fx, x)
-
-                if sparsity isa Nothing
-                    # J is dense, so either it is truly dense or this is the
-                    # compressed form of the coloring, so write into it.
-                    @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
+                @. vfx1 = (vfx1 - vfx) / 2epsilon
+                if ArrayInterface.fast_scalar_indexing(x1)
+                    _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                 else
-                    # J is a sparse matrix, so decompress on the fly
-                    @. vfx1 = (vfx1 - vfx) / 2epsilon
-
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
+                    if J isa SparseMatrixCSC
+                        @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
                     else
-                        #=
-                        J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        or
-                        J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        += means requires a zero'd out start
-                        =#
-                        if J isa SparseMatrixCSC
-                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
-                        else
-                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
-                        end
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
                     end
                 end
-
-            else
-                fx1 = f(_x1)
-                fx = f(_x)
-                vfx1 = vec(fx1)
-                vfx  = vec(fx)
-
-                if sparsity isa Nothing
-                    # J is dense, so either it is truly dense or this is the
-                    # compressed form of the coloring, so write into it.
-                    J[:,color_i] = (vfx1 - vfx) / 2epsilon
-                else
-                    # J is a sparse matrix, so decompress on the fly
-                    vfx1 = (vfx1 - vfx) / 2epsilon
-                    # vfx1 is the compressed Jacobian column
-
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
-                    else
-                        #=
-                        J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        or
-                        J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        += means requires a zero'd out start
-                        =#
-                        if J isa SparseMatrixCSC
-                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
-                        else
-                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
-                        end
-                    end
-                end
-            end
-
-            # Now return x1 back to its original value
-            if inplace == Val{true}
-                if colorvec isa Base.OneTo || colorvec isa UnitRange || colorvec isa StaticArrays.SOneTo #Dense matrix
-                    ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
-                    ArrayInterface.allowed_setindex!(x,x_save,color_i)
-                else
-                    @. x1 = x1 - epsilon * (_color == color_i)
-                    @. x  = x  + epsilon * (_color == color_i)
-                end
+                @. x1 = x1 - epsilon * (_color == color_i)
+                @. x  = x  + epsilon * (_color == color_i)
             end
         end
     elseif fdtype==Val{:complex} && returntype<:Real
         epsilon = eps(eltype(x))
         @inbounds for color_i ∈ 1:maximum(colorvec)
-
-            if colorvec isa Base.OneTo || colorvec isa UnitRange || colorvec isa StaticArrays.SOneTo # Dense matrix
+            if sparsity isa Nothing 
                 x1_save = ArrayInterface.allowed_getindex(x1,color_i)
-                if inplace == Val{true}
-                    ArrayInterface.allowed_setindex!(x1,x1_save + im*epsilon, color_i)
-                else
-                    _x1 = setindex(x1,x1_save+im*epsilon,color_i)
-                end
-            else # Perturb along the colorvec vector
-                if inplace == Val{true}
-                    @. x1 = x1 + im * epsilon * (_color == color_i)
-                else
-                    _x1 = @. x1 + im * epsilon * (_color == color_i)
-                end
-            end
-
-            if inplace == Val{true}
+                ArrayInterface.allowed_setindex!(x1,x1_save + im*epsilon, color_i)
                 f(fx,x1)
-                if sparsity isa Nothing
-                    # J is dense, so either it is truly dense or this is the
-                    # compressed form of the coloring, so write into it.
-                    @. J[:,color_i] = imag(vfx) / epsilon
+                @. J[:,color_i] = imag(vfx) / epsilon
+                ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
+            else # Perturb along the colorvec vector
+                @. x1 = x1 + im * epsilon * (_color == color_i)
+                f(fx,x1)
+                @. vfx = imag(vfx) / epsilon
+                if ArrayInterface.fast_scalar_indexing(x1)
+                    _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,n)
                 else
-                    # J is a sparse matrix, so decompress on the fly
-                    @. vfx = imag(vfx) / epsilon
-
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,n)
+                   if J isa SparseMatrixCSC
+                        @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index)
                     else
-                        #=
-                        J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx[rows_index]
-                        or
-                        J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx[rows_index]
-                        += means requires a zero'd out start
-                        =#
-                        if J isa SparseMatrixCSC
-                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index)
-                        else
-                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
-                        end
+                        @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx,),rows_index),rows_index, cols_index)
                     end
                 end
-
-            else
-                fx = f(_x1)
-                vfx = vec(fx)
-                if sparsity isa Nothing
-                    # J is dense, so either it is truly dense or this is the
-                    # compressed form of the coloring, so write into it.
-                    J[:,color_i] = imag(vfx) / epsilon
-                else
-                    # J is a sparse matrix, so decompress on the fly
-                    vfx = imag(vfx) / epsilon
-
-                    if ArrayInterface.fast_scalar_indexing(x1)
-                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
-                    else
-                        #=
-                        J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        or
-                        J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                        += means requires a zero'd out start
-                        =#
-                        if J isa SparseMatrixCSC
-                            @. setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
-                        else
-                            @. setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
-                        end
-                    end
-                end
-            end
-
-            if inplace == Val{true}
-                # Now return x1 back to its original value
-                if colorvec isa Base.OneTo || colorvec isa UnitRange || colorvec isa StaticArrays.SOneTo
-                    ArrayInterface.allowed_setindex!(x1,x1_save,color_i)
-                else
-                    @. x1 = x1 - im * epsilon * (_color == color_i)
-                end
+                @. x1 = x1 - im * epsilon * (_color == color_i)
             end
         end
     else
         fdtype_error(returntype)
     end
-    J
+    nothing
 end
 
 function resize!(cache::JacobianCache, i::Int)

@@ -325,12 +325,12 @@ J = zero(J_ref)
 df = zero(x)
 df_ref = diag(J_ref)
 epsilon = zero(x)
-forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward},eltype(x),Val{false})
-central_cache = DiffEqDiffTools.JacobianCache(x,Val{:central},eltype(x),Val{false})
-complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex},eltype(x),Val{false})
+forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward},eltype(x))
+central_cache = DiffEqDiffTools.JacobianCache(x,Val{:central},eltype(x))
+complex_cache = DiffEqDiffTools.JacobianCache(x,Val{:complex},eltype(x))
 f_in = copy(y)
 
-@time @testset "Jacobian StridedArray real-valued tests" begin
+@time @testset "Out-of-Place Jacobian StridedArray real-valued tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, forward_cache), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopff, x, forward_cache, dir=-1), J_ref) < 1e-4
     @test_throws Any err_func(DiffEqDiffTools.finite_difference_jacobian(oopff, x, forward_cache), J_ref) < 1e-4
@@ -339,6 +339,22 @@ f_in = copy(y)
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, Val{:central}), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, complex_cache), J_ref) < 1e-14
+end
+
+function test_iipJac(J_ref,args...;kwargs...)
+    _J = zero(J_ref)
+    DiffEqDiffTools.finite_difference_jacobian!(_J,args...;kwargs...)
+    _J
+end
+@time @testset "inPlace Jacobian StridedArray real-valued tests" begin
+    @test err_func(test_iipJac(J_ref,iipf,x,forward_cache), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref,iipff,x,forward_cache,dir=-1), J_ref) < 1e-4
+    @test_throws Any err_func(test_iipJac(J_ref,iipff, x, forward_cache), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref,iipf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref,iipf, x, forward_cache, f_in), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref,iipf, x, central_cache), J_ref) < 1e-8
+    @test err_func(test_iipJac(J_ref,iipf, x, Val{:central}), J_ref) < 1e-8
+    @test err_func(test_iipJac(J_ref,iipf, x, complex_cache), J_ref) < 1e-14
 end
 
 function iipf(fvec,x)
@@ -357,18 +373,24 @@ J = zero(J_ref)
 df = zero(x)
 df_ref = diag(J_ref)
 epsilon = zero(real.(x))
-forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward},eltype(x),Val{false})
-central_cache = DiffEqDiffTools.JacobianCache(x,Val{:central},eltype(x),Val{false})
+forward_cache = DiffEqDiffTools.JacobianCache(x,Val{:forward},eltype(x))
+central_cache = DiffEqDiffTools.JacobianCache(x,Val{:central},eltype(x))
 f_in = copy(y)
 
-@time @testset "Jacobian StridedArray f : C^N -> C^N tests" begin
+@time @testset "Out-of-Place Jacobian StridedArray f : C^N -> C^N tests" begin
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, forward_cache), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, forward_cache, f_in), J_ref) < 1e-4
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, central_cache), J_ref) < 1e-8
     @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, Val{:central}), J_ref) < 1e-8
 end
-
+@time @testset "inPlace Jacobian StridedArray f : C^N -> C^N tests" begin
+    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache, f_in), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref, iipf, x, central_cache), J_ref) < 1e-8
+    @test err_func(test_iipJac(J_ref, iipf, x, Val{:central}), J_ref) < 1e-8
+end
 # Hessian tests
 
 f(x) = sin(x[1]) + cos(x[2])
