@@ -154,7 +154,7 @@ function finite_difference_jacobian(
     end
     vecx = vec(x)
     vecx1 = vec(x1)
-    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*x' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
     nrows, ncols = size(J)
     
     if !(sparsity isa Nothing)
