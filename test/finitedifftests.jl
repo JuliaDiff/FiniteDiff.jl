@@ -391,6 +391,20 @@ end
     @test err_func(test_iipJac(J_ref, iipf, x, central_cache), J_ref) < 1e-8
     @test err_func(test_iipJac(J_ref, iipf, x, Val{:central}), J_ref) < 1e-8
 end
+
+# Non vector input
+x = rand(2,2)
+oopf(x) = x
+iipf(fx,x) = (fx.=x)
+J_ref = Matrix{Float64}(I,4,4)
+@time @testset "Jacobian for non-vector inputs" begin
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, Val{:forward}), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, Val{:central}), J_ref) < 1e-8
+    @test err_func(DiffEqDiffTools.finite_difference_jacobian(oopf, x, Val{:complex}), J_ref) < 1e-8
+    @test err_func(test_iipJac(J_ref, iipf, x, Val{:forward}, eltype(x), iipf(similar(x),x)), J_ref) < 1e-8
+    @test err_func(test_iipJac(J_ref, iipf, x, Val{:central}, eltype(x), iipf(similar(x),x)), J_ref) < 1e-8
+    @test err_func(test_iipJac(J_ref, iipf, x, Val{:complex}, eltype(x), iipf(similar(x),x)), J_ref) < 1e-8
+end
 # Hessian tests
 
 f(x) = sin(x[1]) + cos(x[2])
