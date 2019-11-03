@@ -154,7 +154,7 @@ function finite_difference_jacobian(
     end
     vecx = vec(x)
     vecx1 = vec(x1)
-    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*x' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
     nrows, ncols = size(J)
     
     if !(sparsity isa Nothing)
@@ -242,13 +242,25 @@ function finite_difference_jacobian!(J::AbstractMatrix,
     x::AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:forward},
     returntype :: Type{T2}=eltype(x),
-    f_in       :: Union{T2,Nothing}=nothing;
+    f_in       :: Union{AbstractArray{<:T2},Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
-    sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing) where {T1,T2,T3}
-    cache = JacobianCache(x, fdtype, returntype)
-    finite_difference_jacobian!(J, f, x, cache, f_in; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity)
+    sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing) where {T1,T2}
+    if f_in isa Nothing && fdtype == Val{:forward}
+        if size(J,1) == length(x)
+            fx = zero(x)
+        else
+            fx = zeros(returntype,size(J,1))
+        end
+        f(fx,x)
+        cache = JacobianCache(x, fx, fdtype, returntype)
+    elseif f_in isa Nothing
+        cache = JacobianCache(x, fdtype, returntype)
+    else
+        cache = JacobianCache(x, f_in, fdtype, returntype)
+    end
+    finite_difference_jacobian!(J, f, x, cache, cache.fx; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity)
 end
 
 function finite_difference_jacobian!(
