@@ -105,6 +105,11 @@ function _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
     Ji
 end
 
+function _make_Ji(xtype, dx, color_i, nrows, ncols)
+    Ji = mapreduce(i -> i==color_i ? dx : zeros(xtype,nrows), hcat, 1:ncols)
+    size(Ji)!=(nrows, ncols) ? reshape(Ji,(nrows,ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
+end
+
 function Base.vec(x::Number)
     x
 end
@@ -112,7 +117,7 @@ end
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:forward},
     returntype :: Type{T2}=eltype(x),
-    f_in       :: Union{T2,Nothing}=nothing;
+    f_in       :: Union{AbstractArray{<:T2},Nothing}=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
@@ -172,7 +177,7 @@ function finite_difference_jacobian(
                 _x1 = reshape(_vecx1,size(x))
                 vecfx1 = vec(f(_x1))
                 dx = (vecfx1-vecfx)/epsilon
-                J = J + mapreduce(i -> i==color_i ? dx : zeros(eltype(x),nrows), hcat, 1:ncols)
+                J = J + _make_Ji(eltype(x), dx, color_i, nrows, ncols)
             else
                 tmp = norm(vecx .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -197,7 +202,7 @@ function finite_difference_jacobian(
                 vecfx1 = vec(f(_x1))
                 vecfx = vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
-                J = J + mapreduce(i -> i==color_i ? dx : zeros(eltype(x),nrows), hcat, 1:ncols)
+                J = J + _make_Ji(eltype(x), dx, color_i, nrows, ncols)
             else
                 tmp = norm(vecx1 .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -221,7 +226,7 @@ function finite_difference_jacobian(
                 _x = reshape(_vecx,size(x))
                 vecfx = vec(f(_x))
                 dx = imag(vecfx)/epsilon
-                J = J + mapreduce(i -> i==color_i ? dx : zeros(eltype(x),nrows), hcat, 1:ncols)
+                J = J + _make_Ji(eltype(x), dx, color_i, nrows, ncols)
             else
                 _vecx = @. vecx + im * epsilon * (colorvec == color_i)
                 _x = reshape(_vecx,size(x))
