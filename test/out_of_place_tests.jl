@@ -25,3 +25,12 @@ J = DiffEqDiffTools.finite_difference_jacobian(f,x, Val{:central}, eltype(x))
 J = DiffEqDiffTools.finite_difference_jacobian(f,x, Val{:complex}, eltype(x))
 @test J ≈ second_derivative_stencil(30)
 
+#1x1 SVector test
+x = SVector{1}([1.])
+f(x) = x
+J = DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:forward}, eltype(x))
+@test J ≈ SMatrix{1,1}([1.])
+J = DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:central}, eltype(x))
+@test J ≈ SMatrix{1,1}([1.])
+J = DiffEqDiffTools.finite_difference_jacobian(f, x, Val{:complex}, eltype(x))
+@test J ≈ SMatrix{1,1}([1.])
