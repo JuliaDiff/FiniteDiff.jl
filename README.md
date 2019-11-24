@@ -181,6 +181,10 @@ and `fx = f(x)` when using out-of-place `finite_difference_jacobain`. The out-of
 jacobian will return a similar type as `jac_prototype` if it is not a `nothing`. For non-square
 Jacobians, a cache which specifies the vector `fx` is required. 
 
+For sparse differentiation, pass a `colorvec` of matrix colors. `sparsity` should be a sparse
+or structured matrix (`Tridiagonal`, `Banded`, etc. according to the ArrayInterface.jl specs)
+to allow for decompression, otherwise the result will be the colorvec compressed Jacobian.
+
 ### Differencing Calls
 
 ```julia
