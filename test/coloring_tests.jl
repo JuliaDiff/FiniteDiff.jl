@@ -106,13 +106,13 @@ function f(out, x)
 	return vec(out)
 end
 x = rand(10000)
-Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), (fill(100, 100), fill(100, 100)), (1, 1), (1, 1))
+Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
 Jsparse = sparse(Jbbb)
 colorsbbb = ArrayInterface.matrix_colors(Jbbb)
 DiffEqDiffTools.finite_difference_jacobian!(Jbbb, f, x, colorvec=colorsbbb)
 DiffEqDiffTools.finite_difference_jacobian!(Jsparse, f, x, colorvec=colorsbbb)
 @test Jbbb ≈ Jsparse
-Jbb = BlockBandedMatrix(similar(Jsparse),(fill(100, 100), fill(100, 100)),(1,1));
+Jbb = BlockBandedMatrix(similar(Jsparse),fill(100, 100), fill(100, 100),(1,1));
 colorsbb = ArrayInterface.matrix_colors(Jbb)
 DiffEqDiffTools.finite_difference_jacobian!(Jbb, f, x, colorvec=colorsbb)
 @test Jbb ≈ Jsparse
