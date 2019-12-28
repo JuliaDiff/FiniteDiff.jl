@@ -64,7 +64,7 @@ function __init__()
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
                     c_v = c.blocks[J.n[1]]
                     blockcolrange = BlockBandedMatrices.blockcolrange(Jac,J)
-                    _,n = BlockBandedMatrices.blocksize(Jac,(blockcolrange[1].n[1],J.n[1]))
+                    _,n = length.(getindex.(axes(Jac), (blockcolrange[1], J)))
                     @inbounds for j = 1:n
                         if c_v[j] == color_i
                             @inbounds for K = blockcolrange
