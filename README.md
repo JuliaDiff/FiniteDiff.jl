@@ -7,10 +7,10 @@
 [![Coverage Status](https://coveralls.io/repos/JuliaDiffEq/DiffEqDiffTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiffEq/DiffEqDiffTools.jl?branch=master)
 [![codecov.io](http://codecov.io/github/JuliaDiffEq/DiffEqDiffTools.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaDiffEq/DiffEqDiffTools.jl?branch=master)
 
-DiffEqDiffTools.jl is a component package in the DifferentialEquations ecosystem.
-It holds the common tools for taking derivatives, gradients, Jacobians, Hessians,
-etc. This library is for maximizing speed while giving a usable interface to
-end users. Included is:
+This package is for calculating derivatives, gradients, Jacobians, Hessians,
+etc. numerically. This library is for maximizing speed while giving a usable 
+interface to end users in a way that specializes on array types and sparsity. 
+Included is:
 
 - Fully non-allocating mutable forms for fast array support
 - Fully non-mutating forms for static array support
