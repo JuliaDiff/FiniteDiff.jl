@@ -32,8 +32,8 @@ function __init__()
                 λ,μ = BlockBandedMatrices.subblockbandwidths(Jac)
                 rs = BlockArrays.blockaxes(Jac,1) # column block sizes
                 cs = BlockArrays.blockaxes(Jac,2)
-                b = BlockBandedMatrices.BlockArray(vfx,collect(rs))
-                c = BlockBandedMatrices.BlockArray(colorvec,collect(cs))
+                b = BlockBandedMatrices.BlockArray(vfx,Int.(rs))
+                c = BlockBandedMatrices.BlockArray(colorvec,Int.(cs))
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
                     c_v = c.blocks[J.n[1]]
                     @inbounds for K=BlockBandedMatrices.blockcolrange(Jac,J)
@@ -59,8 +59,8 @@ function __init__()
                                                 rows_index,cols_index,vfx,colorvec,color_i,ncols)
                 rs = BlockArrays.blockaxes(Jac,1) # column block sizes
                 cs = BlockArrays.blockaxes(Jac,2)
-                b = BlockBandedMatrices.BlockArray(vfx,rs)
-                c = BlockBandedMatrices.BlockArray(colorvec,cs)
+                b = BlockBandedMatrices.BlockArray(vfx,Int.(rs))
+                c = BlockBandedMatrices.BlockArray(colorvec,Int.(cs))
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
                     c_v = c.blocks[J.n[1]]
                     blockcolrange = BlockBandedMatrices.blockcolrange(Jac,J)
