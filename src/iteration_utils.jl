@@ -30,10 +30,10 @@ function __init__()
                                                 sparsity::BlockBandedMatrices.BandedBlockBandedMatrix,
                                                 rows_index,cols_index,vfx,colorvec,color_i,ncols)
                 λ,μ = BlockBandedMatrices.subblockbandwidths(Jac)
-                rs = BlockArrays.blocklasts.(BlockArrays.blockaxes(Jac,1)) # column block sizes
-                cs = BlockArrays.blocklasts.(BlockArrays.blockaxes(Jac,2))
-                b = BlockBandedMatrices.BlockArray(vfx,Int.(rs))
-                c = BlockBandedMatrices.BlockArray(colorvec,Int.(cs))
+                rs = BlockArrays.blocklasts(BlockArrays.axes(Jac,1)) # column block sizes
+                cs = BlockArrays.blocklasts(BlockArrays.axes(Jac,2))
+                b = BlockBandedMatrices.BlockArray(vfx,rs)
+                c = BlockBandedMatrices.BlockArray(colorvec,cs)
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
                     c_v = c.blocks[J.n[1]]
                     @inbounds for K=BlockBandedMatrices.blockcolrange(Jac,J)
@@ -57,10 +57,10 @@ function __init__()
             @inline function _colorediteration!(Jac::BlockBandedMatrices.BlockBandedMatrix,
                                                 sparsity::BlockBandedMatrices.BlockBandedMatrix,
                                                 rows_index,cols_index,vfx,colorvec,color_i,ncols)
-                rs = BlockArrays.blocklasts.(BlockArrays.blockaxes(Jac,1)) # column block sizes
-                cs = BlockArrays.blocklasts.(BlockArrays.blockaxes(Jac,2))
-                b = BlockBandedMatrices.BlockArray(vfx,Int.(rs))
-                c = BlockBandedMatrices.BlockArray(colorvec,Int.(cs))
+                rs = BlockArrays.blocklasts(BlockArrays.axes(Jac,1)) # column block sizes
+                cs = BlockArrays.blocklasts(BlockArrays.axes(Jac,2))
+                b = BlockBandedMatrices.BlockArray(vfx,rs)
+                c = BlockBandedMatrices.BlockArray(colorvec,cs)
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
                     c_v = c.blocks[J.n[1]]
                     blockcolrange = BlockBandedMatrices.blockcolrange(Jac,J)
