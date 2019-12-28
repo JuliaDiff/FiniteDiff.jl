@@ -30,8 +30,8 @@ function __init__()
                                                 sparsity::BlockBandedMatrices.BandedBlockBandedMatrix,
                                                 rows_index,cols_index,vfx,colorvec,color_i,ncols)
                 λ,μ = BlockBandedMatrices.subblockbandwidths(Jac)
-                rs = BlockArrays.blocklasts(BlockArrays.axes(Jac,1)) # column block sizes
-                cs = BlockArrays.blocklasts(BlockArrays.axes(Jac,2))
+                rs = BlockArrays.blocklengths(BlockArrays.axes(Jac,1)) # column block sizes
+                cs = BlockArrays.blocklengths(BlockArrays.axes(Jac,1))
                 b = BlockBandedMatrices.BlockArray(vfx,rs)
                 c = BlockBandedMatrices.BlockArray(colorvec,cs)
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
@@ -57,8 +57,8 @@ function __init__()
             @inline function _colorediteration!(Jac::BlockBandedMatrices.BlockBandedMatrix,
                                                 sparsity::BlockBandedMatrices.BlockBandedMatrix,
                                                 rows_index,cols_index,vfx,colorvec,color_i,ncols)
-                rs = BlockArrays.blocklasts(BlockArrays.axes(Jac,1)) # column block sizes
-                cs = BlockArrays.blocklasts(BlockArrays.axes(Jac,2))
+                rs = BlockArrays.blocklengths(BlockArrays.axes(Jac,1)) # column block sizes
+                cs = BlockArrays.blocklengths(BlockArrays.axes(Jac,1))
                 b = BlockBandedMatrices.BlockArray(vfx,rs)
                 c = BlockBandedMatrices.BlockArray(colorvec,cs)
                 @inbounds for J=BlockArrays.blockaxes(Jac,2)
