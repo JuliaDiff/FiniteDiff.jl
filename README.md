@@ -1,7 +1,5 @@
 # DiffEqDiffTools
 
-[![Join the chat at https://gitter.im/JuliaDiffEq/Lobby](https://badges.gitter.im/JuliaDiffEq/Lobby.svg)](https://gitter.im/JuliaDiffEq/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
 [![Build Status](https://travis-ci.org/JuliaDiffEq/DiffEqDiffTools.jl.svg?branch=master)](https://travis-ci.org/JuliaDiffEq/DiffEqDiffTools.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/t3risc94d2jqipd6?svg=true)](https://ci.appveyor.com/project/ChrisRackauckas/diffeqdifftools-jl)
 [![Coverage Status](https://coveralls.io/repos/JuliaDiffEq/DiffEqDiffTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiffEq/DiffEqDiffTools.jl?branch=master)
