@@ -15,6 +15,7 @@ Included is:
 - Fully non-allocating mutable forms for fast array support
 - Fully non-mutating forms for static array support
 - Coloring vectors for efficient calculation of sparse Jacobians
+- GPU-compatible, to the extent that you can be with finite differencing.
 
 If you want the fastest versions, create a cache and repeatedly call the
 differencing functions at different `x` values (or with different `f` functions),
