@@ -20,7 +20,7 @@ differencing functions at different `x` values (or with different `f` functions)
 while if you want a quick and dirty numerical answer, directly call a differencing
 function.
 
-**For analygous sparse differentiation with automatic differentiation, see [SparseDiffTools.jl](https://github.com/JuliaDiff/SparseDiffTools.jl)**
+**For analogous sparse differentiation with automatic differentiation, see [SparseDiffTools.jl](https://github.com/JuliaDiff/SparseDiffTools.jl)**
 
 #### FiniteDiff.jl vs FiniteDifferences.jl
 [FiniteDiff.jl](https://github.com/JuliaDiff/FiniteDiff.jl) and [FiniteDifferences.jl](FiniteDifferences.jl)
