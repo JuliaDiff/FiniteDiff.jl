@@ -20,6 +20,18 @@ differencing functions at different `x` values (or with different `f` functions)
 while if you want a quick and dirty numerical answer, directly call a differencing
 function.
 
+#### FiniteDiff.jl vs FiniteDifferences.jl
+[FiniteDiff.jl](https://github.com/JuliaDiff/FiniteDiff.jl) and [FiniteDifferences.jl](FiniteDifferences.jl)
+are similar libraries: both calculate approximate derivatives numerically.
+You should definately use one or the other, rather than the legacy [Calculus.jl](https://github.com/JuliaMath/Calculus.jl) finite differencing, or reimplementing it yourself.
+At some point in the future they might merge, or one might depend on the other.
+Right now here are the differences:
+
+ - FiniteDifferences.jl supports basically any type, where as FiniteDiff.jl supports only array-ish types
+ - FiniteDifferences.jl supports higher order approximations, which can be particularly useful for scalar to improve accuracy
+ - FiniteDiff.jl is carefully optimized to minimize allocations etc in the matrix case
+ - FiniteDiff.jl supports coloring vectors for efficient calculation of sparse Jacobians
+
 ## Tutorials
 
 ### Tutorial 1: Fast Dense Jacobians
