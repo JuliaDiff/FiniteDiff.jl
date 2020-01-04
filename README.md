@@ -1,9 +1,9 @@
-# DiffEqDiffTools
+# FiniteDiff
 
-[![Build Status](https://travis-ci.org/JuliaDiffEq/DiffEqDiffTools.jl.svg?branch=master)](https://travis-ci.org/JuliaDiffEq/DiffEqDiffTools.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/t3risc94d2jqipd6?svg=true)](https://ci.appveyor.com/project/ChrisRackauckas/diffeqdifftools-jl)
-[![Coverage Status](https://coveralls.io/repos/JuliaDiffEq/DiffEqDiffTools.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiffEq/DiffEqDiffTools.jl?branch=master)
-[![codecov.io](http://codecov.io/github/JuliaDiffEq/DiffEqDiffTools.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaDiffEq/DiffEqDiffTools.jl?branch=master)
+[![Build Status](https://travis-ci.org/JuliaDiffEq/FiniteDiff.jl.svg?branch=master)](https://travis-ci.org/JuliaDiffEq/FiniteDiff.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/t3risc94d2jqipd6?svg=true)](https://ci.appveyor.com/project/ChrisRackauckas/FiniteDiff-jl)
+[![Coverage Status](https://coveralls.io/repos/JuliaDiffEq/FiniteDiff.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiffEq/FiniteDiff.jl?branch=master)
+[![codecov.io](http://codecov.io/github/JuliaDiffEq/FiniteDiff.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaDiffEq/FiniteDiff.jl?branch=master)
 
 This package is for calculating derivatives, gradients, Jacobians, Hessians,
 etc. numerically. This library is for maximizing speed while giving a usable 
@@ -55,7 +55,7 @@ Hessian coloring support is coming soon!
 ## Scalar Derivatives
 
 ```julia
-DiffEqDiffTools.finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
+FiniteDiff.finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
     returntype::Type{T2}=eltype(x), f_x::Union{Nothing,T}=nothing)
 ```
 
@@ -66,7 +66,7 @@ DiffEqDiffTools.finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:cent
 ```julia
 # Cache-less but non-allocating if `fx` and `epsilon` are supplied
 # fx must be f(x)
-DiffEqDiffTools.finite_difference_derivative(
+FiniteDiff.finite_difference_derivative(
     f,
     x          :: AbstractArray{<:Number},
     fdtype     :: Type{T1} = Val{:central},
@@ -75,7 +75,7 @@ DiffEqDiffTools.finite_difference_derivative(
     epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing;
     [epsilon_factor])
 
-DiffEqDiffTools.finite_difference_derivative!(
+FiniteDiff.finite_difference_derivative!(
     df         :: AbstractArray{<:Number},
     f,
     x          :: AbstractArray{<:Number},
@@ -86,7 +86,7 @@ DiffEqDiffTools.finite_difference_derivative!(
     [epsilon_factor])
 
 # Cached
-DiffEqDiffTools.finite_difference_derivative!(
+FiniteDiff.finite_difference_derivative!(
     df::AbstractArray{<:Number},
     f,
     x::AbstractArray{<:Number},
@@ -97,7 +97,7 @@ DiffEqDiffTools.finite_difference_derivative!(
 ### Allocating and Non-Allocating Constructor
 
 ```julia
-DiffEqDiffTools.DerivativeCache(
+FiniteDiff.DerivativeCache(
     x          :: AbstractArray{<:Number},
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
     epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing,
@@ -118,14 +118,14 @@ Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map
 
 ```julia
 # Cache-less
-DiffEqDiffTools.finite_difference_gradient(
+FiniteDiff.finite_difference_gradient(
     f,
     x,
     fdtype::Type{T1}=Val{:central},
     returntype::Type{T2}=eltype(x),
     inplace::Type{Val{T3}}=Val{true};
     [epsilon_factor])
-DiffEqDiffTools.finite_difference_gradient!(
+FiniteDiff.finite_difference_gradient!(
     df,
     f,
     x,
@@ -135,7 +135,7 @@ DiffEqDiffTools.finite_difference_gradient!(
     [epsilon_factor])
 
 # Cached
-DiffEqDiffTools.finite_difference_gradient!(
+FiniteDiff.finite_difference_gradient!(
     df::AbstractArray{<:Number},
     f,
     x::AbstractArray{<:Number},
@@ -146,7 +146,7 @@ DiffEqDiffTools.finite_difference_gradient!(
 ### Allocating Cache Constructor
 
 ```julia
-DiffEqDiffTools.GradientCache(
+FiniteDiff.GradientCache(
     df         :: Union{<:Number,AbstractArray{<:Number}},
     x          :: Union{<:Number, AbstractArray{<:Number}},
     fdtype     :: Type{T1} = Val{:central},
@@ -157,7 +157,7 @@ DiffEqDiffTools.GradientCache(
 ### Non-Allocating Cache Constructor
 
 ```julia
-DiffEqDiffTools.GradientCache(
+FiniteDiff.GradientCache(
     c1         :: Union{Nothing,AbstractArray{<:Number}},
     c2         :: Union{Nothing,AbstractArray{<:Number}},
     fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}} = nothing,
@@ -169,7 +169,7 @@ DiffEqDiffTools.GradientCache(
 Note that here `fx` is a cached function call of `f`. If you provide `fx`, then
 `fx` will be used in the forward differencing method to skip a function call.
 It is on you to make sure that you update `cache.fx` every time before
-calling `DiffEqDiffTools.finite_difference_gradient!`. A good use of this is if you have a
+calling `FiniteDiff.finite_difference_gradient!`. A good use of this is if you have a
 cache array for the output of `fx` already being used, you can make it alias
 into the differencing algorithm here.
 
@@ -188,7 +188,7 @@ to allow for decompression, otherwise the result will be the colorvec compressed
 
 ```julia
 # Cache-less
-DiffEqDiffTools.finite_difference_jacobian(
+FiniteDiff.finite_difference_jacobian(
     f,
     x          :: AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:central},
@@ -211,7 +211,7 @@ finite_difference_jacobian!(J::AbstractMatrix,
     sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing)
 
 # Cached
-DiffEqDiffTools.finite_difference_jacobian(
+FiniteDiff.finite_difference_jacobian(
     f,
     x,
     cache::JacobianCache;
@@ -221,7 +221,7 @@ DiffEqDiffTools.finite_difference_jacobian(
     sparsity = cache.sparsity,
     jac_prototype = nothing)
 
-DiffEqDiffTools.finite_difference_jacobian!(
+FiniteDiff.finite_difference_jacobian!(
     J::AbstractMatrix{<:Number},
     f,
     x::AbstractArray{<:Number},
@@ -235,7 +235,7 @@ DiffEqDiffTools.finite_difference_jacobian!(
 ### Allocating Cache Constructor
 
 ```julia
-DiffEqDiffTools.JacobianCache(
+FiniteDiff.JacobianCache(
               x,
               fdtype     :: Type{T1} = Val{:central},
               returntype :: Type{T2} = eltype(x),
@@ -248,7 +248,7 @@ This assumes the Jacobian is square.
 ### Non-Allocating Cache Constructor
 
 ```julia
-DiffEqDiffTools.JacobianCache(
+FiniteDiff.JacobianCache(
               x1 ,
               fx ,
               fx1,
