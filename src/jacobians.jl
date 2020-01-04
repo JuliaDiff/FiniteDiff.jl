@@ -145,9 +145,9 @@ function finite_difference_jacobian(
     sparsity = cache.sparsity,
     jac_prototype = nothing,
     dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype}
-    
+
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
-    
+
     if !(f_in isa Nothing)
         vecfx = vec(f_in)
     elseif fdtype == Val{:forward}
@@ -161,13 +161,13 @@ function finite_difference_jacobian(
     vecx1 = vec(x1)
     J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
     nrows, ncols = size(J)
-    
+
     if !(sparsity isa Nothing)
         rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
         rows_index = [rows_index[i] for i in 1:length(rows_index)]
         cols_index = [cols_index[i] for i in 1:length(cols_index)]
     end
-    
+
     if fdtype == Val{:forward}
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
@@ -348,7 +348,7 @@ function finite_difference_jacobian!(
     elseif fdtype == Val{:central}
         vfx1 = vec(fx1)
         @inbounds for color_i ∈ 1:maximum(colorvec)
-            if sparsity isa Nothing 
+            if sparsity isa Nothing
                 x_save = ArrayInterface.allowed_getindex(x,color_i)
                 x1_save = ArrayInterface.allowed_getindex(x1,color_i)
                 epsilon = compute_epsilon(Val{:central}, x_save, relstep, absstep, dir)
@@ -384,7 +384,7 @@ function finite_difference_jacobian!(
     elseif fdtype==Val{:complex} && returntype<:Real
         epsilon = eps(eltype(x))
         @inbounds for color_i ∈ 1:maximum(colorvec)
-            if sparsity isa Nothing 
+            if sparsity isa Nothing
                 x1_save = ArrayInterface.allowed_getindex(x1,color_i)
                 ArrayInterface.allowed_setindex!(x1,x1_save + im*epsilon, color_i)
                 f(fx,x1)
