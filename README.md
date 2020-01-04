@@ -1,13 +1,13 @@
 # FiniteDiff
 
-[![Build Status](https://travis-ci.org/JuliaDiffEq/FiniteDiff.jl.svg?branch=master)](https://travis-ci.org/JuliaDiffEq/FiniteDiff.jl)
+[![Build Status](https://travis-ci.org/JuliaDiff/FiniteDiff.jl.svg?branch=master)](https://travis-ci.org/JuliaDiff/FiniteDiff.jl)
 [![Build status](https://ci.appveyor.com/api/projects/status/t3risc94d2jqipd6?svg=true)](https://ci.appveyor.com/project/ChrisRackauckas/FiniteDiff-jl)
-[![Coverage Status](https://coveralls.io/repos/JuliaDiffEq/FiniteDiff.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiffEq/FiniteDiff.jl?branch=master)
-[![codecov.io](http://codecov.io/github/JuliaDiffEq/FiniteDiff.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaDiffEq/FiniteDiff.jl?branch=master)
+[![Coverage Status](https://coveralls.io/repos/JuliaDiff/FiniteDiff.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiff/FiniteDiff.jl?branch=master)
+[![codecov.io](http://codecov.io/github/JuliaDiff/FiniteDiff.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaDiff/FiniteDiff.jl?branch=master)
 
 This package is for calculating derivatives, gradients, Jacobians, Hessians,
-etc. numerically. This library is for maximizing speed while giving a usable 
-interface to end users in a way that specializes on array types and sparsity. 
+etc. numerically. This library is for maximizing speed while giving a usable
+interface to end users in a way that specializes on array types and sparsity.
 Included is:
 
 - Fully non-allocating mutable forms for fast array support
@@ -48,7 +48,7 @@ colorvec vectors are allowed to be supplied to the Jacobian routines, and these 
 the directional derivatives for constructing the Jacobian. For example, an accurate
 NxN tridiagonal Jacobian can be computed in just 4 `f` calls by using
 `colorvec=repeat(1:3,N÷3)`. For information on automatically generating colorvec
-vectors of sparse matrices, see [SparseDiffTools.jl](https://github.com/JuliaDiffEq/SparseDiffTools.jl).
+vectors of sparse matrices, see [SparseDiffTools.jl](https://github.com/JuliaDiff/SparseDiffTools.jl).
 
 Hessian coloring support is coming soon!
 
@@ -175,10 +175,10 @@ into the differencing algorithm here.
 
 ## Jacobians
 
-Jacobians are for functions `f!(fx,x)` when using in-place `finite_difference_jacobian!`, 
-and `fx = f(x)` when using out-of-place `finite_difference_jacobain`. The out-of-place 
+Jacobians are for functions `f!(fx,x)` when using in-place `finite_difference_jacobian!`,
+and `fx = f(x)` when using out-of-place `finite_difference_jacobain`. The out-of-place
 jacobian will return a similar type as `jac_prototype` if it is not a `nothing`. For non-square
-Jacobians, a cache which specifies the vector `fx` is required. 
+Jacobians, a cache which specifies the vector `fx` is required.
 
 For sparse differentiation, pass a `colorvec` of matrix colors. `sparsity` should be a sparse
 or structured matrix (`Tridiagonal`, `Banded`, etc. according to the ArrayInterface.jl specs)

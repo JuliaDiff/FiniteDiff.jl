@@ -94,7 +94,7 @@ _Jtri = Tridiagonal(similar(_J2))
 FiniteDiff.finite_difference_jacobian!(_Jtri, f, rand(30), colorvec=repeat(1:3,10))
 @test _Jtri ≈ _J
 
-#https://github.com/JuliaDiffEq/FiniteDiff.jl/issues/67#issuecomment-516871956
+#https://github.com/JuliaDiff/FiniteDiff.jl/issues/67#issuecomment-516871956
 function f(out, x)
 	x = reshape(x, 100, 100)
 	out = reshape(out, 100, 100)

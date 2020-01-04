@@ -1,5 +1,3 @@
-__precompile__()
-
 module FiniteDiff
 
 using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface, Requires
@@ -7,8 +5,7 @@ using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface, Requires
 import Base: resize!
 
 include("iteration_utils.jl")
-include("function_wrappers.jl")
-include("finitediff.jl")
+include("epsilons.jl")
 include("derivatives.jl")
 include("gradients.jl")
 include("jacobians.jl")
