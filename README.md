@@ -30,8 +30,8 @@ At some point in the future they might merge, or one might depend on the other.
 Right now here are the differences:
 
  - FiniteDifferences.jl supports basically any type, where as FiniteDiff.jl supports only array-ish types
- - FiniteDifferences.jl supports higher order approximations, which can be particularly useful for scalar to improve accuracy
- - FiniteDiff.jl is carefully optimized to minimize allocations etc in the matrix case
+ - FiniteDifferences.jl supports higher order approximation
+ - FiniteDiff.jl is carefully optimized to minimize allocations
  - FiniteDiff.jl supports coloring vectors for efficient calculation of sparse Jacobians
 
 ## Tutorials
