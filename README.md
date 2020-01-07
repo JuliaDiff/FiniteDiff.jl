@@ -237,7 +237,7 @@ using FillArrays, BlockBandedMatrices
 Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
 colorsbbb = ArrayInterface.matrix_colors(Jbbb)
 bbbcache = FiniteDiff.JacobianCache(x,colorvec=colorsbbb,sparsity=Jbbb)
-FiniteDiff.finite_difference_jacobian!(Jbbb, pde, x, colorvec=colorsbbb)
+FiniteDiff.finite_difference_jacobian!(Jbbb, pde, x, bbbcache)
 ```
 
 And boom, a fast Jacobian filling algorithm on your special matrix.
