@@ -93,7 +93,15 @@ function JacobianCache(
     JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_fx,fx1,colorvec,sparsity)
 end
 
-function _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+function _make_Ji(::SparseMatrixCSC, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+    pick_inds = [i for i in 1:length(rows_index) if colorvec[cols_index[i]] == color_i]
+    rows_index_c = rows_index[pick_inds]
+    cols_index_c = cols_index[pick_inds]
+    Ji = sparse(rows_index_c, cols_index_c, dx[rows_index_c],nrows,ncols)
+    Ji
+end
+
+function _make_Ji(::AbstractArray, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
     pick_inds = [i for i in 1:length(rows_index) if colorvec[cols_index[i]] == color_i]
     rows_index_c = rows_index[pick_inds]
     cols_index_c = cols_index[pick_inds]
@@ -105,7 +113,13 @@ function _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
     Ji
 end
 
-function _make_Ji(xtype, dx, color_i, nrows, ncols)
+function _make_Ji(::SparseMatrixCSC, xtype, dx, color_i, nrows, ncols)
+    Ji = sparse(1:nrows,fill(color_i,nrows),dx,nrows,ncols)
+    Ji
+end
+
+
+function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     Ji = mapreduce(i -> i==color_i ? dx : zeros(xtype,nrows), hcat, 1:ncols)
     size(Ji)!=(nrows, ncols) ? reshape(Ji,(nrows,ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
 end
@@ -177,7 +191,7 @@ function finite_difference_jacobian(
                 _x1 = reshape(_vecx1,size(x))
                 vecfx1 = vec(f(_x1))
                 dx = (vecfx1-vecfx)/epsilon
-                J = J + _make_Ji(eltype(x), dx, color_i, nrows, ncols)
+                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
                 tmp = norm(vecx .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -185,7 +199,7 @@ function finite_difference_jacobian(
                 _x = reshape(_vecx,size(x))
                 vecfx1 = vec(f(_x))
                 dx = (vecfx1-vecfx)/epsilon
-                Ji = _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
                 J = J + Ji
             end
         end
@@ -202,7 +216,7 @@ function finite_difference_jacobian(
                 vecfx1 = vec(f(_x1))
                 vecfx = vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
-                J = J + _make_Ji(eltype(x), dx, color_i, nrows, ncols)
+                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
                 tmp = norm(vecx1 .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -213,7 +227,7 @@ function finite_difference_jacobian(
                 vecfx1 = vec(f(_x1))
                 vecfx = vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
-                Ji = _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
                 J = J + Ji
             end
         end
@@ -226,13 +240,13 @@ function finite_difference_jacobian(
                 _x = reshape(_vecx,size(x))
                 vecfx = vec(f(_x))
                 dx = imag(vecfx)/epsilon
-                J = J + _make_Ji(eltype(x), dx, color_i, nrows, ncols)
+                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
                 _vecx = @. vecx + im * epsilon * (colorvec == color_i)
                 _x = reshape(_vecx,size(x))
                 vecfx = vec(f(_x))
                 dx = imag(vecfx)/epsilon
-                Ji = _make_Ji(rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
                 J = J + Ji
             end
         end

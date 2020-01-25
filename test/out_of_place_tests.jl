@@ -18,13 +18,20 @@ end
 x = @SVector ones(30)
 J = FiniteDiff.finite_difference_jacobian(f,x, Val{:forward}, eltype(x))
 @test J ≈ second_derivative_stencil(30)
-_J = sparse(J)
+
 J = FiniteDiff.finite_difference_jacobian(f,x, Val{:central}, eltype(x))
 @test J ≈ second_derivative_stencil(30)
 
 J = FiniteDiff.finite_difference_jacobian(f,x, Val{:complex}, eltype(x))
 @test J ≈ second_derivative_stencil(30)
 
+spJ = sparse(second_derivative_stencil(30))
+J = FiniteDiff.finite_difference_jacobian(f,x, Val{:forward}, eltype(x),jac_prototype=spJ)
+@test J ≈ second_derivative_stencil(30)
+@test typeof(J) == typeof(spJ)
+J = FiniteDiff.finite_difference_jacobian(f,x, Val{:forward}, eltype(x),colorvec=repeat(1:3,10),sparsity=spJ,jac_prototype=spJ)
+@test J ≈ second_derivative_stencil(30)
+@test typeof(J) == typeof(spJ)
 #1x1 SVector test
 x = SVector{1}([1.])
 f(x) = x
