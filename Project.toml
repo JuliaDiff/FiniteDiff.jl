@@ -1,6 +1,6 @@
 name = "FiniteDiff"
 uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
-version = "2.1.1"
+version = "2.2.0"
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
