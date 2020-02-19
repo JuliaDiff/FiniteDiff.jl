@@ -120,7 +120,7 @@ end
 
 
 function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
-    Ji = mapreduce(i -> i==color_i ? dx : (ret = similar(dx, nrows); fill!(ret, 0.)), hcat, 1:ncols)
+    Ji = mapreduce(i -> i==color_i ? dx : zero(dx), hcat, 1:ncols)
     size(Ji)!=(nrows, ncols) ? reshape(Ji,(nrows,ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
 end
 
