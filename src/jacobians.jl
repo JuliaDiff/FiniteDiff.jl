@@ -124,10 +124,6 @@ function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     size(Ji)!=(nrows, ncols) ? reshape(Ji,(nrows,ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
 end
 
-function Base.vec(x::Number)
-    x
-end
-
 function finite_difference_jacobian(f, x::AbstractArray{<:Number},
     fdtype     :: Type{T1}=Val{:forward},
     returntype :: Type{T2}=eltype(x),
@@ -165,16 +161,16 @@ function finite_difference_jacobian(
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
 
     if !(f_in isa Nothing)
-        vecfx = vec(f_in)
+        vecfx = _vec(f_in)
     elseif fdtype == Val{:forward}
-        vecfx = vec(f(x))
+        vecfx = _vec(f(x))
     elseif fdtype == Val{:complex} && returntype <: Real
         vecfx = real(fx)
     else
-        vecfx = vec(fx)
+        vecfx = _vec(fx)
     end
-    vecx = vec(x)
-    vecx1 = vec(x1)
+    vecx = _vec(x)
+    vecx1 = _vec(x1)
     J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
     nrows, ncols = size(J)
 
@@ -191,7 +187,7 @@ function finite_difference_jacobian(
                 epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
                 _vecx1 = Base.setindex(vecx,x_save+epsilon,color_i)
                 _x1 = reshape(_vecx1,size(x))
-                vecfx1 = vec(f(_x1))
+                vecfx1 = _vec(f(_x1))
                 dx = (vecfx1-vecfx)/epsilon
                 J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
@@ -199,7 +195,7 @@ function finite_difference_jacobian(
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
                 _vecx = @. vecx + epsilon * (colorvec == color_i)
                 _x = reshape(_vecx,size(x))
-                vecfx1 = vec(f(_x))
+                vecfx1 = _vec(f(_x))
                 dx = (vecfx1-vecfx)/epsilon
                 Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
                 J = J + Ji
@@ -215,8 +211,8 @@ function finite_difference_jacobian(
                 _vecx = Base.setindex(vecx,x_save-epsilon,color_i)
                 _x1 = reshape(_vecx1,size(x))
                 _x = reshape(_vecx,size(x))
-                vecfx1 = vec(f(_x1))
-                vecfx = vec(f(_x))
+                vecfx1 = _vec(f(_x1))
+                vecfx = _vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
                 J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
@@ -226,8 +222,8 @@ function finite_difference_jacobian(
                 _vecx = @. vecx - epsilon * (colorvec == color_i)
                 _x1 = reshape(_vecx1,size(x))
                 _x = reshape(_vecx, size(x))
-                vecfx1 = vec(f(_x1))
-                vecfx = vec(f(_x))
+                vecfx1 = _vec(f(_x1))
+                vecfx = _vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
                 Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
                 J = J + Ji
@@ -240,13 +236,13 @@ function finite_difference_jacobian(
                 x_save = vecx[color_i]
                 _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,color_i)
                 _x = reshape(_vecx,size(x))
-                vecfx = vec(f(_x))
+                vecfx = _vec(f(_x))
                 dx = imag(vecfx)/epsilon
                 J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
                 _vecx = @. vecx + im * epsilon * (colorvec == color_i)
                 _x = reshape(_vecx,size(x))
-                vecfx = vec(f(_x))
+                vecfx = _vec(f(_x))
                 dx = imag(vecfx)/epsilon
                 Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
                 J = J + Ji
@@ -301,7 +297,7 @@ function finite_difference_jacobian!(
 
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
     copyto!(x1, x)
-    vfx = vec(fx)
+    vfx = _vec(fx)
 
     rows_index = nothing
     cols_index = nothing
@@ -314,13 +310,13 @@ function finite_difference_jacobian!(
     end
 
     if fdtype == Val{:forward}
-        vfx1 = vec(fx1)
+        vfx1 = _vec(fx1)
 
         if f_in isa Nothing
             f(fx, x)
-            vfx = vec(fx)
+            vfx = _vec(fx)
         else
-            vfx = vec(f_in)
+            vfx = _vec(f_in)
         end
 
         @inbounds for color_i ∈ 1:maximum(colorvec)
@@ -362,7 +358,7 @@ function finite_difference_jacobian!(
             end
         end #for ends here
     elseif fdtype == Val{:central}
-        vfx1 = vec(fx1)
+        vfx1 = _vec(fx1)
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
                 x_save = ArrayInterface.allowed_getindex(x,color_i)
