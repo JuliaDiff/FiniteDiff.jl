@@ -183,7 +183,7 @@ function finite_difference_jacobian(
     if fdtype == Val{:forward}
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
-                x_save = vecx[color_i]
+                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
                 epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
                 _vecx1 = Base.setindex(vecx,x_save+epsilon,color_i)
                 _x1 = reshape(_vecx1,size(x))
@@ -204,8 +204,8 @@ function finite_difference_jacobian(
     elseif fdtype == Val{:central}
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
-                x1_save = vecx1[color_i]
-                x_save = vecx[color_i]
+                x1_save = ArrayInterface.allowed_getindex(vecx1,color_i)
+                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
                 epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
                 _vecx1 = Base.setindex(vecx1,x1_save+epsilon,color_i)
                 _vecx = Base.setindex(vecx,x_save-epsilon,color_i)
@@ -233,7 +233,7 @@ function finite_difference_jacobian(
         epsilon = eps(eltype(x))
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
-                x_save = vecx[color_i]
+                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
                 _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,color_i)
                 _x = reshape(_vecx,size(x))
                 vecfx = _vec(f(_x))
