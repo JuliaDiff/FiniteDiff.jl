@@ -124,16 +124,16 @@ function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     size(Ji)!=(nrows, ncols) ? reshape(Ji,(nrows,ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
 end
 
-function finite_difference_jacobian(f, x::AbstractArray{<:Number},
-    fdtype     :: Type{T1}=Val{:forward},
-    returntype :: Type{T2}=eltype(x),
-    f_in       :: Union{AbstractArray{<:T2},Nothing}=nothing;
+function finite_difference_jacobian(f, x,
+    fdtype     = Val{:forward},
+    returntype = eltype(x),
+    f_in       = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
     sparsity = nothing,
     jac_prototype = nothing,
-    dir=true) where {T1,T2,T3}
+    dir=true)
 
     if f_in isa Nothing
         fx = f(x)
@@ -254,12 +254,12 @@ function finite_difference_jacobian(
     J
 end
 
-function finite_difference_jacobian!(J::AbstractMatrix,
+function finite_difference_jacobian!(J,
     f,
-    x::AbstractArray{<:Number},
-    fdtype     :: Type{T1}=Val{:forward},
-    returntype :: Type{T2}=eltype(x),
-    f_in       :: Union{AbstractArray{<:T2},Nothing}=nothing;
+    x,
+    fdtype     = Val{:forward},
+    returntype = eltype(x),
+    f_in       = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
@@ -281,15 +281,15 @@ function finite_difference_jacobian!(J::AbstractMatrix,
 end
 
 function finite_difference_jacobian!(
-    J::AbstractMatrix{<:Number},
+    J,
     f,
-    x::AbstractArray{<:Number},
+    x,
     cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype},
-    f_in::Union{T2,Nothing}=nothing;
+    f_in = nothing;
     relstep = default_relstep(fdtype, eltype(x)),
-    absstep=relstep,
+    absstep = relstep,
     colorvec = cache.colorvec,
-    sparsity::Union{AbstractArray,Nothing} = cache.sparsity,
+    sparsity = cache.sparsity,
     dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype}
 
     m, n = size(J)

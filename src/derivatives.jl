@@ -4,12 +4,12 @@ Single-point derivatives of scalar->scalar maps.
 function finite_difference_derivative(
     f,
     x::T,
-    fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(x),
-    f_x::Union{Nothing,T}=nothing;
+    fdtype=Val{:central},
+    returntype=eltype(x),
+    f_x=nothing;
     relstep=default_relstep(fdtype, T),
     absstep=relstep,
-    dir=true) where {T<:Number,T1,T2}
+    dir=true) where {T<:Number}
 
     epsilon = compute_epsilon(fdtype, x, relstep, absstep, dir)
     if fdtype==Val{:forward}
@@ -71,37 +71,37 @@ Compute the derivative df of a scalar-valued map f at a collection of points x.
 =#
 function finite_difference_derivative(
     f,
-    x          :: AbstractArray{<:Number},
-    fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(x),      # return type of f
-    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing;
+    x,
+    fdtype = Val{:central},
+    returntype = eltype(x),      # return type of f
+    fx = nothing,
+    epsilon = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2}
+    absstep=relstep)
 
     df = fill(zero(returntype), size(x))
     finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon; relstep=relstep, absstep=absstep)
 end
 
 function finite_difference_derivative!(
-    df         :: AbstractArray{<:Number},
+    df,
     f,
-    x          :: AbstractArray{<:Number},
-    fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(x),
-    fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
-    epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing;
+    x,
+    fdtype = Val{:central},
+    returntype = eltype(x),
+    fx = nothing,
+    epsilon = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2}
+    absstep=relstep)
 
     cache = DerivativeCache(x, fx, epsilon, fdtype, returntype)
     finite_difference_derivative!(df, f, x, cache; relstep=relstep, absstep=absstep)
 end
 
 function finite_difference_derivative!(
-    df::AbstractArray{<:Number},
+    df,
     f,
-    x::AbstractArray{<:Number},
+    x,
     cache::DerivativeCache{T1,T2,fdtype,returntype};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,

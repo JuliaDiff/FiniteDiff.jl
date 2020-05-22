@@ -5,11 +5,11 @@ struct GradientCache{CacheType1, CacheType2, CacheType3, fdtype, returntype, inp
 end
 
 function GradientCache(
-    df         :: Union{<:Number, AbstractArray{<:Number}},
-    x          :: Union{<:Number, AbstractArray{<:Number}},
-    fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(df),
-    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
+    df,
+    x,
+    fdtype = Val{:central},
+    returntype = eltype(df),
+    inplace = Val{true})
 
     if typeof(x)<:AbstractArray # the vector->scalar case
         if fdtype!=Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
@@ -49,74 +49,18 @@ function GradientCache(
 
 end
 
-function GradientCache(
-    c1         :: Union{Nothing,AbstractArray{<:Number}},
-    c2         :: Union{Nothing,AbstractArray{<:Number}},
-    fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}} = nothing,
-    fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(c1),
-    inplace    :: Type{Val{T3}} = Val{true}) where {T1,T2,T3}
-
-    if fdtype!=Val{:forward} && typeof(fx)!=Nothing
-        @warn("Pre-computed function values are only useful for fdtype == Val{:forward}.")
-        _fx = nothing
-    else
-        # more runtime sanity checks?
-        _fx = fx
-    end
-
-    if typeof(x)<:AbstractArray # the vector->scalar case
-        # need cache arrays for x1 (c1) and epsilon (c2) (both only if non-StridedArray)
-        if fdtype!=Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
-            if typeof(x)<:StridedVector
-                if eltype(df)<:Complex && !(eltype(x)<:Complex)
-                    _c1 = zero(Complex{eltype(x)}) .* x
-                    _c2 = nothing
-                else
-                    _c1 = nothing
-                    _c2 = nothing
-                    if typeof(c1)!=Nothing || typeof(c2)!=Nothing
-                        @warn("For StridedVectors, neither c1 nor c2 are necessary.")
-                    end
-                end
-            else
-                _c1 = c1
-                _c2 = c2
-            end
-        else
-            if !(returntype<:Real)
-                fdtype_error(returntype)
-            else
-                _c1 = x + zero(eltype(x)) .* im
-                _c2 = nothing
-            end
-        end
-
-    else # the scalar->vector case
-        # need cache arrays for fx1 and fx2, except in complex mode, which needs one complex array
-        if fdtype != Val{:complex}
-            _c1 = c1
-            _c2 = c2
-        else
-            _c1 = c1
-            _c2 = nothing
-        end
-    end
-    GradientCache{typeof(_fx),typeof(_c1),typeof(_c2),fdtype,returntype,inplace}(_fx,_c1,_c2)
-end
-
 function finite_difference_gradient(
     f,
     x,
-    fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(x),
-    inplace::Type{Val{T3}}=Val{true},
-    fx::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    c2::Union{Nothing,AbstractArray{<:Number}}=nothing;
+    fdtype = Val{:central},
+    returntype = eltype(x),
+    inplace = Val{true},
+    fx = nothing,
+    c1 = nothing,
+    c2 = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    dir=true) where {T1,T2,T3}
+    dir=true)
 
     if typeof(x) <: AbstractArray
         df = zero(returntype) .* x
@@ -142,14 +86,14 @@ function finite_difference_gradient!(
     df,
     f,
     x,
-    fdtype::Type{T1}=Val{:central},
-    returntype::Type{T2}=eltype(df),
-    inplace::Type{Val{T3}}=Val{true},
-    fx::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    c1::Union{Nothing,AbstractArray{<:Number}}=nothing,
-    c2::Union{Nothing,AbstractArray{<:Number}}=nothing;
+    fdtype=Val{:central},
+    returntype=eltype(df),
+    inplace=Val{true},
+    fx=nothing,
+    c1=nothing,
+    c2=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2,T3}
+    absstep=relstep)
 
     cache = GradientCache(df, x, fdtype, returntype, inplace)
     finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep)
@@ -175,9 +119,9 @@ end
 # vector of derivatives of a vector->scalar map by each component of a vector x
 # this ignores the value of "inplace", because it doesn't make much sense
 function finite_difference_gradient!(
-    df::AbstractArray{<:Number},
+    df,
     f,
-    x::AbstractArray{<:Number},
+    x,
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
@@ -359,7 +303,7 @@ end
 # vector of derivatives of a scalar->vector map
 # this is effectively a vector of partial derivatives, but we still call it a gradient
 function finite_difference_gradient!(
-    df::AbstractArray{<:Number},
+    df,
     f,
     x::Number,
     cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
