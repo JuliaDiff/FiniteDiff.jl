@@ -1,5 +1,9 @@
 using FiniteDiff, Test, LinearAlgebra
 
+# code quality guards
+@test isempty(detect_unbound_args(FiniteDiff))
+@test isempty(detect_ambiguities(FiniteDiff) )
+
 # TODO: add tests for GPUArrays
 # TODO: add tests for DEDataArrays
 
