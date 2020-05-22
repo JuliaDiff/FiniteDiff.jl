@@ -6,21 +6,21 @@ struct HessianCache{T,fdtype,inplace}
 end
 
 function HessianCache(xpp,xpm,xmp,xmm,
-                      fdtype::Type{T1}=Val{:hcentral},
-                      inplace::Type{Val{T2}} = x isa StaticArray ? Val{false} : Val{true}) where {T1,T2}
+                      fdtype=Val{:hcentral},
+                      inplace = x isa StaticArray ? Val{false} : Val{true})
     HessianCache{typeof(xpp),fdtype,inplace}(xpp,xpm,xmp,xmm)
 end
 
-function HessianCache(x,fdtype::Type{T1}=Val{:hcentral},
-                        inplace::Type{Val{T2}} = x isa StaticArray ? Val{false} : Val{true}) where {T1,T2}
+function HessianCache(x,fdtype=Val{:hcentral},
+                        inplace = x isa StaticArray ? Val{false} : Val{true})
     HessianCache{typeof(x),fdtype,inplace}(copy(x),copy(x),copy(x),copy(x))
 end
 
-function finite_difference_hessian(f, x::AbstractArray{<:Number},
-    fdtype     :: Type{T1}=Val{:hcentral},
-    inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{false} : Val{true};
-    relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2}
+function finite_difference_hessian(f, x,
+    fdtype  = Val{:hcentral},
+    inplace = x isa StaticArray ? Val{false} : Val{true};
+    relstep = default_relstep(fdtype, eltype(x)),
+    absstep = relstep)
 
     cache = HessianCache(x, fdtype, inplace)
     finite_difference_hessian(f, x, cache; relstep=relstep, absstep=absstep)
@@ -37,12 +37,12 @@ function finite_difference_hessian(
     Symmetric(_H isa SMatrix ? SArray(H) : H)
 end
 
-function finite_difference_hessian!(H::AbstractMatrix,f,
-    x::AbstractArray{<:Number},
-    fdtype     :: Type{T1}=Val{:hcentral},
-    inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{false} : Val{true};
+function finite_difference_hessian!(H,f,
+    x,
+    fdtype  = Val{:hcentral},
+    inplace = x isa StaticArray ? Val{false} : Val{true};
     relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep) where {T1,T2}
+    absstep=relstep)
 
     cache = HessianCache(x,fdtype,inplace)
     finite_difference_hessian!(H, f, x, cache; relstep=relstep, absstep=absstep)
