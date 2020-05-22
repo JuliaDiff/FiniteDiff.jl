@@ -263,7 +263,7 @@ function finite_difference_jacobian!(J,
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
-    sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing) where {T1,T2}
+    sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing)
     if f_in isa Nothing && fdtype == Val{:forward}
         if size(J,1) == length(x)
             fx = zero(x)
