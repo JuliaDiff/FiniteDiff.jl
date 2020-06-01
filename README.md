@@ -42,6 +42,8 @@ It's always fun to start out with a tutorial before jumping into the details!
 Suppose we had the functions:
 
 ```julia
+using FiniteDiff, StaticArrays
+
 fcalls = 0
 function f(dx,x) # in-place
   global fcalls += 1
@@ -53,11 +55,12 @@ function f(dx,x) # in-place
   nothing
 end
 
+const N = 10
 handleleft(x,i) = i==1 ? zero(eltype(x)) : x[i-1]
 handleright(x,i) = i==length(x) ? zero(eltype(x)) : x[i+1]
 function g(x) # out-of-place
   global fcalls += 1
-  @SVector [handleleft(x,i) - 2x[i] + handleright(x,i) for i in 1:length(x)]
+  @SVector [handleleft(x,i) - 2x[i] + handleright(x,i) for i in 1:N]
 end
 ```
 
@@ -66,8 +69,7 @@ do is ask for the Jacobian. If we want to allocate the result, we'd use the
 allocating function `finite_difference_jacobian` on a 1-argument function `g`:
 
 ```julia
-using StaticArrays
-x = @SVector rand(10)
+x = @SVector rand(N)
 FiniteDiff.finite_difference_jacobian(g,x)
 
 #=
