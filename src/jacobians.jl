@@ -171,7 +171,8 @@ function finite_difference_jacobian(
     end
     vecx = _vec(x)
     vecx1 = _vec(x1)
-    nrows, ncols = length(vecfx), length(vecx)
+    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    nrows, ncols = size(J)
 
     if !(sparsity isa Nothing)
         rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
@@ -179,16 +180,30 @@ function finite_difference_jacobian(
         cols_index = [cols_index[i] for i in 1:length(cols_index)]
     end
 
-    if sparsity isa Nothing
-        J = mapreduce(hcat,1:maximum(colorvec)) do color_i
-            if fdtype == Val{:forward}
+    if fdtype == Val{:forward}
+        @inbounds for color_i ∈ 1:maximum(colorvec)
+            if sparsity isa Nothing
                 x_save = ArrayInterface.allowed_getindex(vecx,color_i)
                 epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
                 _vecx1 = Base.setindex(vecx,x_save+epsilon,color_i)
                 _x1 = reshape(_vecx1,size(x))
                 vecfx1 = _vec(f(_x1))
                 dx = (vecfx1-vecfx)/epsilon
-            elseif fdtype == Val{:central}
+                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+            else
+                tmp = norm(vecx .* (colorvec .== color_i))
+                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                _vecx = @. vecx + epsilon * (colorvec == color_i)
+                _x = reshape(_vecx,size(x))
+                vecfx1 = _vec(f(_x))
+                dx = (vecfx1-vecfx)/epsilon
+                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                J = J + Ji
+            end
+        end
+    elseif fdtype == Val{:central}
+        @inbounds for color_i ∈ 1:maximum(colorvec)
+            if sparsity isa Nothing
                 x1_save = ArrayInterface.allowed_getindex(vecx1,color_i)
                 x_save = ArrayInterface.allowed_getindex(vecx,color_i)
                 epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
@@ -199,27 +214,8 @@ function finite_difference_jacobian(
                 vecfx1 = _vec(f(_x1))
                 vecfx = _vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
-            elseif fdtype == Val{:complex} && returntype <: Real
-                epsilon = eps(eltype(x))
-                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
-                _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,color_i)
-                _x = reshape(_vecx,size(x))
-                vecfx = _vec(f(_x))
-                dx = imag(vecfx)/epsilon
+                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
             else
-                fdtype_error(returntype)
-            end
-        end
-    else
-        cols = map(hcat,1:maximum(colorvec)) do color_i
-            if fdtype == Val{:forward}
-                tmp = norm(vecx .* (colorvec .== color_i))
-                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
-                _vecx = @. vecx + epsilon * (colorvec == color_i)
-                _x = reshape(_vecx,size(x))
-                vecfx1 = _vec(f(_x))
-                dx = (vecfx1-vecfx)/epsilon
-            elseif fdtype == Val{:central}
                 tmp = norm(vecx1 .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
                 _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
@@ -229,35 +225,31 @@ function finite_difference_jacobian(
                 vecfx1 = _vec(f(_x1))
                 vecfx = _vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
-            elseif fdtype == Val{:complex} && returntype <: Real
-                epsilon = eps(eltype(x))
+                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                J = J + Ji
+            end
+        end
+    elseif fdtype == Val{:complex} && returntype <: Real
+        epsilon = eps(eltype(x))
+        @inbounds for color_i ∈ 1:maximum(colorvec)
+            if sparsity isa Nothing
+                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
+                _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,color_i)
+                _x = reshape(_vecx,size(x))
+                vecfx = _vec(f(_x))
+                dx = imag(vecfx)/epsilon
+                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+            else
                 _vecx = @. vecx + im * epsilon * (colorvec == color_i)
                 _x = reshape(_vecx,size(x))
                 vecfx = _vec(f(_x))
                 dx = imag(vecfx)/epsilon
-            else
-                fdtype_error(returntype)
+                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                J = J + Ji
             end
         end
-        J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
-        for color_i in 1:maximum(colorvec)
-            vfx1 = cols[color_i]
-            if ArrayInterface.fast_scalar_indexing(x1)
-                _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
-            else
-                #=
-                J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                or
-                J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
-                += means requires a zero'd out start
-                =#
-                if J isa SparseMatrixCSC
-                    @. void_setindex!((J.nzval,),getindex((J.nzval,),rows_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index)
-                else
-                    @. void_setindex!((J,),getindex((J,),rows_index, cols_index) + (getindex((_color,),cols_index) == color_i) * getindex((vfx1,),rows_index),rows_index, cols_index)
-                end
-            end
-        end
+    else
+        fdtype_error(returntype)
     end
     J
 end
