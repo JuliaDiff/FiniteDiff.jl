@@ -171,7 +171,8 @@ function finite_difference_jacobian(
     end
     vecx = _vec(x)
     vecx1 = _vec(x1)
-    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? Array{eltype(x),2}(undef, length(vecfx), 0) : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    @show J
     nrows, ncols = size(J)
 
     if !(sparsity isa Nothing)
@@ -189,7 +190,11 @@ function finite_difference_jacobian(
                 _x1 = reshape(_vecx1,size(x))
                 vecfx1 = _vec(f(_x1))
                 dx = (vecfx1-vecfx)/epsilon
-                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                if jac_prototype isa Nothing
+                    J = hcat(J, dx)
+                else
+                    J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                end
             else
                 tmp = norm(vecx .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -214,7 +219,11 @@ function finite_difference_jacobian(
                 vecfx1 = _vec(f(_x1))
                 vecfx = _vec(f(_x))
                 dx = (vecfx1-vecfx)/(2epsilon)
-                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                if jac_prototype isa Nothing
+                    J = hcat(J, dx)
+                else
+                    J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                end
             else
                 tmp = norm(vecx1 .* (colorvec .== color_i))
                 epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
@@ -238,7 +247,11 @@ function finite_difference_jacobian(
                 _x = reshape(_vecx,size(x))
                 vecfx = _vec(f(_x))
                 dx = imag(vecfx)/epsilon
-                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                if jac_prototype isa Nothing
+                    J = hcat(J, dx)
+                else
+                    J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                end
             else
                 _vecx = @. vecx + im * epsilon * (colorvec == color_i)
                 _x = reshape(_vecx,size(x))
