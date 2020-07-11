@@ -1,4 +1,5 @@
-using FiniteDiff, LinearAlgebra, SparseArrays, Test, LinearAlgebra, BlockBandedMatrices, ArrayInterface, BandedMatrices
+using FiniteDiff, LinearAlgebra, SparseArrays, Test, LinearAlgebra,
+      BlockBandedMatrices, ArrayInterface, BandedMatrices
 
 fcalls = 0
 function f(dx,x)

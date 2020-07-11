@@ -1,7 +1,30 @@
-using FiniteDiff
-using Test, LinearAlgebra
+using Pkg
+using SafeTestsets
+const LONGER_TESTS = false
+
+const GROUP = get(ENV, "GROUP", "All")
+const is_APPVEYOR = Sys.iswindows() && haskey(ENV,"APPVEYOR")
+
+function activate_downstream_env()
+    Pkg.activate("downstream")
+    Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
+    Pkg.instantiate()
+end
 
 @time begin
-  include("finitedifftests.jl")
-  include("coloring_tests.jl")
+
+if GROUP == "All" || GROUP == "Core"
+  @time @safetestset "FiniteDiff Standard Tests" begin include("finitedifftests.jl") end
+  @time @safetestset "Color Differentiation Tests" begin include("coloring_tests.jl") end
+  @time @safetestset "Out of Place Tests" begin include("out_of_place_tests.jl") end
+end
+
+if GROUP == "All" || GROUP == "Downstream"
+  activate_downstream_env()
+  @time @safetestset "ODEs" begin
+    import OrdinaryDiffEq
+    include(joinpath(dirname(pathof(OrdinaryDiffEq)), "..", "test/interface/sparsedifftests.jl"))
+  end
+end
+
 end
