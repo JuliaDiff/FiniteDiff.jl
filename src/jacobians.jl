@@ -171,7 +171,7 @@ function finite_difference_jacobian(
     end
     vecx = _vec(x)
     vecx1 = _vec(x1)
-    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? false.*vecfx.*vecx' : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
+    J = jac_prototype isa Nothing ? (sparsity isa Nothing ? Array{eltype(x),2}(undef, length(vecfx), 0) : zeros(eltype(x),size(sparsity))) : zero(jac_prototype)
     nrows, ncols = size(J)
 
     if !(sparsity isa Nothing)
@@ -181,71 +181,101 @@ function finite_difference_jacobian(
     end
 
     if fdtype == Val{:forward}
-        @inbounds for color_i ∈ 1:maximum(colorvec)
-            if sparsity isa Nothing
-                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
-                epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
-                _vecx1 = Base.setindex(vecx,x_save+epsilon,color_i)
-                _x1 = reshape(_vecx1,size(x))
-                vecfx1 = _vec(f(_x1))
-                dx = (vecfx1-vecfx)/epsilon
-                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
-            else
-                tmp = norm(vecx .* (colorvec .== color_i))
-                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
-                _vecx = @. vecx + epsilon * (colorvec == color_i)
-                _x = reshape(_vecx,size(x))
-                vecfx1 = _vec(f(_x))
-                dx = (vecfx1-vecfx)/epsilon
-                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
-                J = J + Ji
+
+        function calculate_Ji_forward(i)
+            x_save = ArrayInterface.allowed_getindex(vecx, i)
+            epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
+            _vecx1 = Base.setindex(vecx, x_save+epsilon, i)
+            _x1 = reshape(_vecx1,size(x))
+            vecfx1 = _vec(f(_x1))
+            dx = (vecfx1-vecfx) / epsilon
+            return dx
+        end
+
+        if jac_prototype isa Nothing && sparsity isa Nothing
+            J = mapreduce(calculate_Ji_forward, hcat, 1:maximum(colorvec))
+        else
+            @inbounds for color_i ∈ 1:maximum(colorvec)
+                if sparsity isa Nothing
+                    dx = calculate_Ji(color_i)
+                    J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                else
+                    tmp = norm(vecx .* (colorvec .== color_i))
+                    epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                    _vecx = @. vecx + epsilon * (colorvec == color_i)
+                    _x = reshape(_vecx,size(x))
+                    vecfx1 = _vec(f(_x))
+                    dx = (vecfx1-vecfx)/epsilon
+                    Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                    J = J + Ji
+                end
             end
         end
     elseif fdtype == Val{:central}
-        @inbounds for color_i ∈ 1:maximum(colorvec)
-            if sparsity isa Nothing
-                x1_save = ArrayInterface.allowed_getindex(vecx1,color_i)
-                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
-                epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
-                _vecx1 = Base.setindex(vecx1,x1_save+epsilon,color_i)
-                _vecx = Base.setindex(vecx,x_save-epsilon,color_i)
-                _x1 = reshape(_vecx1,size(x))
-                _x = reshape(_vecx,size(x))
-                vecfx1 = _vec(f(_x1))
-                vecfx = _vec(f(_x))
-                dx = (vecfx1-vecfx)/(2epsilon)
-                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
-            else
-                tmp = norm(vecx1 .* (colorvec .== color_i))
-                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
-                _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
-                _vecx = @. vecx - epsilon * (colorvec == color_i)
-                _x1 = reshape(_vecx1,size(x))
-                _x = reshape(_vecx, size(x))
-                vecfx1 = _vec(f(_x1))
-                vecfx = _vec(f(_x))
-                dx = (vecfx1-vecfx)/(2epsilon)
-                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
-                J = J + Ji
+
+        function calculate_Ji_central(i)
+            x1_save = ArrayInterface.allowed_getindex(vecx1,i)
+            x_save = ArrayInterface.allowed_getindex(vecx,i)
+            epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
+            _vecx1 = Base.setindex(vecx1,x1_save+epsilon,i)
+            _vecx = Base.setindex(vecx,x_save-epsilon,i)
+            _x1 = reshape(_vecx1,size(x))
+            _x = reshape(_vecx,size(x))
+            vecfx1 = _vec(f(_x1))
+            vecfx = _vec(f(_x))
+            dx = (vecfx1-vecfx)/(2epsilon)
+            return dx
+        end
+
+        if jac_prototype isa Nothing && sparsity isa Nothing
+            J = mapreduce(calculate_Ji_central, hcat, 1:maximum(colorvec))
+        else
+            @inbounds for color_i ∈ 1:maximum(colorvec)
+                if sparsity isa Nothing
+                    dx = calculate_Ji(color_i)
+                    J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                else
+                    tmp = norm(vecx1 .* (colorvec .== color_i))
+                    epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                    _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
+                    _vecx = @. vecx - epsilon * (colorvec == color_i)
+                    _x1 = reshape(_vecx1,size(x))
+                    _x = reshape(_vecx, size(x))
+                    vecfx1 = _vec(f(_x1))
+                    vecfx = _vec(f(_x))
+                    dx = (vecfx1-vecfx)/(2epsilon)
+                    Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                    J = J + Ji
+                end
             end
         end
     elseif fdtype == Val{:complex} && returntype <: Real
         epsilon = eps(eltype(x))
-        @inbounds for color_i ∈ 1:maximum(colorvec)
-            if sparsity isa Nothing
-                x_save = ArrayInterface.allowed_getindex(vecx,color_i)
-                _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,color_i)
-                _x = reshape(_vecx,size(x))
-                vecfx = _vec(f(_x))
-                dx = imag(vecfx)/epsilon
-                J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
-            else
-                _vecx = @. vecx + im * epsilon * (colorvec == color_i)
-                _x = reshape(_vecx,size(x))
-                vecfx = _vec(f(_x))
-                dx = imag(vecfx)/epsilon
-                Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
-                J = J + Ji
+        
+        function calculate_Ji_complex(i)
+            x_save = ArrayInterface.allowed_getindex(vecx,i)
+            _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,i)
+            _x = reshape(_vecx,size(x))
+            vecfx = _vec(f(_x))
+            dx = imag(vecfx)/epsilon
+            return dx
+        end
+        
+        if jac_prototype isa Nothing && sparsity isa Nothing
+            J = mapreduce(calculate_Ji_complex, hcat, 1:maximum(colorvec))
+        else
+            @inbounds for color_i ∈ 1:maximum(colorvec)
+                if sparsity isa Nothing
+                    dx = calculate_Ji_complex(color_i)
+                    J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
+                else
+                    _vecx = @. vecx + im * epsilon * (colorvec == color_i)
+                    _x = reshape(_vecx,size(x))
+                    vecfx = _vec(f(_x))
+                    dx = imag(vecfx)/epsilon
+                    Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
+                    J = J + Ji
+                end
             end
         end
     else
