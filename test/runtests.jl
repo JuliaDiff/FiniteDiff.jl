@@ -23,7 +23,7 @@ if GROUP == "All" || GROUP == "Downstream"
   activate_downstream_env()
   @time @safetestset "ODEs" begin
     import OrdinaryDiffEq
-    include(joinpath(dirname(pathof(OrdinaryDiffEq)), "..", "test/interface/sparsedifftests.jl"))
+    include(joinpath(dirname(pathof(OrdinaryDiffEq)), "..", "test/interface/sparsediff_tests.jl"))
   end
 end
 
