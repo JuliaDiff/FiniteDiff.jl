@@ -194,6 +194,9 @@ function finite_difference_jacobian(
 
         if jac_prototype isa Nothing && sparsity isa Nothing
             J = mapreduce(calculate_Ji_forward, hcat, 1:maximum(colorvec))
+            if maximum(colorvec) == 1
+                J = reshape(J, 1, 1)
+            end
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
@@ -229,6 +232,9 @@ function finite_difference_jacobian(
 
         if jac_prototype isa Nothing && sparsity isa Nothing
             J = mapreduce(calculate_Ji_central, hcat, 1:maximum(colorvec))
+            if maximum(colorvec) == 1
+                J = reshape(J, 1, 1)
+            end
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
@@ -263,6 +269,9 @@ function finite_difference_jacobian(
         
         if jac_prototype isa Nothing && sparsity isa Nothing
             J = mapreduce(calculate_Ji_complex, hcat, 1:maximum(colorvec))
+            if maximum(colorvec) == 1
+                J = reshape(J, 1, 1)
+            end
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
