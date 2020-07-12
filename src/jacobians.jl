@@ -197,7 +197,7 @@ function finite_difference_jacobian(
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
-                    dx = calculate_Ji(color_i)
+                    dx = calculate_Ji_forward(color_i)
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     tmp = norm(vecx .* (colorvec .== color_i))
@@ -232,7 +232,7 @@ function finite_difference_jacobian(
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
-                    dx = calculate_Ji(color_i)
+                    dx = calculate_Ji_central(color_i)
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     tmp = norm(vecx1 .* (colorvec .== color_i))
