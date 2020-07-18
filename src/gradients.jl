@@ -1,7 +1,8 @@
-struct GradientCache{CacheType1, CacheType2, CacheType3, fdtype, returntype, inplace}
+struct GradientCache{CacheType1, CacheType2, CacheType3, CacheType4, fdtype, returntype, inplace}
     fx :: CacheType1
     c1 :: CacheType2
     c2 :: CacheType3
+    c3 :: CacheType4
 end
 
 function GradientCache(
@@ -33,6 +34,7 @@ function GradientCache(
                 _c2 = nothing
             end
         end
+        _c3 = similar(x)
     else # the scalar->vector case
         # need cache arrays for fx1 and fx2, except in complex mode, which needs one complex array
         if fdtype != Val{:complex}
@@ -42,10 +44,11 @@ function GradientCache(
             _c1 = zero(Complex{eltype(x)}) .* df
             _c2 = nothing
         end
+        _c3 = x
     end
 
-    GradientCache{Nothing,typeof(_c1),typeof(_c2),fdtype,
-                  returntype,inplace}(nothing,_c1,_c2)
+    GradientCache{Nothing,typeof(_c1),typeof(_c2),typeof(_c3),fdtype,
+                  returntype,inplace}(nothing,_c1,_c2,_c3)
 
 end
 
@@ -102,10 +105,10 @@ end
 function finite_difference_gradient(
     f,
     x,
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    cache::GradientCache{T1,T2,T3,T4,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
+    dir=true) where {T1,T2,T3,T4,fdtype,returntype,inplace}
 
     if typeof(x) <: AbstractArray
         df = zero(returntype) .* x
@@ -122,18 +125,19 @@ function finite_difference_gradient!(
     df,
     f,
     x,
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    cache::GradientCache{T1,T2,T3,T4,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
+    dir=true) where {T1,T2,T3,T4,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
     # c1 denotes x1, c2 is epsilon
-    fx, c1, c2 = cache.fx, cache.c1, cache.c2
+    fx, c1, c2, c3 = cache.fx, cache.c1, cache.c2, cache.c3
     if fdtype != Val{:complex} && ArrayInterface.fast_scalar_indexing(c2)
         @. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
         copyto!(c1,x)
     end
+    copyto!(c3,x)
     if fdtype == Val{:forward}
         @inbounds for i ∈ eachindex(x)
             if ArrayInterface.fast_scalar_indexing(c2)
@@ -174,18 +178,18 @@ function finite_difference_gradient!(
             c1_old = ArrayInterface.allowed_getindex(c1,i)
             ArrayInterface.allowed_setindex!(c1,c1_old + epsilon, i)
             x_old  = ArrayInterface.allowed_getindex(x,i)
-            ArrayInterface.allowed_setindex!(x,x_old - epsilon,i)
-            df_tmp = real((f(c1) - f(x)) / (2*epsilon))
+            ArrayInterface.allowed_setindex!(c3,x_old - epsilon,i)
+            df_tmp = real((f(c1) - f(c3)) / (2*epsilon))
             if eltype(df)<:Complex
                 ArrayInterface.allowed_setindex!(c1,c1_old + im*epsilon,i)
-                ArrayInterface.allowed_setindex!(x,x_old - im*epsilon,i)
-                df_tmp2 = im*imag( (f(c1) - f(x)) / (2*im*epsilon) )
+                ArrayInterface.allowed_setindex!(c3,x_old - im*epsilon,i)
+                df_tmp2 = im*imag( (f(c1) - f(c3)) / (2*im*epsilon) )
                 ArrayInterface.allowed_setindex!(df,df_tmp-df_tmp2,i)
             else
                 ArrayInterface.allowed_setindex!(df,df_tmp,i)
             end
             ArrayInterface.allowed_setindex!(c1,c1_old, i)
-            ArrayInterface.allowed_setindex!(x,x_old,i)
+            ArrayInterface.allowed_setindex!(c3,x_old,i)
         end
     elseif fdtype == Val{:complex} && returntype <: Real
         copyto!(c1,x)
@@ -207,44 +211,45 @@ function finite_difference_gradient!(
     df::StridedVector{<:Number},
     f,
     x::StridedVector{<:Number},
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    cache::GradientCache{T1,T2,T3,T4,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
+    dir=true) where {T1,T2,T3,T4,fdtype,returntype,inplace}
 
     # c1 is x1 if we need a complex copy of x, otherwise Nothing
     # c2 is Nothing
-    fx, c1, c2 = cache.fx, cache.c1, cache.c2
+    fx, c1, c2, c3 = cache.fx, cache.c1, cache.c2, cache.c3
     if fdtype != Val{:complex}
         if eltype(df)<:Complex && !(eltype(x)<:Complex)
             copyto!(c1,x)
         end
     end
+    copyto!(c3,x)
     if fdtype == Val{:forward}
         for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
             if typeof(fx) != Nothing
-                x[i] += epsilon
-                dfi = (f(x) - fx) / epsilon
-                x[i] = x_old
+                c3[i] += epsilon
+                dfi = (f(c3) - fx) / epsilon
+                c3[i] = x_old
             else
                 fx0 = f(x)
-                x[i] += epsilon
-                dfi = (f(x) - fx0) / epsilon
-                x[i] = x_old
+                c3[i] += epsilon
+                dfi = (f(c3) - fx0) / epsilon
+                c3[i] = x_old
             end
 
             df[i] = real(dfi)
             if eltype(df)<:Complex
                 if eltype(x)<:Complex
-                    x[i] += im * epsilon
+                    c3[i] += im * epsilon
                     if typeof(fx) != Nothing
-                        dfi = (f(x) - fx) / (im*epsilon)
+                        dfi = (f(c3) - fx) / (im*epsilon)
                     else
-                        dfi = (f(x) - fx0) / (im*epsilon)
+                        dfi = (f(c3) - fx0) / (im*epsilon)
                     end
-                    x[i] = x_old
+                    c3[i] = x_old
                 else
                     c1[i] += im * epsilon
                     if typeof(fx) != Nothing
@@ -261,19 +266,19 @@ function finite_difference_gradient!(
         @inbounds for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
-            x[i] += epsilon
-            dfi = f(x)
-            x[i] = x_old - epsilon
-            dfi -= f(x)
-            x[i] = x_old
+            c3[i] += epsilon
+            dfi = f(c3)
+            c3[i] = x_old - epsilon
+            dfi -= f(c3)
+            c3[i] = x_old
             df[i] = real(dfi / (2*epsilon))
             if eltype(df)<:Complex
                 if eltype(x)<:Complex
-                    x[i] += im*epsilon
-                    dfi = f(x)
-                    x[i] = x_old - im*epsilon
-                    dfi -= f(x)
-                    x[i] = x_old
+                    c3[i] += im*epsilon
+                    dfi = f(c3)
+                    c3[i] = x_old - im*epsilon
+                    dfi -= f(c3)
+                    c3[i] = x_old
                 else
                     c1[i] += im*epsilon
                     dfi = f(c1)
@@ -306,10 +311,10 @@ function finite_difference_gradient!(
     df,
     f,
     x::Number,
-    cache::GradientCache{T1,T2,T3,fdtype,returntype,inplace};
+    cache::GradientCache{T1,T2,T3,T4,fdtype,returntype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
-    dir=true) where {T1,T2,T3,fdtype,returntype,inplace}
+    dir=true) where {T1,T2,T3,T4,fdtype,returntype,inplace}
 
     # NOTE: in this case epsilon is a scalar, we need two arrays for fx1 and fx2
     # c1 denotes fx1, c2 is fx2, sizes guaranteed by the cache constructor
