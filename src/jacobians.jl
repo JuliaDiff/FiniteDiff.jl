@@ -121,7 +121,7 @@ end
 
 function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     Ji = mapreduce(i -> i==color_i ? dx : zero(dx), hcat, 1:ncols)
-    size(Ji)!=(nrows, ncols) ? reshape(Ji,(nrows,ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
+    size(Ji) != (nrows, ncols) ? reshape(Ji, (nrows, ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
 end
 
 function finite_difference_jacobian(f, x,
@@ -186,7 +186,7 @@ function finite_difference_jacobian(
             x_save = ArrayInterface.allowed_getindex(vecx, i)
             epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
             _vecx1 = Base.setindex(vecx, x_save+epsilon, i)
-            _x1 = reshape(_vecx1,size(x))
+            _x1 = reshape(_vecx1, axes(x))
             vecfx1 = _vec(f(_x1))
             dx = (vecfx1-vecfx) / epsilon
             return dx
@@ -194,9 +194,7 @@ function finite_difference_jacobian(
 
         if jac_prototype isa Nothing && sparsity isa Nothing
             J = mapreduce(calculate_Ji_forward, hcat, 1:maximum(colorvec))
-            if maximum(colorvec) == 1
-                J = reshape(J, 1, 1)
-            end
+            J = _mat(J)
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
@@ -206,7 +204,7 @@ function finite_difference_jacobian(
                     tmp = norm(vecx .* (colorvec .== color_i))
                     epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
                     _vecx = @. vecx + epsilon * (colorvec == color_i)
-                    _x = reshape(_vecx,size(x))
+                    _x = reshape(_vecx, axes(x))
                     vecfx1 = _vec(f(_x))
                     dx = (vecfx1-vecfx)/epsilon
                     Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
@@ -222,8 +220,8 @@ function finite_difference_jacobian(
             epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
             _vecx1 = Base.setindex(vecx1,x1_save+epsilon,i)
             _vecx = Base.setindex(vecx,x_save-epsilon,i)
-            _x1 = reshape(_vecx1,size(x))
-            _x = reshape(_vecx,size(x))
+            _x1 = reshape(_vecx1, axes(x))
+            _x = reshape(_vecx, axes(x))
             vecfx1 = _vec(f(_x1))
             vecfx = _vec(f(_x))
             dx = (vecfx1-vecfx)/(2epsilon)
@@ -232,9 +230,7 @@ function finite_difference_jacobian(
 
         if jac_prototype isa Nothing && sparsity isa Nothing
             J = mapreduce(calculate_Ji_central, hcat, 1:maximum(colorvec))
-            if maximum(colorvec) == 1
-                J = reshape(J, 1, 1)
-            end
+            J = _mat(J)
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
@@ -245,8 +241,8 @@ function finite_difference_jacobian(
                     epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
                     _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
                     _vecx = @. vecx - epsilon * (colorvec == color_i)
-                    _x1 = reshape(_vecx1,size(x))
-                    _x = reshape(_vecx, size(x))
+                    _x1 = reshape(_vecx1, axes(x))
+                    _x = reshape(_vecx, axes(x))
                     vecfx1 = _vec(f(_x1))
                     vecfx = _vec(f(_x))
                     dx = (vecfx1-vecfx)/(2epsilon)
@@ -257,21 +253,19 @@ function finite_difference_jacobian(
         end
     elseif fdtype == Val{:complex} && returntype <: Real
         epsilon = eps(eltype(x))
-        
+
         function calculate_Ji_complex(i)
             x_save = ArrayInterface.allowed_getindex(vecx,i)
             _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,i)
-            _x = reshape(_vecx,size(x))
+            _x = reshape(_vecx, axes(x))
             vecfx = _vec(f(_x))
             dx = imag(vecfx)/epsilon
             return dx
         end
-        
+
         if jac_prototype isa Nothing && sparsity isa Nothing
             J = mapreduce(calculate_Ji_complex, hcat, 1:maximum(colorvec))
-            if maximum(colorvec) == 1
-                J = reshape(J, 1, 1)
-            end
+            J = _mat(J)
         else
             @inbounds for color_i ∈ 1:maximum(colorvec)
                 if sparsity isa Nothing
@@ -279,7 +273,7 @@ function finite_difference_jacobian(
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     _vecx = @. vecx + im * epsilon * (colorvec == color_i)
-                    _x = reshape(_vecx,size(x))
+                    _x = reshape(_vecx, axes(x))
                     vecfx = _vec(f(_x))
                     dx = imag(vecfx)/epsilon
                     Ji = _make_Ji(J,rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
@@ -332,7 +326,7 @@ function finite_difference_jacobian!(
     dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype}
 
     m, n = size(J)
-    _color = reshape(colorvec,size(x)...)
+    _color = reshape(colorvec, axes(x)...)
 
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
     copyto!(x1, x)
