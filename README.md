@@ -91,7 +91,7 @@ FiniteDiff.jl assumes you're a smart cookie, and so if you used an
 out-of-place function then it'll not mutate vectors at all, and is thus compatible
 with objects like StaticArrays and will give you a fast Jacobian.
 
-But if you wanted to use mutatiion, then we'd have to use the in-place function
+But if you wanted to use mutation, then we'd have to use the in-place function
 `f` and call the mutating form:
 
 ```julia
