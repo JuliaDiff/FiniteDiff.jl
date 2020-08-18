@@ -1,9 +1,6 @@
 # FiniteDiff
 
 [![Build Status](https://travis-ci.org/JuliaDiff/FiniteDiff.jl.svg?branch=master)](https://travis-ci.org/JuliaDiff/FiniteDiff.jl)
-[![Build status](https://ci.appveyor.com/api/projects/status/t3risc94d2jqipd6?svg=true)](https://ci.appveyor.com/project/ChrisRackauckas/FiniteDiff-jl)
-[![Coverage Status](https://coveralls.io/repos/JuliaDiff/FiniteDiff.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/JuliaDiff/FiniteDiff.jl?branch=master)
-[![codecov.io](http://codecov.io/github/JuliaDiff/FiniteDiff.jl/coverage.svg?branch=master)](http://codecov.io/github/JuliaDiff/FiniteDiff.jl?branch=master)
 
 This package is for calculating derivatives, gradients, Jacobians, Hessians,
 etc. numerically. This library is for maximizing speed while giving a usable
