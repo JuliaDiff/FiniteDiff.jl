@@ -425,3 +425,33 @@ H = similar(H_ref)
     @test err_func(FiniteDiff.finite_difference_hessian!(H, f, x), H_ref) < 1e-4
     @test err_func(FiniteDiff.finite_difference_hessian!(H, f, x, hcache), H_ref) < 1e-4
 end
+
+# Thread safety
+# create an an abstract array type that doesn't allow setindex
+struct ImmutableVector <: DenseVector{Float64}
+    x::Vector{Float64}
+end
+Base.size(x::ImmutableVector) = size(x.x)
+Base.getindex(x::ImmutableVector, i::Integer) = x.x[i]
+@testset "thread safety" begin
+    @testset "Gradients with diff type $difftype"  for difftype in (Val{:forward}, Val{:central}, Val{:complex})
+        g = FiniteDiff.finite_difference_gradient(sum, ImmutableVector(ones(2)), difftype)
+        @test g ≈ ones(2)
+        FiniteDiff.finite_difference_gradient!(g, sum, ImmutableVector(ones(2)), difftype)
+        @test g ≈ ones(2)
+    end
+
+    @testset "Hessians (only supported diff type is :hcentral)" begin
+        H = FiniteDiff.finite_difference_hessian(t -> sum(abs2, t)/2, ImmutableVector(ones(2)))
+        @test H ≈ Matrix(I, 2, 2)
+        FiniteDiff.finite_difference_hessian!(parent(H), t -> sum(abs2, t)/2, ImmutableVector(ones(2)))
+        @test H ≈ Matrix(I, 2, 2)
+    end
+
+    @testset "Jacobians with diff type $difftype"  for difftype in (Val{:forward}, Val{:central}, Val{:complex})
+        J = FiniteDiff.finite_difference_jacobian(identity, ImmutableVector(ones(2)), difftype)
+        @test J ≈ Matrix(I, 2, 2)
+        FiniteDiff.finite_difference_jacobian!(J, (out, in) -> out .= in, ImmutableVector(ones(2)), difftype)
+        @test J ≈ Matrix(I, 2, 2)
+    end
+end
