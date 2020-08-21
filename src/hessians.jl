@@ -11,9 +11,10 @@ function HessianCache(xpp,xpm,xmp,xmm,
     HessianCache{typeof(xpp),fdtype,inplace}(xpp,xpm,xmp,xmm)
 end
 
-function HessianCache(x,fdtype=Val{:hcentral},
-                        inplace = x isa StaticArray ? Val{false} : Val{true})
-    HessianCache{typeof(x),fdtype,inplace}(copy(x),copy(x),copy(x),copy(x))
+function HessianCache(x, fdtype=Val{:hcentral},
+                      inplace = x isa StaticArray ? Val{false} : Val{true})
+    cx = copy(x)
+    HessianCache{typeof(cx),fdtype,inplace}(cx, copy(x), copy(x), copy(x))
 end
 
 function finite_difference_hessian(f, x,
