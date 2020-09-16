@@ -10,11 +10,12 @@ function JacobianCache(
     x,
     fdtype     :: Union{Val{T1},Type{T1}} = Val(:forward),
     returntype :: Type{T2} = eltype(x);
-    inplace    :: Type{Val{T3}} = Val{true},
+    inplace    :: Union{Val{T3},Type{T3}} = Val(true),
     colorvec = 1:length(x),
     sparsity = nothing) where {T1,T2,T3}
 
     fdtype isa Type && (fdtype = fdtype())
+    inplace isa Type && (inplace = inplace())
     if eltype(x) <: Real && fdtype==Val(:complex)
         x1  = false .* im .* x
         _fx = false .* im .* x
@@ -37,11 +38,12 @@ function JacobianCache(
     fx,
     fdtype     :: Union{Val{T1},Type{T1}} = Val(:forward),
     returntype :: Type{T2} = eltype(x);
-    inplace    :: Type{Val{T3}} = Val{true},
+    inplace    :: Union{Val{T3},Type{T3}} = Val(true),
     colorvec = 1:length(x),
     sparsity = nothing) where {T1,T2,T3}
 
     fdtype isa Type && (fdtype = fdtype())
+    inplace isa Type && (inplace = inplace())
     if eltype(x) <: Real && fdtype==Val(:complex)
         x1  = false .* im .* x
     else
@@ -69,11 +71,12 @@ function JacobianCache(
     fx1,
     fdtype     :: Union{Val{T1},Type{T1}} = Val(:forward),
     returntype :: Type{T2} = eltype(fx);
-    inplace    :: Type{Val{T3}} = Val{true},
+    inplace    :: Union{Val{T3},Type{T3}} = Val(true),
     colorvec = 1:length(x1),
     sparsity = nothing) where {T1,T2,T3}
 
     fdtype isa Type && (fdtype = fdtype())
+    inplace isa Type && (inplace = inplace())
     if fdtype==Val(:complex)
         !(returntype<:Real) && fdtype_error(returntype)
 

@@ -10,9 +10,10 @@ function GradientCache(
     x,
     fdtype = Val(:central),
     returntype = eltype(df),
-    inplace = Val{true})
+    inplace = Val(true))
 
     fdtype isa Type && (fdtype = fdtype())
+    inplace isa Type && (inplace = inplace())
     if typeof(x)<:AbstractArray # the vector->scalar case
         if fdtype!=Val(:complex) # complex-mode FD only needs one cache, for x+eps*im
             if typeof(x)<:StridedVector
@@ -58,7 +59,7 @@ function finite_difference_gradient(
     x,
     fdtype = Val(:central),
     returntype = eltype(x),
-    inplace = Val{true},
+    inplace = Val(true),
     fx = nothing,
     c1 = nothing,
     c2 = nothing;
@@ -66,10 +67,11 @@ function finite_difference_gradient(
     absstep=relstep,
     dir=true)
 
+    inplace isa Type && (inplace = inplace())
     if typeof(x) <: AbstractArray
         df = zero(returntype) .* x
     else
-        if inplace == Val{true}
+        if inplace == Val(true)
             if typeof(fx)==Nothing && typeof(c1)==Nothing && typeof(c2)==Nothing
                 error("In the scalar->vector in-place map case, at least one of fx, c1 or c2 must be provided, otherwise we cannot infer the return size.")
             else
@@ -92,7 +94,7 @@ function finite_difference_gradient!(
     x,
     fdtype=Val(:central),
     returntype=eltype(df),
-    inplace=Val{true},
+    inplace=Val(true),
     fx=nothing,
     c1=nothing,
     c2=nothing;
@@ -321,13 +323,13 @@ function finite_difference_gradient!(
     # c1 denotes fx1, c2 is fx2, sizes guaranteed by the cache constructor
     fx, c1, c2 = cache.fx, cache.c1, cache.c2
 
-    if inplace == Val{true}
+    if inplace == Val(true)
         _c1, _c2 = c1, c2
     end
 
     if fdtype == Val(:forward)
         epsilon = compute_epsilon(Val(:forward), x, relstep, absstep, dir)
-        if inplace == Val{true}
+        if inplace == Val(true)
             f(c1, x+epsilon)
         else
             _c1 = f(x+epsilon)
@@ -335,7 +337,7 @@ function finite_difference_gradient!(
         if typeof(fx) != Nothing
             @. df = (_c1 - fx) / epsilon
         else
-            if inplace == Val{true}
+            if inplace == Val(true)
                 f(c2, x)
             else
                 _c2 = f(x)
@@ -344,7 +346,7 @@ function finite_difference_gradient!(
         end
     elseif fdtype == Val(:central)
         epsilon = compute_epsilon(Val(:central), x, relstep, absstep, dir)
-        if inplace == Val{true}
+        if inplace == Val(true)
             f(c1, x+epsilon)
             f(c2, x-epsilon)
         else
@@ -354,7 +356,7 @@ function finite_difference_gradient!(
         @. df = (_c1 - _c2) / (2*epsilon)
     elseif fdtype == Val(:complex) && returntype <: Real
         epsilon_complex = eps(real(eltype(x)))
-        if inplace == Val{true}
+        if inplace == Val(true)
             f(c1, x+im*epsilon_complex)
         else
             _c1 = f(x+im*epsilon_complex)

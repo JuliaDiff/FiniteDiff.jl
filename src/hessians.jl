@@ -7,21 +7,23 @@ end
 
 function HessianCache(xpp,xpm,xmp,xmm,
                       fdtype=Val(:hcentral),
-                      inplace = x isa StaticArray ? Val{false} : Val{true})
+                      inplace = x isa StaticArray ? Val(false) : Val(true))
     fdtype isa Type && (fdtype = fdtype())
+    inplace isa Type && (inplace = inplace())
     HessianCache{typeof(xpp),fdtype,inplace}(xpp,xpm,xmp,xmm)
 end
 
 function HessianCache(x, fdtype=Val(:hcentral),
-                      inplace = x isa StaticArray ? Val{false} : Val{true})
+                      inplace = x isa StaticArray ? Val(false) : Val(true))
     cx = copy(x)
     fdtype isa Type && (fdtype = fdtype())
+    inplace isa Type && (inplace = inplace())
     HessianCache{typeof(cx),fdtype,inplace}(cx, copy(x), copy(x), copy(x))
 end
 
 function finite_difference_hessian(f, x,
     fdtype  = Val(:hcentral),
-    inplace = x isa StaticArray ? Val{false} : Val{true};
+    inplace = x isa StaticArray ? Val(false) : Val(true);
     relstep = default_relstep(fdtype, eltype(x)),
     absstep = relstep)
 
@@ -43,7 +45,7 @@ end
 function finite_difference_hessian!(H,f,
     x,
     fdtype  = Val(:hcentral),
-    inplace = x isa StaticArray ? Val{false} : Val{true};
+    inplace = x isa StaticArray ? Val(false) : Val(true);
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep)
 
@@ -61,7 +63,7 @@ function finite_difference_hessian!(H,f,x,
     xpp, xpm, xmp, xmm = cache.xpp, cache.xpm, cache.xmp, cache.xmm
     fx = f(x)
 
-    if inplace === Val{true}
+    if inplace === Val(true)
         _xpp, _xpm, _xmp, _xmm = xpp, xpm, xmp, xmm
     end
 
@@ -69,7 +71,7 @@ function finite_difference_hessian!(H,f,x,
         xi = ArrayInterface.allowed_getindex(x,i)
         epsilon = compute_epsilon(Val(:hcentral), xi, relstep, absstep)
 
-        if inplace === Val{true}
+        if inplace === Val(true)
             ArrayInterface.allowed_setindex!(xpp,xi + epsilon,i)
             ArrayInterface.allowed_setindex!(xmm,xi - epsilon,i)
         else
@@ -82,7 +84,7 @@ function finite_difference_hessian!(H,f,x,
         xp = xi + epsiloni
         xm = xi - epsiloni
 
-        if inplace === Val{true}
+        if inplace === Val(true)
             ArrayInterface.allowed_setindex!(xpp,xp,i)
             ArrayInterface.allowed_setindex!(xpm,xp,i)
             ArrayInterface.allowed_setindex!(xmp,xm,i)
@@ -100,7 +102,7 @@ function finite_difference_hessian!(H,f,x,
             xp = xj + epsilonj
             xm = xj - epsilonj
 
-            if inplace === Val{true}
+            if inplace === Val(true)
                 ArrayInterface.allowed_setindex!(xpp,xp,j)
                 ArrayInterface.allowed_setindex!(xpm,xm,j)
                 ArrayInterface.allowed_setindex!(xmp,xp,j)
@@ -114,7 +116,7 @@ function finite_difference_hessian!(H,f,x,
 
             ArrayInterface.allowed_setindex!(H,(f(_xpp) - f(_xpm) - f(_xmp) + f(_xmm))/(4*epsiloni*epsilonj),i,j)
 
-            if inplace === Val{true}
+            if inplace === Val(true)
                 ArrayInterface.allowed_setindex!(xpp,xj,j)
                 ArrayInterface.allowed_setindex!(xpm,xj,j)
                 ArrayInterface.allowed_setindex!(xmp,xj,j)
@@ -127,7 +129,7 @@ function finite_difference_hessian!(H,f,x,
             end
         end
 
-        if inplace === Val{true}
+        if inplace === Val(true)
             ArrayInterface.allowed_setindex!(xpp,xi,i)
             ArrayInterface.allowed_setindex!(xpm,xi,i)
             ArrayInterface.allowed_setindex!(xmp,xi,i)
