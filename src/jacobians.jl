@@ -8,13 +8,14 @@ end
 
 function JacobianCache(
     x,
-    fdtype     :: Type{T1} = Val{:forward},
+    fdtype     :: Union{Val{T1},Type{T1}} = Val(:forward),
     returntype :: Type{T2} = eltype(x);
     inplace    :: Type{Val{T3}} = Val{true},
     colorvec = 1:length(x),
     sparsity = nothing) where {T1,T2,T3}
 
-    if eltype(x) <: Real && fdtype==Val{:complex}
+    fdtype isa Type && (fdtype = fdtype())
+    if eltype(x) <: Real && fdtype==Val(:complex)
         x1  = false .* im .* x
         _fx = false .* im .* x
     else
@@ -22,7 +23,7 @@ function JacobianCache(
         _fx = copy(x)
     end
 
-    if fdtype==Val{:complex}
+    if fdtype==Val(:complex)
         _fx1  = nothing
     else
         _fx1 = copy(x)
@@ -34,25 +35,26 @@ end
 function JacobianCache(
     x ,
     fx,
-    fdtype     :: Type{T1} = Val{:forward},
+    fdtype     :: Union{Val{T1},Type{T1}} = Val(:forward),
     returntype :: Type{T2} = eltype(x);
     inplace    :: Type{Val{T3}} = Val{true},
     colorvec = 1:length(x),
     sparsity = nothing) where {T1,T2,T3}
 
-    if eltype(x) <: Real && fdtype==Val{:complex}
+    fdtype isa Type && (fdtype = fdtype())
+    if eltype(x) <: Real && fdtype==Val(:complex)
         x1  = false .* im .* x
     else
         x1 = copy(x)
     end
 
-    if eltype(fx) <: Real && fdtype==Val{:complex}
+    if eltype(fx) <: Real && fdtype==Val(:complex)
         _fx = false .* im .* fx
     else
         _fx = copy(fx)
     end
 
-    if fdtype==Val{:complex}
+    if fdtype==Val(:complex)
         _fx1  = nothing
     else
         _fx1 = copy(fx)
@@ -65,13 +67,14 @@ function JacobianCache(
     x1 ,
     fx ,
     fx1,
-    fdtype     :: Type{T1} = Val{:forward},
+    fdtype     :: Union{Val{T1},Type{T1}} = Val(:forward),
     returntype :: Type{T2} = eltype(fx);
     inplace    :: Type{Val{T3}} = Val{true},
     colorvec = 1:length(x1),
     sparsity = nothing) where {T1,T2,T3}
 
-    if fdtype==Val{:complex}
+    fdtype isa Type && (fdtype = fdtype())
+    if fdtype==Val(:complex)
         !(returntype<:Real) && fdtype_error(returntype)
 
         if eltype(fx) <: Real
@@ -125,7 +128,7 @@ function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
 end
 
 function finite_difference_jacobian(f, x,
-    fdtype     = Val{:forward},
+    fdtype     = Val(:forward),
     returntype = eltype(x),
     f_in       = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
@@ -162,9 +165,9 @@ function finite_difference_jacobian(
 
     if !(f_in isa Nothing)
         vecfx = _vec(f_in)
-    elseif fdtype == Val{:forward}
+    elseif fdtype == Val(:forward)
         vecfx = _vec(f(x))
-    elseif fdtype == Val{:complex} && returntype <: Real
+    elseif fdtype == Val(:complex) && returntype <: Real
         vecfx = real(fx)
     else
         vecfx = _vec(fx)
@@ -180,11 +183,11 @@ function finite_difference_jacobian(
         cols_index = [cols_index[i] for i in 1:length(cols_index)]
     end
 
-    if fdtype == Val{:forward}
+    if fdtype == Val(:forward)
 
         function calculate_Ji_forward(i)
             x_save = ArrayInterface.allowed_getindex(vecx, i)
-            epsilon = compute_epsilon(Val{:forward}, x_save, relstep, absstep, dir)
+            epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
             _vecx1 = Base.setindex(vecx, x_save+epsilon, i)
             _x1 = reshape(_vecx1, axes(x))
             vecfx1 = _vec(f(_x1))
@@ -202,7 +205,7 @@ function finite_difference_jacobian(
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     tmp = norm(vecx .* (colorvec .== color_i))
-                    epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                    epsilon = compute_epsilon(Val(:forward), sqrt(tmp), relstep, absstep, dir)
                     _vecx = @. vecx + epsilon * (colorvec == color_i)
                     _x = reshape(_vecx, axes(x))
                     vecfx1 = _vec(f(_x))
@@ -212,12 +215,12 @@ function finite_difference_jacobian(
                 end
             end
         end
-    elseif fdtype == Val{:central}
+    elseif fdtype == Val(:central)
 
         function calculate_Ji_central(i)
             x1_save = ArrayInterface.allowed_getindex(vecx1,i)
             x_save = ArrayInterface.allowed_getindex(vecx,i)
-            epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
+            epsilon = compute_epsilon(Val(:forward), x1_save, relstep, absstep, dir)
             _vecx1 = Base.setindex(vecx1,x1_save+epsilon,i)
             _vecx = Base.setindex(vecx,x_save-epsilon,i)
             _x1 = reshape(_vecx1, axes(x))
@@ -238,7 +241,7 @@ function finite_difference_jacobian(
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     tmp = norm(vecx1 .* (colorvec .== color_i))
-                    epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                    epsilon = compute_epsilon(Val(:forward), sqrt(tmp), relstep, absstep, dir)
                     _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
                     _vecx = @. vecx - epsilon * (colorvec == color_i)
                     _x1 = reshape(_vecx1, axes(x))
@@ -251,7 +254,7 @@ function finite_difference_jacobian(
                 end
             end
         end
-    elseif fdtype == Val{:complex} && returntype <: Real
+    elseif fdtype == Val(:complex) && returntype <: Real
         epsilon = eps(eltype(x))
 
         function calculate_Ji_complex(i)
@@ -290,14 +293,14 @@ end
 function finite_difference_jacobian!(J,
     f,
     x,
-    fdtype     = Val{:forward},
+    fdtype     = Val(:forward),
     returntype = eltype(x),
     f_in       = nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
     sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing)
-    if f_in isa Nothing && fdtype == Val{:forward}
+    if f_in isa Nothing && fdtype == Val(:forward)
         if size(J,1) == length(x)
             fx = zero(x)
         else
@@ -342,7 +345,7 @@ function finite_difference_jacobian!(
         fill!(J,false)
     end
 
-    if fdtype == Val{:forward}
+    if fdtype == Val(:forward)
         vfx1 = _vec(fx1)
 
         if f_in isa Nothing
@@ -355,7 +358,7 @@ function finite_difference_jacobian!(
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
                 x1_save = ArrayInterface.allowed_getindex(x1,color_i)
-                epsilon = compute_epsilon(Val{:forward}, x1_save, relstep, absstep, dir)
+                epsilon = compute_epsilon(Val(:forward), x1_save, relstep, absstep, dir)
                 ArrayInterface.allowed_setindex!(x1, x1_save + epsilon, color_i)
                 f(fx1, x1)
                 # J is dense, so either it is truly dense or this is the
@@ -366,7 +369,7 @@ function finite_difference_jacobian!(
             else # Perturb along the colorvec vector
                 @. fx1 = x1 * (_color == color_i)
                 tmp = norm(fx1)
-                epsilon = compute_epsilon(Val{:forward}, sqrt(tmp), relstep, absstep, dir)
+                epsilon = compute_epsilon(Val(:forward), sqrt(tmp), relstep, absstep, dir)
                 @. x1 = x1 + epsilon * (_color == color_i)
                 f(fx1, x1)
                 # J is a sparse matrix, so decompress on the fly
@@ -390,12 +393,12 @@ function finite_difference_jacobian!(
                 @. x1 = x1 - epsilon * (_color == color_i)
             end
         end #for ends here
-    elseif fdtype == Val{:central}
+    elseif fdtype == Val(:central)
         vfx1 = _vec(fx1)
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
                 x_save = ArrayInterface.allowed_getindex(x, color_i)
-                epsilon = compute_epsilon(Val{:central}, x_save, relstep, absstep, dir)
+                epsilon = compute_epsilon(Val(:central), x_save, relstep, absstep, dir)
                 ArrayInterface.allowed_setindex!(x1, x_save + epsilon, color_i)
                 f(fx1, x1)
                 ArrayInterface.allowed_setindex!(x1, x_save - epsilon, color_i)
@@ -405,7 +408,7 @@ function finite_difference_jacobian!(
             else # Perturb along the colorvec vector
                 @. fx1 = x1 * (_color == color_i)
                 tmp = norm(fx1)
-                epsilon = compute_epsilon(Val{:central}, sqrt(tmp), relstep, absstep, dir)
+                epsilon = compute_epsilon(Val(:central), sqrt(tmp), relstep, absstep, dir)
                 @. x1 = x1 + epsilon * (_color == color_i)
                 @. x  = x  - epsilon * (_color == color_i)
                 f(fx1, x1)
@@ -424,7 +427,7 @@ function finite_difference_jacobian!(
                 @. x  = x  + epsilon * (_color == color_i)
             end
         end
-    elseif fdtype==Val{:complex} && returntype<:Real
+    elseif fdtype==Val(:complex) && returntype<:Real
         epsilon = eps(eltype(x))
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing

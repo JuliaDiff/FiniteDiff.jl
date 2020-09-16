@@ -6,19 +6,21 @@ struct HessianCache{T,fdtype,inplace}
 end
 
 function HessianCache(xpp,xpm,xmp,xmm,
-                      fdtype=Val{:hcentral},
+                      fdtype=Val(:hcentral),
                       inplace = x isa StaticArray ? Val{false} : Val{true})
+    fdtype isa Type && (fdtype = fdtype())
     HessianCache{typeof(xpp),fdtype,inplace}(xpp,xpm,xmp,xmm)
 end
 
-function HessianCache(x, fdtype=Val{:hcentral},
+function HessianCache(x, fdtype=Val(:hcentral),
                       inplace = x isa StaticArray ? Val{false} : Val{true})
     cx = copy(x)
+    fdtype isa Type && (fdtype = fdtype())
     HessianCache{typeof(cx),fdtype,inplace}(cx, copy(x), copy(x), copy(x))
 end
 
 function finite_difference_hessian(f, x,
-    fdtype  = Val{:hcentral},
+    fdtype  = Val(:hcentral),
     inplace = x isa StaticArray ? Val{false} : Val{true};
     relstep = default_relstep(fdtype, eltype(x)),
     absstep = relstep)
@@ -40,7 +42,7 @@ end
 
 function finite_difference_hessian!(H,f,
     x,
-    fdtype  = Val{:hcentral},
+    fdtype  = Val(:hcentral),
     inplace = x isa StaticArray ? Val{false} : Val{true};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep)
@@ -54,7 +56,7 @@ function finite_difference_hessian!(H,f,x,
                                     relstep = default_relstep(fdtype, eltype(x)),
                                     absstep = relstep) where {T,fdtype,inplace}
 
-    @assert fdtype == Val{:hcentral}
+    @assert fdtype == Val(:hcentral)
     n = length(x)
     xpp, xpm, xmp, xmm = cache.xpp, cache.xpm, cache.xmp, cache.xmm
     fx = f(x)
@@ -65,7 +67,7 @@ function finite_difference_hessian!(H,f,x,
 
     for i = 1:n
         xi = ArrayInterface.allowed_getindex(x,i)
-        epsilon = compute_epsilon(Val{:hcentral}, xi, relstep, absstep)
+        epsilon = compute_epsilon(Val(:hcentral), xi, relstep, absstep)
 
         if inplace === Val{true}
             ArrayInterface.allowed_setindex!(xpp,xi + epsilon,i)
@@ -76,7 +78,7 @@ function finite_difference_hessian!(H,f,x,
         end
 
         ArrayInterface.allowed_setindex!(H,(f(_xpp) - 2*fx + f(_xmm)) / epsilon^2,i,i)
-        epsiloni = compute_epsilon(Val{:central}, xi, relstep, absstep)
+        epsiloni = compute_epsilon(Val(:central), xi, relstep, absstep)
         xp = xi + epsiloni
         xm = xi - epsiloni
 
@@ -94,7 +96,7 @@ function finite_difference_hessian!(H,f,x,
 
         for j = i+1:n
             xj = ArrayInterface.allowed_getindex(x,j)
-            epsilonj = compute_epsilon(Val{:central}, xj, relstep, absstep)
+            epsilonj = compute_epsilon(Val(:central), xj, relstep, absstep)
             xp = xj + epsilonj
             xm = xj - epsilonj
 

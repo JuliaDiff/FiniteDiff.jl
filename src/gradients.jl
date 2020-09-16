@@ -8,12 +8,13 @@ end
 function GradientCache(
     df,
     x,
-    fdtype = Val{:central},
+    fdtype = Val(:central),
     returntype = eltype(df),
     inplace = Val{true})
 
+    fdtype isa Type && (fdtype = fdtype())
     if typeof(x)<:AbstractArray # the vector->scalar case
-        if fdtype!=Val{:complex} # complex-mode FD only needs one cache, for x+eps*im
+        if fdtype!=Val(:complex) # complex-mode FD only needs one cache, for x+eps*im
             if typeof(x)<:StridedVector
                 if eltype(df)<:Complex && !(eltype(x)<:Complex)
                     _c1 = zero(Complex{eltype(x)}) .* x
@@ -37,7 +38,7 @@ function GradientCache(
         _c3 = similar(x)
     else # the scalar->vector case
         # need cache arrays for fx1 and fx2, except in complex mode, which needs one complex array
-        if fdtype != Val{:complex}
+        if fdtype != Val(:complex)
             _c1 = similar(df)
             _c2 = similar(df)
         else
@@ -55,7 +56,7 @@ end
 function finite_difference_gradient(
     f,
     x,
-    fdtype = Val{:central},
+    fdtype = Val(:central),
     returntype = eltype(x),
     inplace = Val{true},
     fx = nothing,
@@ -89,7 +90,7 @@ function finite_difference_gradient!(
     df,
     f,
     x,
-    fdtype=Val{:central},
+    fdtype=Val(:central),
     returntype=eltype(df),
     inplace=Val{true},
     fx=nothing,
@@ -133,12 +134,12 @@ function finite_difference_gradient!(
     # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2, c3 = cache.fx, cache.c1, cache.c2, cache.c3
-    if fdtype != Val{:complex} && ArrayInterface.fast_scalar_indexing(c2)
+    if fdtype != Val(:complex) && ArrayInterface.fast_scalar_indexing(c2)
         @. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
         copyto!(c1,x)
     end
     copyto!(c3,x)
-    if fdtype == Val{:forward}
+    if fdtype == Val(:forward)
         @inbounds for i ∈ eachindex(x)
             if ArrayInterface.fast_scalar_indexing(c2)
                 epsilon = ArrayInterface.allowed_getindex(c2,i)*dir
@@ -168,7 +169,7 @@ function finite_difference_gradient!(
                 ArrayInterface.allowed_setindex!(c1,c1_old,i)
             end
         end
-    elseif fdtype == Val{:central}
+    elseif fdtype == Val(:central)
         @inbounds for i ∈ eachindex(x)
             if ArrayInterface.fast_scalar_indexing(c2)
                 epsilon = ArrayInterface.allowed_getindex(c2,i)*dir
@@ -191,7 +192,7 @@ function finite_difference_gradient!(
             ArrayInterface.allowed_setindex!(c1,c1_old, i)
             ArrayInterface.allowed_setindex!(c3,x_old,i)
         end
-    elseif fdtype == Val{:complex} && returntype <: Real
+    elseif fdtype == Val(:complex) && returntype <: Real
         copyto!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
@@ -219,13 +220,13 @@ function finite_difference_gradient!(
     # c1 is x1 if we need a complex copy of x, otherwise Nothing
     # c2 is Nothing
     fx, c1, c2, c3 = cache.fx, cache.c1, cache.c2, cache.c3
-    if fdtype != Val{:complex}
+    if fdtype != Val(:complex)
         if eltype(df)<:Complex && !(eltype(x)<:Complex)
             copyto!(c1,x)
         end
     end
     copyto!(c3,x)
-    if fdtype == Val{:forward}
+    if fdtype == Val(:forward)
         for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
@@ -262,7 +263,7 @@ function finite_difference_gradient!(
                 df[i] -= im * imag(dfi)
             end
         end
-    elseif fdtype == Val{:central}
+    elseif fdtype == Val(:central)
         @inbounds for i ∈ eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
@@ -289,7 +290,7 @@ function finite_difference_gradient!(
                 df[i] -= im*imag(dfi / (2*im*epsilon))
             end
         end
-    elseif fdtype==Val{:complex} && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
+    elseif fdtype==Val(:complex) && returntype<:Real && eltype(df)<:Real && eltype(x)<:Real
         copyto!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
@@ -324,8 +325,8 @@ function finite_difference_gradient!(
         _c1, _c2 = c1, c2
     end
 
-    if fdtype == Val{:forward}
-        epsilon = compute_epsilon(Val{:forward}, x, relstep, absstep, dir)
+    if fdtype == Val(:forward)
+        epsilon = compute_epsilon(Val(:forward), x, relstep, absstep, dir)
         if inplace == Val{true}
             f(c1, x+epsilon)
         else
@@ -341,8 +342,8 @@ function finite_difference_gradient!(
             end
             @. df = (_c1 - _c2) / epsilon
         end
-    elseif fdtype == Val{:central}
-        epsilon = compute_epsilon(Val{:central}, x, relstep, absstep, dir)
+    elseif fdtype == Val(:central)
+        epsilon = compute_epsilon(Val(:central), x, relstep, absstep, dir)
         if inplace == Val{true}
             f(c1, x+epsilon)
             f(c2, x-epsilon)
@@ -351,7 +352,7 @@ function finite_difference_gradient!(
             _c2 = f(x-epsilon)
         end
         @. df = (_c1 - _c2) / (2*epsilon)
-    elseif fdtype == Val{:complex} && returntype <: Real
+    elseif fdtype == Val(:complex) && returntype <: Real
         epsilon_complex = eps(real(eltype(x)))
         if inplace == Val{true}
             f(c1, x+im*epsilon_complex)
