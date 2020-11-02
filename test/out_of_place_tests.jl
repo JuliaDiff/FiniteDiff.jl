@@ -34,18 +34,15 @@ J = FiniteDiff.finite_difference_jacobian(f, x, Val{:forward}, eltype(x),
 @test J ≈ second_derivative_stencil(30)
 @test typeof(J) == typeof(spJ)
 
-#1x1 SVector test
-x = SVector{1}([1.])
-f(x) = x
-J = FiniteDiff.finite_difference_jacobian(f, x, Val{:forward}, eltype(x))
-@test J[1, 1] ≈ 1.0
-@test J isa SMatrix{1,1}
-J = FiniteDiff.finite_difference_jacobian(f, x, Val{:central}, eltype(x))
-@test J[1, 1] ≈ 1.0
-@test J isa SMatrix{1,1}
-J = FiniteDiff.finite_difference_jacobian(f, x, Val{:complex}, eltype(x))
-@test J[1, 1] ≈ 1.0
-@test J isa SMatrix{1,1}
+f = x -> x
+@testset "1x1 test of $x" for
+  (x, y) in ((SVector{1}([1.]), SMatrix{1,1}), ([1.0], Matrix)),
+    difftype in (:forward, :central, :complex)
+
+  J = FiniteDiff.finite_difference_jacobian(f, x, Val{difftype}, eltype(x))
+  @test J[1, 1] ≈ 1.0
+  @test J isa y
+end
 
 x = SVector{1}([1.])
 f(x) = vcat(x, x)
