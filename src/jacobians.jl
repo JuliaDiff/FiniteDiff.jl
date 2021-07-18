@@ -348,6 +348,9 @@ function finite_difference_jacobian!(
         fill!(J,false)
     end
 
+    # fast path if J and sparsity are both SparseMatrixCSC and have the same number of columns and stored values
+    sparseCSC_common_sparsity = _use_sparseCSC_common_sparsity!(J, sparsity)
+    
     if fdtype == Val(:forward)
         vfx1 = _vec(fx1)
 
@@ -378,7 +381,11 @@ function finite_difference_jacobian!(
                 # J is a sparse matrix, so decompress on the fly
                 @. vfx1 = (vfx1 - vfx) / epsilon
                 if ArrayInterface.fast_scalar_indexing(x1)
-                    _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
+                    if sparseCSC_common_sparsity
+                        _colorediteration!(J,vfx1,colorvec,color_i,n)
+                    else
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
+                    end
                 else
                     #=
                     J.nzval[rows_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
@@ -417,8 +424,12 @@ function finite_difference_jacobian!(
                 f(fx1, x1)
                 f(fx, x)
                 @. vfx1 = (vfx1 - vfx) / 2epsilon
-                if ArrayInterface.fast_scalar_indexing(x1)
-                    _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
+                if ArrayInterface.fast_scalar_indexing(x1)                    
+                    if sparseCSC_common_sparsity
+                        _colorediteration!(J,vfx1,colorvec,color_i,n)
+                    else
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
+                    end
                 else
                     if J isa SparseMatrixCSC
                         @. void_setindex!((J.nzval,), getindex((J.nzval,), rows_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx1,), rows_index), rows_index)
@@ -443,8 +454,12 @@ function finite_difference_jacobian!(
                 @. x1 = x1 + im * epsilon * (_color == color_i)
                 f(fx,x1)
                 @. vfx = imag(vfx) / epsilon
-                if ArrayInterface.fast_scalar_indexing(x1)
-                    _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,n)
+                if ArrayInterface.fast_scalar_indexing(x1)                    
+                    if sparseCSC_common_sparsity
+                        _colorediteration!(J,vfx,colorvec,color_i,n)
+                    else
+                        _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,n)
+                    end
                 else
                    if J isa SparseMatrixCSC
                         @. void_setindex!((J.nzval,), getindex((J.nzval,), rows_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx,),rows_index), rows_index)
