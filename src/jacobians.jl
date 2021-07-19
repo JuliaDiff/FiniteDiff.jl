@@ -348,8 +348,8 @@ function finite_difference_jacobian!(
         fill!(J,false)
     end
 
-    # fast path if J and sparsity are both SparseMatrixCSC and have the same number of columns and stored values
-    sparseCSC_common_sparsity = _use_sparseCSC_common_sparsity!(J, sparsity)
+    # fast path if J and sparsity are both SparseMatrixCSC and have the same sparsity pattern
+    sparseCSC_common_sparsity = _use_sparseCSC_common_sparsity(J, sparsity)
     
     if fdtype == Val(:forward)
         vfx1 = _vec(fx1)

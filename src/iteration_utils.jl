@@ -32,20 +32,10 @@ end
 _use_findstructralnz(sparsity) = ArrayInterface.has_sparsestruct(sparsity)
 _use_findstructralnz(::SparseMatrixCSC) = false
 
-# test if J, sparsity are both SparseMatrixCSC and have the same size storage arrays,
-# if so, update J so they can share the same sparsity pattern
-_use_sparseCSC_common_sparsity!(J, sparsity) = false
-function _use_sparseCSC_common_sparsity!(J::SparseMatrixCSC, sparsity::SparseMatrixCSC)
-    common_sparsity = (length(J.colptr) == length(sparsity.colptr) &&
-            length(J.nzval) == length(sparsity.nzval))
-
-    if common_sparsity
-        J.colptr .= sparsity.colptr
-        J.rowval .= sparsity.rowval
-    end
-
-    return common_sparsity
-end
+# test if J, sparsity are both SparseMatrixCSC and have the same sparsity pattern of stored values
+_use_sparseCSC_common_sparsity(J, sparsity) = false
+_use_sparseCSC_common_sparsity(J::SparseMatrixCSC, sparsity::SparseMatrixCSC) =
+    ((J.colptr == sparsity.colptr) && (J.rowval == sparsity.rowval))
 
 function __init__()
     @require BlockBandedMatrices="ffab5731-97b5-5995-9138-79e8c1846df0" begin
