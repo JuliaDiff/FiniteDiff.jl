@@ -1,4 +1,4 @@
-using OrdinaryDiffEq, ForwardDiff, Test
+using OrdinaryDiffEq, ForwardDiff, LinearAlgebra, Test
 
 const nknots = 10
 const h = 1.0/(nknots+1)
