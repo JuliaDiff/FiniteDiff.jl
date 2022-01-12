@@ -373,8 +373,8 @@ function finite_difference_jacobian!(
                 # Now return x1 back to its original value
                 ArrayInterface.allowed_setindex!(x1, x1_save, color_i)
             else # Perturb along the colorvec vector
-                idx = findfirst(isequal(color_i), _color)
-                tmp = norm(x1[idx])
+                @. fx1 = x1 * (_color == color_i)
+                tmp = norm(fx1)
                 epsilon = compute_epsilon(Val(:forward), sqrt(tmp), relstep, absstep, dir)
                 @. x1 = x1 + epsilon * (_color == color_i)
                 f(fx1, x1)
@@ -416,8 +416,8 @@ function finite_difference_jacobian!(
                 @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
                 ArrayInterface.allowed_setindex!(x1, x_save, color_i)
             else # Perturb along the colorvec vector
-                idx = findfirst(isequal(color_i), _color)
-                tmp = norm(x1[idx])
+                @. fx1 = x1 * (_color == color_i)
+                tmp = norm(fx1)
                 epsilon = compute_epsilon(Val(:central), sqrt(tmp), relstep, absstep, dir)
                 @. x1 = x1 + epsilon * (_color == color_i)
                 @. x  = x  - epsilon * (_color == color_i)
