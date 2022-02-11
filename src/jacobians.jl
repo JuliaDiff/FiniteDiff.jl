@@ -345,12 +345,16 @@ function finite_difference_jacobian!(
     end
 
     if sparsity !== nothing
-        fill!(J,false)
+        if J isa SparseMatrixCSC
+            fill!(nonzeros(J),false)
+        else
+            fill!(J,false)
+        end
     end
 
     # fast path if J and sparsity are both SparseMatrixCSC and have the same sparsity pattern
     sparseCSC_common_sparsity = _use_sparseCSC_common_sparsity(J, sparsity)
-    
+
     if fdtype == Val(:forward)
         vfx1 = _vec(fx1)
 
@@ -424,7 +428,7 @@ function finite_difference_jacobian!(
                 f(fx1, x1)
                 f(fx, x)
                 @. vfx1 = (vfx1 - vfx) / 2epsilon
-                if ArrayInterface.fast_scalar_indexing(x1)                    
+                if ArrayInterface.fast_scalar_indexing(x1)
                     if sparseCSC_common_sparsity
                         _colorediteration!(J,vfx1,colorvec,color_i,n)
                     else
@@ -454,7 +458,7 @@ function finite_difference_jacobian!(
                 @. x1 = x1 + im * epsilon * (_color == color_i)
                 f(fx,x1)
                 @. vfx = imag(vfx) / epsilon
-                if ArrayInterface.fast_scalar_indexing(x1)                    
+                if ArrayInterface.fast_scalar_indexing(x1)
                     if sparseCSC_common_sparsity
                         _colorediteration!(J,vfx,colorvec,color_i,n)
                     else
