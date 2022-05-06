@@ -117,3 +117,43 @@ Jbb = BlockBandedMatrix(similar(Jsparse),fill(100, 100), fill(100, 100),(1,1));
 colorsbb = ArrayInterface.matrix_colors(Jbb)
 FiniteDiff.finite_difference_jacobian!(Jbb, f, x, colorvec=colorsbb)
 @test Jbb ≈ Jsparse
+
+
+# Non-square Jacobian test.
+# The Jacobian of f_nonsquare! has size (n, 2*n).
+function f_nonsquare!(y, x)
+    global fcalls += 1
+    @assert length(x) == 2*length(y)
+    n = length(x) ÷ 2
+    x1 = @view x[1:n]
+    x2 = @view x[n+1:end]
+
+    @. y = (x1 .- 3).^2 .+ x1.*x2 .+ (x2 .+ 4).^2 .- 3
+    return nothing
+end
+
+n = 4
+x0 = vcat(ones(n).*(1:n) .+ 0.5, ones(n).*(1:n) .+ 1.5)
+y0 = zeros(n)
+rows = vcat([i for i in 1:n], [i for i in 1:n])
+cols = vcat([i for i in 1:n], [i+n for i in 1:n])
+sparsity = sparse(rows, cols, ones(length(rows)))
+colorvec = vcat(fill(1, n), fill(2, n))
+
+J_nonsquare1 = zeros(size(sparsity))
+FiniteDiff.finite_difference_jacobian!(J_nonsquare1, f_nonsquare!, x0)
+
+J_nonsquare2 = similar(sparsity)
+for method in [Val(:forward), Val(:central), Val(:complex)]
+    cache = FiniteDiff.JacobianCache(copy(x0), copy(y0), copy(y0), method; sparsity, colorvec)
+    global fcalls = 0
+    FiniteDiff.finite_difference_jacobian!(J_nonsquare2, f_nonsquare!, x0, cache)
+    if method == Val(:central)
+        @test fcalls == 2*maximum(colorvec)
+    elseif method == Val(:complex)
+        @test fcalls == maximum(colorvec)
+    else
+        @test fcalls == maximum(colorvec) + 1
+    end
+    @test isapprox(J_nonsquare2, J_nonsquare1; rtol=1e-6)
+end

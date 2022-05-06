@@ -1,5 +1,6 @@
 mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,SparsityType,fdtype,returntype}
     x1  :: CacheType1
+    x2  :: CacheType1
     fx  :: CacheType2
     fx1 :: CacheType3
     colorvec :: ColorType
@@ -96,7 +97,8 @@ function JacobianCache(
         @assert eltype(fx1) == T2
         _fx = fx
     end
-    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_fx,fx1,colorvec,sparsity)
+    _x2 = similar(_x1)
+    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_x2,_fx,fx1,colorvec,sparsity)
 end
 
 function _make_Ji(::SparseMatrixCSC, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
@@ -334,7 +336,7 @@ function finite_difference_jacobian!(
     m, n = size(J)
     _color = reshape(colorvec, axes(x)...)
 
-    x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
+    x1, x2, fx, fx1 = cache.x1, cache.x2, cache.fx, cache.fx1
     copyto!(x1, x)
     vfx = _vec(fx)
 
@@ -377,8 +379,8 @@ function finite_difference_jacobian!(
                 # Now return x1 back to its original value
                 ArrayInterface.allowed_setindex!(x1, x1_save, color_i)
             else # Perturb along the colorvec vector
-                @. fx1 = x1 * (_color == color_i)
-                tmp = norm(fx1)
+                @. x2 = x1 * (_color == color_i)
+                tmp = norm(x2)
                 epsilon = compute_epsilon(Val(:forward), sqrt(tmp), relstep, absstep, dir)
                 @. x1 = x1 + epsilon * (_color == color_i)
                 f(fx1, x1)
@@ -420,8 +422,8 @@ function finite_difference_jacobian!(
                 @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
                 ArrayInterface.allowed_setindex!(x1, x_save, color_i)
             else # Perturb along the colorvec vector
-                @. fx1 = x1 * (_color == color_i)
-                tmp = norm(fx1)
+                @. x2 = x1 * (_color == color_i)
+                tmp = norm(x2)
                 epsilon = compute_epsilon(Val(:central), sqrt(tmp), relstep, absstep, dir)
                 @. x1 = x1 + epsilon * (_color == color_i)
                 @. x  = x  - epsilon * (_color == color_i)
