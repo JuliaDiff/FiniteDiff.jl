@@ -136,20 +136,20 @@ function finite_difference_gradient!(
     # NOTE: in this case epsilon is a vector, we need two arrays for epsilon and x1
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2, c3 = cache.fx, cache.c1, cache.c2, cache.c3
-    if fdtype != Val(:complex) && ArrayInterface.fast_scalar_indexing(c2)
+    if fdtype != Val(:complex) && ArrayInterfaceCore.fast_scalar_indexing(c2)
         @. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
         copyto!(c1,x)
     end
     copyto!(c3,x)
     if fdtype == Val(:forward)
         @inbounds for i ∈ eachindex(x)
-            if ArrayInterface.fast_scalar_indexing(c2)
-                epsilon = ArrayInterface.allowed_getindex(c2,i)*dir
+            if ArrayInterfaceCore.fast_scalar_indexing(c2)
+                epsilon = ArrayInterfaceCore.allowed_getindex(c2,i)*dir
             else
                 epsilon = compute_epsilon(fdtype, x, relstep, absstep, dir)*dir
             end
-            c1_old = ArrayInterface.allowed_getindex(c1,i)
-            ArrayInterface.allowed_setindex!(c1,c1_old + epsilon,i)
+            c1_old = ArrayInterfaceCore.allowed_getindex(c1,i)
+            ArrayInterfaceCore.allowed_setindex!(c1,c1_old + epsilon,i)
             if typeof(fx) != Nothing
                 dfi = (f(c1) - fx) / epsilon
             else
@@ -158,51 +158,51 @@ function finite_difference_gradient!(
             end
             df_tmp = real(dfi)
             if eltype(df)<:Complex
-                ArrayInterface.allowed_setindex!(c1,c1_old + im * epsilon,i)
+                ArrayInterfaceCore.allowed_setindex!(c1,c1_old + im * epsilon,i)
                 if typeof(fx) != Nothing
                     dfi = (f(c1) - fx) / (im*epsilon)
                 else
                     dfi = (f(c1) - fx0) / (im*epsilon)
                 end
-                ArrayInterface.allowed_setindex!(c1,c1_old,i)
-                ArrayInterface.allowed_setindex!(df, df_tmp - im * imag(dfi), i)
+                ArrayInterfaceCore.allowed_setindex!(c1,c1_old,i)
+                ArrayInterfaceCore.allowed_setindex!(df, df_tmp - im * imag(dfi), i)
             else
-                ArrayInterface.allowed_setindex!(df, df_tmp, i)
-                ArrayInterface.allowed_setindex!(c1,c1_old,i)
+                ArrayInterfaceCore.allowed_setindex!(df, df_tmp, i)
+                ArrayInterfaceCore.allowed_setindex!(c1,c1_old,i)
             end
         end
     elseif fdtype == Val(:central)
         @inbounds for i ∈ eachindex(x)
-            if ArrayInterface.fast_scalar_indexing(c2)
-                epsilon = ArrayInterface.allowed_getindex(c2,i)*dir
+            if ArrayInterfaceCore.fast_scalar_indexing(c2)
+                epsilon = ArrayInterfaceCore.allowed_getindex(c2,i)*dir
             else
                 epsilon = compute_epsilon(fdtype, x, relstep, absstep, dir)*dir
             end
-            c1_old = ArrayInterface.allowed_getindex(c1,i)
-            ArrayInterface.allowed_setindex!(c1,c1_old + epsilon, i)
-            x_old  = ArrayInterface.allowed_getindex(x,i)
-            ArrayInterface.allowed_setindex!(c3,x_old - epsilon,i)
+            c1_old = ArrayInterfaceCore.allowed_getindex(c1,i)
+            ArrayInterfaceCore.allowed_setindex!(c1,c1_old + epsilon, i)
+            x_old  = ArrayInterfaceCore.allowed_getindex(x,i)
+            ArrayInterfaceCore.allowed_setindex!(c3,x_old - epsilon,i)
             df_tmp = real((f(c1) - f(c3)) / (2*epsilon))
             if eltype(df)<:Complex
-                ArrayInterface.allowed_setindex!(c1,c1_old + im*epsilon,i)
-                ArrayInterface.allowed_setindex!(c3,x_old - im*epsilon,i)
+                ArrayInterfaceCore.allowed_setindex!(c1,c1_old + im*epsilon,i)
+                ArrayInterfaceCore.allowed_setindex!(c3,x_old - im*epsilon,i)
                 df_tmp2 = im*imag( (f(c1) - f(c3)) / (2*im*epsilon) )
-                ArrayInterface.allowed_setindex!(df,df_tmp-df_tmp2,i)
+                ArrayInterfaceCore.allowed_setindex!(df,df_tmp-df_tmp2,i)
             else
-                ArrayInterface.allowed_setindex!(df,df_tmp,i)
+                ArrayInterfaceCore.allowed_setindex!(df,df_tmp,i)
             end
-            ArrayInterface.allowed_setindex!(c1,c1_old, i)
-            ArrayInterface.allowed_setindex!(c3,x_old,i)
+            ArrayInterfaceCore.allowed_setindex!(c1,c1_old, i)
+            ArrayInterfaceCore.allowed_setindex!(c3,x_old,i)
         end
     elseif fdtype == Val(:complex) && returntype <: Real
         copyto!(c1,x)
         epsilon_complex = eps(real(eltype(x)))
         # we use c1 here to avoid typing issues with x
         @inbounds for i ∈ eachindex(x)
-            c1_old = ArrayInterface.allowed_getindex(c1,i)
-            ArrayInterface.allowed_setindex!(c1,c1_old+im*epsilon_complex,i)
-            ArrayInterface.allowed_setindex!(df,imag(f(c1)) / epsilon_complex,i)
-            ArrayInterface.allowed_setindex!(c1,c1_old,i)
+            c1_old = ArrayInterfaceCore.allowed_getindex(c1,i)
+            ArrayInterfaceCore.allowed_setindex!(c1,c1_old+im*epsilon_complex,i)
+            ArrayInterfaceCore.allowed_setindex!(df,imag(f(c1)) / epsilon_complex,i)
+            ArrayInterfaceCore.allowed_setindex!(c1,c1_old,i)
         end
     else
         fdtype_error(returntype)

@@ -3,19 +3,20 @@ uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
 version = "2.11.1"
 
 [deps]
-ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
+ArrayInterfaceCore = "30b0a656-2188-435a-8636-2ec0e6a096e2"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Requires = "ae029012-a4dd-5104-9daa-d747884805df"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
-ArrayInterface = "1.1, 2.0, 3.0, 4, 5"
+ArrayInterfaceCore = "0.1.1"
 Requires = "0.5, 1.0"
 StaticArrays = "0.10, 0.11, 0.12, 1.0"
-julia = "1.2"
+julia = "1.6"
 
 [extras]
+ArrayInterfaceBlockBandedMatrices = "5331f1e9-51c7-46b0-a9b0-df4434785e0a"
 BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
 BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
@@ -23,4 +24,4 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "BlockBandedMatrices", "BandedMatrices", "Pkg", "SafeTestsets"]
+test = ["Test", "ArrayInterfaceBlockBandedMatrices", "BlockBandedMatrices", "BandedMatrices", "Pkg", "SafeTestsets"]

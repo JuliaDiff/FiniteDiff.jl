@@ -1,5 +1,6 @@
 using FiniteDiff, LinearAlgebra, SparseArrays, Test, LinearAlgebra,
-      BlockBandedMatrices, ArrayInterface, BandedMatrices
+      BlockBandedMatrices, ArrayInterfaceCore, BandedMatrices,
+      ArrayInterfaceBlockBandedMatrices
 
 fcalls = 0
 function f(dx,x)
@@ -109,12 +110,12 @@ end
 x = rand(10000)
 Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
 Jsparse = sparse(Jbbb)
-colorsbbb = ArrayInterface.matrix_colors(Jbbb)
+colorsbbb = ArrayInterfaceCore.matrix_colors(Jbbb)
 FiniteDiff.finite_difference_jacobian!(Jbbb, f, x, colorvec=colorsbbb)
 FiniteDiff.finite_difference_jacobian!(Jsparse, f, x, colorvec=colorsbbb)
 @test Jbbb ≈ Jsparse
 Jbb = BlockBandedMatrix(similar(Jsparse),fill(100, 100), fill(100, 100),(1,1));
-colorsbb = ArrayInterface.matrix_colors(Jbb)
+colorsbb = ArrayInterfaceCore.matrix_colors(Jbb)
 FiniteDiff.finite_difference_jacobian!(Jbb, f, x, colorvec=colorsbb)
 @test Jbb ≈ Jsparse
 
