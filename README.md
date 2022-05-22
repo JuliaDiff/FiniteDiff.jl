@@ -180,7 +180,7 @@ fcalls #4
 Handling dense matrices? Easy. Handling sparse matrices? Cool stuff. Automatically
 specializing on the exact structure of a matrix? Even better. FiniteDiff can
 specialize on types which implement the
-[ArrayInterface.jl](https://github.com/JuliaDiffEq/ArrayInterface.jl) interface.
+[ArrayInterfaceCore.jl](https://github.com/JuliaDiffEq/ArrayInterfaceCore.jl) interface.
 This includes:
 
 - Diagonal
@@ -194,7 +194,7 @@ Our previous example had a Tridiagonal Jacobian, so let's use this. If we just
 do
 
 ```julia
-using ArrayInterface, LinearAlgebra
+using ArrayInterfaceCore, LinearAlgebra
 tridiagjac = Tridiagonal(output)
 colors = matrix_colors(jac)
 ```
@@ -235,7 +235,7 @@ let's specialize the Jacobian calculation on this fact:
 ```julia
 using FillArrays, BlockBandedMatrices
 Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
-colorsbbb = ArrayInterface.matrix_colors(Jbbb)
+colorsbbb = ArrayInterfaceCore.matrix_colors(Jbbb)
 bbbcache = FiniteDiff.JacobianCache(x,colorvec=colorsbbb,sparsity=Jbbb)
 FiniteDiff.finite_difference_jacobian!(Jbbb, pde, x, bbbcache)
 ```
@@ -403,7 +403,7 @@ jacobian will return a similar type as `jac_prototype` if it is not a `nothing`.
 Jacobians, a cache which specifies the vector `fx` is required.
 
 For sparse differentiation, pass a `colorvec` of matrix colors. `sparsity` should be a sparse
-or structured matrix (`Tridiagonal`, `Banded`, etc. according to the ArrayInterface.jl specs)
+or structured matrix (`Tridiagonal`, `Banded`, etc. according to the ArrayInterfaceCore.jl specs)
 to allow for decompression, otherwise the result will be the colorvec compressed Jacobian.
 
 ### Differencing Calls
@@ -430,7 +430,7 @@ finite_difference_jacobian!(J::AbstractMatrix,
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
-    sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing)
+    sparsity = ArrayInterfaceCore.has_sparsestruct(J) ? J : nothing)
 
 # Cached
 FiniteDiff.finite_difference_jacobian(
@@ -528,3 +528,12 @@ HessianCache(xpp,xpm,xmp,xmm,
                       fdtype::Type{T1}=Val{:hcentral},
                       inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
 ```
+
+# Note about sparse differentiation of BandedMatrices and BlockBandedMatrices
+
+These two matrix types need the dependencies ArrayInterfaceBandedMatrices.jl and
+ArrayInterfaceBlockBandedMatrices.jl to basically work with any functionality
+(anywhere). For now, the right thing to do is to add these libraries and do
+`import` on them if you are using BandedMatrices.jl or BlockBandedMatrices.jl
+for sparsity patterns. In the future, those two packages should just depend on
+ArrayInterface.jl and remove this issue entirely from the user space.

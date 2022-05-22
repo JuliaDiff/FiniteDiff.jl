@@ -1,7 +1,7 @@
 module FiniteDiff
 
 
-using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterface, Requires
+using LinearAlgebra, SparseArrays, StaticArrays, ArrayInterfaceCore, Requires
 
 import Base: resize!
 
