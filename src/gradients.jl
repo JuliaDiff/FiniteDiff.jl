@@ -36,7 +36,7 @@ function GradientCache(
                 _c2 = nothing
             end
         end
-        _c3 = similar(x)
+        _c3 = zero(x)
     else # the scalar->vector case
         # need cache arrays for fx1 and fx2, except in complex mode, which needs one complex array
         if fdtype != Val(:complex)
