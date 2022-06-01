@@ -97,7 +97,7 @@ function JacobianCache(
         @assert eltype(fx1) == T2
         _fx = fx
     end
-    _x2 = similar(_x1)
+    _x2 = zero(_x1)
     JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_x2,_fx,fx1,colorvec,sparsity)
 end
 
