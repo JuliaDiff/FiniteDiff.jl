@@ -25,7 +25,7 @@ function GradientCache(
                     _c2 = nothing
                 end
             else
-                _c1 = similar(x)
+                _c1 = zero(x)
                 _c2 = zero(real(eltype(x))) .* x
             end
         else
@@ -36,12 +36,12 @@ function GradientCache(
                 _c2 = nothing
             end
         end
-        _c3 = similar(x)
+        _c3 = zero(x)
     else # the scalar->vector case
         # need cache arrays for fx1 and fx2, except in complex mode, which needs one complex array
         if fdtype != Val(:complex)
-            _c1 = similar(df)
-            _c2 = similar(df)
+            _c1 = zero(df)
+            _c2 = zero(df)
         else
             _c1 = zero(Complex{eltype(x)}) .* df
             _c2 = nothing
@@ -75,13 +75,13 @@ function finite_difference_gradient(
             if typeof(fx)==Nothing && typeof(c1)==Nothing && typeof(c2)==Nothing
                 error("In the scalar->vector in-place map case, at least one of fx, c1 or c2 must be provided, otherwise we cannot infer the return size.")
             else
-                if     c1 != nothing    df = similar(c1)
-                elseif fx != nothing    df = similar(fx)
-                elseif c2 != nothing    df = similar(c2)
+                if     c1 != nothing    df = zero(c1)
+                elseif fx != nothing    df = zero(fx)
+                elseif c2 != nothing    df = zero(c2)
                 end
             end
         else
-            df = similar(f(x))
+            df = zero(f(x))
         end
     end
     cache = GradientCache(df, x, fdtype, returntype, inplace)
