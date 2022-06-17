@@ -1,8 +1,8 @@
-mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,ColorType,SparsityType,fdtype,returntype}
+mutable struct JacobianCache{CacheType1,CacheType2,CacheType3,CacheType4,ColorType,SparsityType,fdtype,returntype}
     x1  :: CacheType1
-    x2  :: CacheType1
-    fx  :: CacheType2
-    fx1 :: CacheType3
+    x2  :: CacheType2
+    fx  :: CacheType3
+    fx1 :: CacheType4
     colorvec :: ColorType
     sparsity :: SparsityType
 end
@@ -98,7 +98,7 @@ function JacobianCache(
         _fx = fx
     end
     _x2 = zero(_x1)
-    JacobianCache{typeof(_x1),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_x2,_fx,fx1,colorvec,sparsity)
+    JacobianCache{typeof(_x1),typeof(_x2),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_x2,_fx,fx1,colorvec,sparsity)
 end
 
 function _make_Ji(::SparseMatrixCSC, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
@@ -157,14 +157,14 @@ void_setindex!(args...) = (setindex!(args...); return)
 function finite_difference_jacobian(
     f,
     x,
-    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype},
+    cache::JacobianCache{T1,T2,T3,T4,cType,sType,fdtype,returntype},
     f_in=nothing;
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = cache.colorvec,
     sparsity = cache.sparsity,
     jac_prototype = nothing,
-    dir=true) where {T1,T2,T3,cType,sType,fdtype,returntype}
+    dir=true) where {T1,T2,T3,T4,cType,sType,fdtype,returntype}
 
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
 
@@ -325,13 +325,13 @@ function finite_difference_jacobian!(
     J,
     f,
     x,
-    cache::JacobianCache{T1,T2,T3,cType,sType,fdtype,returntype},
+    cache::JacobianCache{T1,T2,T3,T4,cType,sType,fdtype,returntype},
     f_in = nothing;
     relstep = default_relstep(fdtype, eltype(x)),
     absstep = relstep,
     colorvec = cache.colorvec,
     sparsity = cache.sparsity,
-    dir = true) where {T1,T2,T3,cType,sType,fdtype,returntype}
+    dir = true) where {T1,T2,T3,T4,cType,sType,fdtype,returntype}
 
     m, n = size(J)
     _color = reshape(colorvec, axes(x)...)
