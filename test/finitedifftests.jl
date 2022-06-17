@@ -409,6 +409,32 @@ J_ref = Matrix{Float64}(I,4,4)
     @test err_func(test_iipJac(J_ref, iipf, x, Val{:central}, eltype(x), iipf(similar(x),x)), J_ref) < 1e-8
     @test err_func(test_iipJac(J_ref, iipf, x, Val{:complex}, eltype(x), iipf(similar(x),x)), J_ref) < 1e-8
 end
+
+# Range input for out-of-place function
+x = range(rand(), rand(); length=2)
+z = copy(x)
+y = similar(x)
+oopf(x) = @. x^2 + sin(x)
+J_ref = [2*x[1] + cos(x[1]) 0.0; 0.0 2*x[2] + cos(x[2])]
+J = zero(J_ref)
+oopff(x) = !all(x .<= z) ? error() : oopf(x)
+epsilon = zero(x)
+forward_cache = FiniteDiff.JacobianCache(x,Val{:forward},eltype(x))
+central_cache = FiniteDiff.JacobianCache(x,Val{:central},eltype(x))
+complex_cache = FiniteDiff.JacobianCache(x,Val{:complex},eltype(x))
+f_in = oopf(x)
+
+@time @testset "Out-of-Place Jacobian real-valued tests with range input" begin
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache), J_ref) < 1e-4
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopff, x, forward_cache, dir=-1), J_ref) < 1e-4
+    @test_throws Any err_func(FiniteDiff.finite_difference_jacobian(oopff, x, forward_cache), J_ref) < 1e-4
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache, f_in), J_ref) < 1e-4
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, central_cache), J_ref) < 1e-8
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, Val{:central}), J_ref) < 1e-8
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, complex_cache), J_ref) < 1e-14
+end
+
 # Hessian tests
 
 f(x) = sin(x[1]) + cos(x[2])
