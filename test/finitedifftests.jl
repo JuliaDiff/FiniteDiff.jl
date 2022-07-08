@@ -330,6 +330,7 @@ df = zero(x)
 df_ref = diag(J_ref)
 epsilon = zero(x)
 forward_cache = FiniteDiff.JacobianCache(x,Val{:forward},eltype(x))
+@test forward_cache.colorvec == 1:length(x)    
 central_cache = FiniteDiff.JacobianCache(x,Val{:central},eltype(x))
 complex_cache = FiniteDiff.JacobianCache(x,Val{:complex},eltype(x))
 f_in = copy(y)
@@ -434,6 +435,12 @@ f_in = oopf(x)
     @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, Val{:central}), J_ref) < 1e-8
     @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, complex_cache), J_ref) < 1e-14
 end
+
+# Test default colorvec construction 
+θ = rand(2)
+y0 = rand(1)
+cache = FiniteDiff.JacobianCache(copy(θ), copy(y0), copy(y0), Val(:forward))
+@test cache.colorvec == 1:length(θ)
 
 # Hessian tests
 
