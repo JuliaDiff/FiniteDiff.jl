@@ -209,3 +209,13 @@ y0 = [0.0, 0.0, 0.0, 0.0]
 cache = FiniteDiff.JacobianCache(copy(θ), copy(y0), copy(y0), Val(:forward); sparsity=[1 1 0; 1 1 0; 1 0 1; 1 0 0])
 FiniteDiff.finite_difference_jacobian!(J, _f4, θ, cache)
 @test J ≈ [-7.0 4.0 0; 2.0 -3.0 0.0; 13.3 0.0 -3.0; 1.0 0.0 0.0]
+
+function _f5(dx, x)
+    dx .= [x[1]^2 + x[2]^2]
+end
+J = zeros(1, 2)
+θ = [5.0, 3.0]
+y0 = [0.0]
+cache = FiniteDiff.JacobianCache(copy(θ), copy(y0), copy(y0), Val(:forward); sparsity = [1 1])
+FiniteDiff.finite_difference_jacobian!(J, _f5, θ, cache)
+@test J ≈ [10.0 6.0]
