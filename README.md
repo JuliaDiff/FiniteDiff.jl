@@ -476,7 +476,7 @@ FiniteDiff.JacobianCache(
               fx1,
               fdtype     :: Type{T1} = Val{:central},
               returntype :: Type{T2} = eltype(fx),
-              colorvec = 1:length(x),
+              colorvec = 1:length(x1),
               sparsity = nothing)
 ```
 
