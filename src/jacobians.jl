@@ -321,6 +321,23 @@ function finite_difference_jacobian!(J,
     finite_difference_jacobian!(J, f, x, cache, cache.fx; relstep=relstep, absstep=absstep, colorvec=colorvec, sparsity=sparsity)
 end
 
+function _findstructralnz(A::DenseMatrix)
+    numnz = count(A .≠ 0)
+    I = Vector{Int64}(undef, numnz)
+    J = Vector{Int64}(undef, numnz)
+    idx = 1 
+    for j in axes(A, 2)
+        for i in axes(A, 1)
+            if A[i, j] ≠ 0
+                I[idx] = i 
+                J[idx] = j
+                idx += 1 
+            end
+        end
+    end
+    I, J
+end 
+
 function finite_difference_jacobian!(
     J,
     f,
@@ -344,6 +361,8 @@ function finite_difference_jacobian!(
     cols_index = nothing
     if _use_findstructralnz(sparsity)
         rows_index, cols_index = ArrayInterfaceCore.findstructralnz(sparsity)
+    elseif sparsity isa DenseMatrix 
+        rows_index, cols_index = FiniteDiff._findstructralnz(sparsity)
     end
 
     if sparsity !== nothing
