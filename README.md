@@ -385,7 +385,7 @@ FiniteDiff.GradientCache(
     c2         :: Union{Nothing,AbstractArray{<:Number}},
     c3         :: Union{Nothing,AbstractArray{<:Number}},
     fdtype     :: Type{T1} = Val{:central},
-    returntype :: Type{T2} = eltype(df),
+    returntype :: Type{T2} = eltype(fx),
     inplace    :: Type{Val{T3}} = Val{true})
 ```
 
@@ -400,7 +400,7 @@ into the differencing algorithm here.
 ## Jacobians
 
 Jacobians are for functions `f!(fx,x)` when using in-place `finite_difference_jacobian!`,
-and `fx = f(x)` when using out-of-place `finite_difference_jacobain`. The out-of-place
+and `fx = f(x)` when using out-of-place `finite_difference_jacobian`. The out-of-place
 jacobian will return a similar type as `jac_prototype` if it is not a `nothing`. For non-square
 Jacobians, a cache which specifies the vector `fx` is required.
 
