@@ -391,8 +391,9 @@ FiniteDiff.GradientCache(
 Note that here `fx` is a cached function call of `f`. If you provide `fx`, then
 `fx` will be used in the forward differencing method to skip a function call.
 It is on you to make sure that you update `cache.fx` every time before
-calling `FiniteDiff.finite_difference_gradient!`. A good use of this is if you have a
-cache array for the output of `fx` already being used, you can make it alias
+calling `FiniteDiff.finite_difference_gradient!`. If `fx` is an immutable, e.g. a scalar or 
+a `StaticArray`, `cache.fx` should be updated using `@set` from [Setfield.jl](https://github.com/jw3126/Setfield.jl).
+A good use of this is if you have a cache array for the output of `fx` already being used, you can make it alias
 into the differencing algorithm here.
 
 ## Jacobians
