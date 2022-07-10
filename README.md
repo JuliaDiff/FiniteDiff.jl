@@ -380,9 +380,10 @@ FiniteDiff.GradientCache(
 
 ```julia
 FiniteDiff.GradientCache(
+    fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}},
     c1         :: Union{Nothing,AbstractArray{<:Number}},
     c2         :: Union{Nothing,AbstractArray{<:Number}},
-    fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}} = nothing,
+    c3         :: Union{Nothing,AbstractArray{<:Number}},
     fdtype     :: Type{T1} = Val{:central},
     returntype :: Type{T2} = eltype(df),
     inplace    :: Type{Val{T3}} = Val{true})
