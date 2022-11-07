@@ -75,8 +75,8 @@ function finite_difference_hessian!(H,f,x,
             ArrayInterfaceCore.allowed_setindex!(xpp,xi + epsilon,i)
             ArrayInterfaceCore.allowed_setindex!(xmm,xi - epsilon,i)
         else
-            _xpp = Base.setindex(xpp,xi + epsilon, i)
-            _xmm = Base.setindex(xmm,xi - epsilon, i)
+            _xpp = setindex(xpp,xi + epsilon, i)
+            _xmm = setindex(xmm,xi - epsilon, i)
         end
 
         ArrayInterfaceCore.allowed_setindex!(H,(f(_xpp) - 2*fx + f(_xmm)) / epsilon^2,i,i)
@@ -90,10 +90,10 @@ function finite_difference_hessian!(H,f,x,
             ArrayInterfaceCore.allowed_setindex!(xmp,xm,i)
             ArrayInterfaceCore.allowed_setindex!(xmm,xm,i)
         else
-            _xpp = Base.setindex(xpp,xp,i)
-            _xpm = Base.setindex(xpm,xp,i)
-            _xmp = Base.setindex(xmp,xm,i)
-            _xmm = Base.setindex(xmm,xm,i)
+            _xpp = setindex(xpp,xp,i)
+            _xpm = setindex(xpm,xp,i)
+            _xmp = setindex(xmp,xm,i)
+            _xmm = setindex(xmm,xm,i)
         end
 
         for j = i+1:n
@@ -108,10 +108,10 @@ function finite_difference_hessian!(H,f,x,
                 ArrayInterfaceCore.allowed_setindex!(xmp,xp,j)
                 ArrayInterfaceCore.allowed_setindex!(xmm,xm,j)
             else
-                _xpp = Base.setindex(_xpp,xp,j)
-                _xpm = Base.setindex(_xpm,xm,j)
-                _xmp = Base.setindex(_xmp,xp,j)
-                _xmm = Base.setindex(_xmm,xm,j)
+                _xpp = setindex(_xpp,xp,j)
+                _xpm = setindex(_xpm,xm,j)
+                _xmp = setindex(_xmp,xp,j)
+                _xmm = setindex(_xmm,xm,j)
             end
 
             ArrayInterfaceCore.allowed_setindex!(H,(f(_xpp) - f(_xpm) - f(_xmp) + f(_xmm))/(4*epsiloni*epsilonj),i,j)
@@ -122,10 +122,10 @@ function finite_difference_hessian!(H,f,x,
                 ArrayInterfaceCore.allowed_setindex!(xmp,xj,j)
                 ArrayInterfaceCore.allowed_setindex!(xmm,xj,j)
             else
-                _xpp = Base.setindex(_xpp,xj,j)
-                _xpm = Base.setindex(_xpm,xj,j)
-                _xmp = Base.setindex(_xmp,xj,j)
-                _xmm = Base.setindex(_xmm,xj,j)
+                _xpp = setindex(_xpp,xj,j)
+                _xpm = setindex(_xpm,xj,j)
+                _xmp = setindex(_xmp,xj,j)
+                _xmm = setindex(_xmm,xj,j)
             end
         end
 
