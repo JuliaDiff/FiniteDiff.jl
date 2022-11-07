@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
+
+[compat]
+Documenter = "0.27"
