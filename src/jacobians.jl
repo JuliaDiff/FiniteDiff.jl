@@ -193,7 +193,7 @@ function finite_difference_jacobian(
         function calculate_Ji_forward(i)
             x_save = ArrayInterfaceCore.allowed_getindex(vecx, i)
             epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
-            _vecx1 = Base.setindex(vecx, x_save+epsilon, i)
+            _vecx1 = setindex(vecx, x_save+epsilon, i)
             _x1 = reshape(_vecx1, axes(x))
             vecfx1 = _vec(f(_x1))
             dx = (vecfx1-vecfx) / epsilon
@@ -226,8 +226,8 @@ function finite_difference_jacobian(
             x1_save = ArrayInterfaceCore.allowed_getindex(vecx1,i)
             x_save = ArrayInterfaceCore.allowed_getindex(vecx,i)
             epsilon = compute_epsilon(Val(:forward), x1_save, relstep, absstep, dir)
-            _vecx1 = Base.setindex(vecx1,x1_save+epsilon,i)
-            _vecx = Base.setindex(vecx,x_save-epsilon,i)
+            _vecx1 = setindex(vecx1,x1_save+epsilon,i)
+            _vecx = setindex(vecx,x_save-epsilon,i)
             _x1 = reshape(_vecx1, axes(x))
             _x = reshape(_vecx, axes(x))
             vecfx1 = _vec(f(_x1))
@@ -264,7 +264,7 @@ function finite_difference_jacobian(
 
         function calculate_Ji_complex(i)
             x_save = ArrayInterfaceCore.allowed_getindex(vecx,i)
-            _vecx = Base.setindex(complex.(vecx),x_save+im*epsilon,i)
+            _vecx = setindex(complex.(vecx),x_save+im*epsilon,i)
             _x = reshape(_vecx, axes(x))
             vecfx = _vec(f(_x))
             dx = imag(vecfx)/epsilon
@@ -325,18 +325,18 @@ function _findstructralnz(A::DenseMatrix)
     numnz = count(A .≠ 0)
     I = Vector{Int64}(undef, numnz)
     J = Vector{Int64}(undef, numnz)
-    idx = 1 
+    idx = 1
     for j in axes(A, 2)
         for i in axes(A, 1)
             if A[i, j] ≠ 0
-                I[idx] = i 
+                I[idx] = i
                 J[idx] = j
-                idx += 1 
+                idx += 1
             end
         end
     end
     I, J
-end 
+end
 
 function finite_difference_jacobian!(
     J,
@@ -361,7 +361,7 @@ function finite_difference_jacobian!(
     cols_index = nothing
     if _use_findstructralnz(sparsity)
         rows_index, cols_index = ArrayInterfaceCore.findstructralnz(sparsity)
-    elseif sparsity isa DenseMatrix 
+    elseif sparsity isa DenseMatrix
         rows_index, cols_index = FiniteDiff._findstructralnz(sparsity)
     end
 
