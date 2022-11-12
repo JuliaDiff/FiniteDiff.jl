@@ -1,7 +1,13 @@
 # FiniteDiff
 
-[![Build Status](https://travis-ci.org/JuliaDiff/FiniteDiff.jl.svg?branch=master)](https://travis-ci.org/JuliaDiff/FiniteDiff.jl)
-[![codecov](https://codecov.io/gh/JuliaDiff/FiniteDiff.jl/branch/master/graph/badge.svg?token=PnBAscoOiU)](https://codecov.io/gh/JuliaDiff/FiniteDiff.jl)
+[![Join the chat at https://julialang.zulipchat.com #sciml-bridged](https://img.shields.io/static/v1?label=Zulip&message=chat&color=9558b2&labelColor=389826)](https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged)
+[![Global Docs](https://img.shields.io/badge/docs-SciML-blue.svg)](https://docs.sciml.ai/FiniteDiff/stable/)
+
+[![codecov](https://codecov.io/gh/JuliaDiff/FiniteDiff.jl/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JuliaDiff/FiniteDiff.jl)
+[![Build Status](https://github.com/JuliaDiff/FiniteDiff.jl/workflows/CI/badge.svg)](https://github.com/JuliaDiff/FiniteDiff.jl/actions?query=workflow%3ACI)
+
+[![ColPrac: Contributor's Guide on Collaborative Practices for Community Packages](https://img.shields.io/badge/ColPrac-Contributor's%20Guide-blueviolet)](https://github.com/SciML/ColPrac)
+[![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 
 This package is for calculating derivatives, gradients, Jacobians, Hessians,
 etc. numerically. This library is for maximizing speed while giving a usable
