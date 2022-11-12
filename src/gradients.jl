@@ -169,6 +169,7 @@ end
 
 # vector of derivatives of a vector->scalar map by each component of a vector x
 # this ignores the value of "inplace", because it doesn't make much sense
+#=
 function finite_difference_gradient!(
     df,
     f,
@@ -254,6 +255,7 @@ function finite_difference_gradient!(
     end
     df
 end
+=#
 
 function finite_difference_gradient!(
     df::StridedVector{<:Number},
