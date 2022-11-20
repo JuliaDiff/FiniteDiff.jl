@@ -14,4 +14,4 @@ makedocs(sitename = "FiniteDiff.jl",
                                   canonical = "https://docs.sciml.ai/FiniteDiff/stable/"),
          pages = pages)
 
-deploydocs(repo = "github.com/SciML/FiniteDiff.jl.git"; push_preview = true)
+deploydocs(repo = "github.com/FiniteDiff/FiniteDiff.jl.git"; push_preview = true)
