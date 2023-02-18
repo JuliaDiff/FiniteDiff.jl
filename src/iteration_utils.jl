@@ -29,7 +29,7 @@ end
 end
 
 #override default setting of using findstructralnz
-_use_findstructralnz(sparsity) = ArrayInterfaceCore.has_sparsestruct(sparsity)
+_use_findstructralnz(sparsity) = ArrayInterface.has_sparsestruct(sparsity)
 _use_findstructralnz(::SparseMatrixCSC) = false
 
 # test if J, sparsity are both SparseMatrixCSC and have the same sparsity pattern of stored values
