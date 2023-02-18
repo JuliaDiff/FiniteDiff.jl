@@ -183,7 +183,7 @@ function finite_difference_jacobian(
     nrows, ncols = size(J)
 
     if !(sparsity isa Nothing)
-        rows_index, cols_index = ArrayInterfaceCore.findstructralnz(sparsity)
+        rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
         rows_index = [rows_index[i] for i in 1:length(rows_index)]
         cols_index = [cols_index[i] for i in 1:length(cols_index)]
     end
@@ -191,7 +191,7 @@ function finite_difference_jacobian(
     if fdtype == Val(:forward)
 
         function calculate_Ji_forward(i)
-            x_save = ArrayInterfaceCore.allowed_getindex(vecx, i)
+            x_save = ArrayInterface.allowed_getindex(vecx, i)
             epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
             _vecx1 = setindex(vecx, x_save+epsilon, i)
             _x1 = reshape(_vecx1, axes(x))
@@ -223,8 +223,8 @@ function finite_difference_jacobian(
     elseif fdtype == Val(:central)
 
         function calculate_Ji_central(i)
-            x1_save = ArrayInterfaceCore.allowed_getindex(vecx1,i)
-            x_save = ArrayInterfaceCore.allowed_getindex(vecx,i)
+            x1_save = ArrayInterface.allowed_getindex(vecx1,i)
+            x_save = ArrayInterface.allowed_getindex(vecx,i)
             epsilon = compute_epsilon(Val(:forward), x1_save, relstep, absstep, dir)
             _vecx1 = setindex(vecx1,x1_save+epsilon,i)
             _vecx = setindex(vecx,x_save-epsilon,i)
@@ -263,7 +263,7 @@ function finite_difference_jacobian(
         epsilon = eps(eltype(x))
 
         function calculate_Ji_complex(i)
-            x_save = ArrayInterfaceCore.allowed_getindex(vecx,i)
+            x_save = ArrayInterface.allowed_getindex(vecx,i)
             _vecx = setindex(complex.(vecx),x_save+im*epsilon,i)
             _x = reshape(_vecx, axes(x))
             vecfx = _vec(f(_x))
@@ -304,7 +304,7 @@ function finite_difference_jacobian!(J,
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep,
     colorvec = 1:length(x),
-    sparsity = ArrayInterfaceCore.has_sparsestruct(J) ? J : nothing)
+    sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing)
     if f_in isa Nothing && fdtype == Val(:forward)
         if size(J,1) == length(x)
             fx = zero(x)
@@ -360,7 +360,7 @@ function finite_difference_jacobian!(
     rows_index = nothing
     cols_index = nothing
     if _use_findstructralnz(sparsity)
-        rows_index, cols_index = ArrayInterfaceCore.findstructralnz(sparsity)
+        rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
     elseif sparsity isa DenseMatrix
         rows_index, cols_index = FiniteDiff._findstructralnz(sparsity)
     end
@@ -388,15 +388,15 @@ function finite_difference_jacobian!(
 
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
-                x1_save = ArrayInterfaceCore.allowed_getindex(x1,color_i)
+                x1_save = ArrayInterface.allowed_getindex(x1,color_i)
                 epsilon = compute_epsilon(Val(:forward), x1_save, relstep, absstep, dir)
-                ArrayInterfaceCore.allowed_setindex!(x1, x1_save + epsilon, color_i)
+                ArrayInterface.allowed_setindex!(x1, x1_save + epsilon, color_i)
                 f(fx1, x1)
                 # J is dense, so either it is truly dense or this is the
                 # compressed form of the coloring, so write into it.
                 @. J[:,color_i] = (vfx1 - vfx) / epsilon
                 # Now return x1 back to its original value
-                ArrayInterfaceCore.allowed_setindex!(x1, x1_save, color_i)
+                ArrayInterface.allowed_setindex!(x1, x1_save, color_i)
             else # Perturb along the colorvec vector
                 @. x2 = x1 * (_color == color_i)
                 tmp = norm(x2)
@@ -405,7 +405,7 @@ function finite_difference_jacobian!(
                 f(fx1, x1)
                 # J is a sparse matrix, so decompress on the fly
                 @. vfx1 = (vfx1 - vfx) / epsilon
-                if ArrayInterfaceCore.fast_scalar_indexing(x1)
+                if ArrayInterface.fast_scalar_indexing(x1)
                     if sparseCSC_common_sparsity
                         _colorediteration!(J,vfx1,colorvec,color_i,n)
                     else
@@ -432,14 +432,14 @@ function finite_difference_jacobian!(
         vfx1 = _vec(fx1)
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
-                x_save = ArrayInterfaceCore.allowed_getindex(x, color_i)
+                x_save = ArrayInterface.allowed_getindex(x, color_i)
                 epsilon = compute_epsilon(Val(:central), x_save, relstep, absstep, dir)
-                ArrayInterfaceCore.allowed_setindex!(x1, x_save + epsilon, color_i)
+                ArrayInterface.allowed_setindex!(x1, x_save + epsilon, color_i)
                 f(fx1, x1)
-                ArrayInterfaceCore.allowed_setindex!(x1, x_save - epsilon, color_i)
+                ArrayInterface.allowed_setindex!(x1, x_save - epsilon, color_i)
                 f(fx, x1)
                 @. J[:,color_i] = (vfx1 - vfx) / 2epsilon
-                ArrayInterfaceCore.allowed_setindex!(x1, x_save, color_i)
+                ArrayInterface.allowed_setindex!(x1, x_save, color_i)
             else # Perturb along the colorvec vector
                 @. x2 = x1 * (_color == color_i)
                 tmp = norm(x2)
@@ -449,7 +449,7 @@ function finite_difference_jacobian!(
                 f(fx1, x1)
                 f(fx, x)
                 @. vfx1 = (vfx1 - vfx) / 2epsilon
-                if ArrayInterfaceCore.fast_scalar_indexing(x1)
+                if ArrayInterface.fast_scalar_indexing(x1)
                     if sparseCSC_common_sparsity
                         _colorediteration!(J,vfx1,colorvec,color_i,n)
                     else
@@ -470,16 +470,16 @@ function finite_difference_jacobian!(
         epsilon = eps(eltype(x))
         @inbounds for color_i ∈ 1:maximum(colorvec)
             if sparsity isa Nothing
-                x1_save = ArrayInterfaceCore.allowed_getindex(x1, color_i)
-                ArrayInterfaceCore.allowed_setindex!(x1, x1_save + im*epsilon, color_i)
+                x1_save = ArrayInterface.allowed_getindex(x1, color_i)
+                ArrayInterface.allowed_setindex!(x1, x1_save + im*epsilon, color_i)
                 f(fx,x1)
                 @. J[:,color_i] = imag(vfx) / epsilon
-                ArrayInterfaceCore.allowed_setindex!(x1, x1_save,color_i)
+                ArrayInterface.allowed_setindex!(x1, x1_save,color_i)
             else # Perturb along the colorvec vector
                 @. x1 = x1 + im * epsilon * (_color == color_i)
                 f(fx,x1)
                 @. vfx = imag(vfx) / epsilon
-                if ArrayInterfaceCore.fast_scalar_indexing(x1)
+                if ArrayInterface.fast_scalar_indexing(x1)
                     if sparseCSC_common_sparsity
                         _colorediteration!(J,vfx,colorvec,color_i,n)
                     else

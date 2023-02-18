@@ -68,27 +68,27 @@ function finite_difference_hessian!(H,f,x,
     end
 
     for i = 1:n
-        xi = ArrayInterfaceCore.allowed_getindex(x,i)
+        xi = ArrayInterface.allowed_getindex(x,i)
         epsilon = compute_epsilon(Val(:hcentral), xi, relstep, absstep)
 
         if inplace === Val(true)
-            ArrayInterfaceCore.allowed_setindex!(xpp,xi + epsilon,i)
-            ArrayInterfaceCore.allowed_setindex!(xmm,xi - epsilon,i)
+            ArrayInterface.allowed_setindex!(xpp,xi + epsilon,i)
+            ArrayInterface.allowed_setindex!(xmm,xi - epsilon,i)
         else
             _xpp = setindex(xpp,xi + epsilon, i)
             _xmm = setindex(xmm,xi - epsilon, i)
         end
 
-        ArrayInterfaceCore.allowed_setindex!(H,(f(_xpp) - 2*fx + f(_xmm)) / epsilon^2,i,i)
+        ArrayInterface.allowed_setindex!(H,(f(_xpp) - 2*fx + f(_xmm)) / epsilon^2,i,i)
         epsiloni = compute_epsilon(Val(:central), xi, relstep, absstep)
         xp = xi + epsiloni
         xm = xi - epsiloni
 
         if inplace === Val(true)
-            ArrayInterfaceCore.allowed_setindex!(xpp,xp,i)
-            ArrayInterfaceCore.allowed_setindex!(xpm,xp,i)
-            ArrayInterfaceCore.allowed_setindex!(xmp,xm,i)
-            ArrayInterfaceCore.allowed_setindex!(xmm,xm,i)
+            ArrayInterface.allowed_setindex!(xpp,xp,i)
+            ArrayInterface.allowed_setindex!(xpm,xp,i)
+            ArrayInterface.allowed_setindex!(xmp,xm,i)
+            ArrayInterface.allowed_setindex!(xmm,xm,i)
         else
             _xpp = setindex(xpp,xp,i)
             _xpm = setindex(xpm,xp,i)
@@ -97,16 +97,16 @@ function finite_difference_hessian!(H,f,x,
         end
 
         for j = i+1:n
-            xj = ArrayInterfaceCore.allowed_getindex(x,j)
+            xj = ArrayInterface.allowed_getindex(x,j)
             epsilonj = compute_epsilon(Val(:central), xj, relstep, absstep)
             xp = xj + epsilonj
             xm = xj - epsilonj
 
             if inplace === Val(true)
-                ArrayInterfaceCore.allowed_setindex!(xpp,xp,j)
-                ArrayInterfaceCore.allowed_setindex!(xpm,xm,j)
-                ArrayInterfaceCore.allowed_setindex!(xmp,xp,j)
-                ArrayInterfaceCore.allowed_setindex!(xmm,xm,j)
+                ArrayInterface.allowed_setindex!(xpp,xp,j)
+                ArrayInterface.allowed_setindex!(xpm,xm,j)
+                ArrayInterface.allowed_setindex!(xmp,xp,j)
+                ArrayInterface.allowed_setindex!(xmm,xm,j)
             else
                 _xpp = setindex(_xpp,xp,j)
                 _xpm = setindex(_xpm,xm,j)
@@ -114,13 +114,13 @@ function finite_difference_hessian!(H,f,x,
                 _xmm = setindex(_xmm,xm,j)
             end
 
-            ArrayInterfaceCore.allowed_setindex!(H,(f(_xpp) - f(_xpm) - f(_xmp) + f(_xmm))/(4*epsiloni*epsilonj),i,j)
+            ArrayInterface.allowed_setindex!(H,(f(_xpp) - f(_xpm) - f(_xmp) + f(_xmm))/(4*epsiloni*epsilonj),i,j)
 
             if inplace === Val(true)
-                ArrayInterfaceCore.allowed_setindex!(xpp,xj,j)
-                ArrayInterfaceCore.allowed_setindex!(xpm,xj,j)
-                ArrayInterfaceCore.allowed_setindex!(xmp,xj,j)
-                ArrayInterfaceCore.allowed_setindex!(xmm,xj,j)
+                ArrayInterface.allowed_setindex!(xpp,xj,j)
+                ArrayInterface.allowed_setindex!(xpm,xj,j)
+                ArrayInterface.allowed_setindex!(xmp,xj,j)
+                ArrayInterface.allowed_setindex!(xmm,xj,j)
             else
                 _xpp = setindex(_xpp,xj,j)
                 _xpm = setindex(_xpm,xj,j)
@@ -130,10 +130,10 @@ function finite_difference_hessian!(H,f,x,
         end
 
         if inplace === Val(true)
-            ArrayInterfaceCore.allowed_setindex!(xpp,xi,i)
-            ArrayInterfaceCore.allowed_setindex!(xpm,xi,i)
-            ArrayInterfaceCore.allowed_setindex!(xmp,xi,i)
-            ArrayInterfaceCore.allowed_setindex!(xmm,xi,i)
+            ArrayInterface.allowed_setindex!(xpp,xi,i)
+            ArrayInterface.allowed_setindex!(xpm,xi,i)
+            ArrayInterface.allowed_setindex!(xmp,xi,i)
+            ArrayInterface.allowed_setindex!(xmm,xi,i)
         end
     end
     LinearAlgebra.copytri!(H,'U')
