@@ -1,7 +1,7 @@
 # FiniteDiff
 
 [![Join the chat at https://julialang.zulipchat.com #sciml-bridged](https://img.shields.io/static/v1?label=Zulip&message=chat&color=9558b2&labelColor=389826)](https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged)
-[![Global Docs](https://img.shields.io/badge/docs-SciML-blue.svg)](https://docs.sciml.ai/FiniteDiff/stable/)
+[![Global Docs](https://img.shields.io/badge/docs-SciML-blue.svg)](https://docs.sciml.ai/FiniteDiff/dev/)
 
 [![codecov](https://codecov.io/gh/JuliaDiff/FiniteDiff.jl/branch/master/graph/badge.svg)](https://app.codecov.io/gh/JuliaDiff/FiniteDiff.jl)
 [![Build Status](https://github.com/JuliaDiff/FiniteDiff.jl/workflows/CI/badge.svg)](https://github.com/JuliaDiff/FiniteDiff.jl/actions?query=workflow%3ACI)
