@@ -528,18 +528,6 @@ HessianCache(xpp,xpm,xmp,xmm,
                       inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
 ```
 
-# Note about sparse differentiation of GPUArrays, BandedMatrices, and BlockBandedMatrices
-
-These two matrix types need the dependencies ArrayInterfaceBandedMatrices.jl and
-ArrayInterfaceBlockBandedMatrices.jl to basically work with any functionality
-(anywhere). For now, the right thing to do is to add these libraries and do
-`import` on them if you are using BandedMatrices.jl or BlockBandedMatrices.jl
-for sparsity patterns. In the future, those two packages should just depend on
-ArrayInterface.jl and remove this issue entirely from the user space.
-
-Additionally, GPUs need ArrayInterfaceGPUArrays for proper determination of the indexing.
-
-
 ## Contributing
 
 - Please refer to the
