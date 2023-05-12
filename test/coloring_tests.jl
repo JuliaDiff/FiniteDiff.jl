@@ -1,6 +1,5 @@
 using FiniteDiff, LinearAlgebra, SparseArrays, Test, LinearAlgebra,
-  BlockBandedMatrices, ArrayInterfaceCore, BandedMatrices,
-  ArrayInterfaceBlockBandedMatrices
+  BlockBandedMatrices, ArrayInterface, BandedMatrices
 
 fcalls = 0
 function f(dx, x)
@@ -110,12 +109,12 @@ end
 x = rand(10000)
 Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
 Jsparse = sparse(Jbbb)
-colorsbbb = ArrayInterfaceCore.matrix_colors(Jbbb)
+colorsbbb = ArrayInterface.matrix_colors(Jbbb)
 FiniteDiff.finite_difference_jacobian!(Jbbb, f, x, colorvec=colorsbbb)
 FiniteDiff.finite_difference_jacobian!(Jsparse, f, x, colorvec=colorsbbb)
 @test Jbbb ≈ Jsparse
 Jbb = BlockBandedMatrix(similar(Jsparse), fill(100, 100), fill(100, 100), (1, 1));
-colorsbb = ArrayInterfaceCore.matrix_colors(Jbb)
+colorsbb = ArrayInterface.matrix_colors(Jbb)
 FiniteDiff.finite_difference_jacobian!(Jbb, f, x, colorvec=colorsbb)
 @test Jbb ≈ Jsparse
 
@@ -164,7 +163,7 @@ end
 A = [[1 1; 0 1], [1 1 1], [1.0 1.0; 1.0 1.0; 1.0 1.0], [true true; true true]]
 for a in A
   rows_index, cols_index = FiniteDiff._findstructralnz(a)
-  rows_index2, cols_index2 = ArrayInterfaceCore.findstructralnz(sparse(a))
+  rows_index2, cols_index2 = ArrayInterface.findstructralnz(sparse(a))
   @test (rows_index, cols_index) == (rows_index2, cols_index2)
 end
 
