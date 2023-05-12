@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · FiniteDiff.jl</title><script data-outdated-warner src="assets/warner.js"></script><link rel="canonical" href="https://docs.sciml.ai/FiniteDiff/stable/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script><link href="assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href><img src="assets/logo.png" alt="FiniteDiff.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href>FiniteDiff.jl</a></span></div><form class="docs-search" action="search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Tutorials"><span>Tutorials</span></a></li><li><a class="tocitem" href="#General-Structure"><span>General Structure</span></a></li><li><a class="tocitem" href="#f-Definitions"><span>f Definitions</span></a></li><li><a class="tocitem" href="#colorvec-Vectors"><span>colorvec Vectors</span></a></li><li><a class="tocitem" href="#Scalar-Derivatives"><span>Scalar Derivatives</span></a></li><li><a class="tocitem" href="#Multi-Point-Derivatives"><span>Multi-Point Derivatives</span></a></li><li><a class="tocitem" href="#Gradients"><span>Gradients</span></a></li><li><a class="tocitem" href="#Jacobians"><span>Jacobians</span></a></li><li><a class="tocitem" href="#Hessians"><span>Hessians</span></a></li><li><a class="tocitem" href="#Contributing"><span>Contributing</span></a></li><li><a class="tocitem" href="#Reproducibility"><span>Reproducibility</span></a></li></ul></li><li><a class="tocitem" href="finitediff/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/master/docs/src/index.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="FiniteDiff"><a class="docs-heading-anchor" href="#FiniteDiff">FiniteDiff</a><a id="FiniteDiff-1"></a><a class="docs-heading-anchor-permalink" href="#FiniteDiff" title="Permalink"></a></h1><p>This package is for calculating derivatives, gradients, Jacobians, Hessians, etc. numerically. This library is for maximizing speed while giving a usable interface to end users in a way that specializes on array types and sparsity. Included is:</p><ul><li>Fully non-allocating mutable forms for fast array support</li><li>Fully non-mutating forms for static array support</li><li>Coloring vectors for efficient calculation of sparse Jacobians</li><li>GPU-compatible, to the extent that you can be with finite differencing.</li></ul><p>If you want the fastest versions, create a cache and repeatedly call the differencing functions at different <code>x</code> values (or with different <code>f</code> functions), while if you want a quick and dirty numerical answer, directly call a differencing function.</p><p><strong>For analogous sparse differentiation with automatic differentiation, see <a href="https://github.com/JuliaDiff/SparseDiffTools.jl">SparseDiffTools.jl</a>.</strong></p><h4 id="FiniteDiff.jl-vs-FiniteDifferences.jl"><a class="docs-heading-anchor" href="#FiniteDiff.jl-vs-FiniteDifferences.jl">FiniteDiff.jl vs FiniteDifferences.jl</a><a id="FiniteDiff.jl-vs-FiniteDifferences.jl-1"></a><a class="docs-heading-anchor-permalink" href="#FiniteDiff.jl-vs-FiniteDifferences.jl" title="Permalink"></a></h4><p><a href="https://github.com/JuliaDiff/FiniteDiff.jl">FiniteDiff.jl</a> and <a href="https://github.com/JuliaDiff/FiniteDifferences.jl">FiniteDifferences.jl</a> are similar libraries: both calculate approximate derivatives numerically. You should definately use one or the other, rather than the legacy <a href="https://github.com/JuliaMath/Calculus.jl">Calculus.jl</a> finite differencing, or reimplementing it yourself. At some point in the future they might merge, or one might depend on the other. Right now here are the differences:</p><ul><li>FiniteDifferences.jl supports basically any type, where as FiniteDiff.jl supports only array-ish types</li><li>FiniteDifferences.jl supports higher order approximation</li><li>FiniteDiff.jl is carefully optimized to minimize allocations</li><li>FiniteDiff.jl supports coloring vectors for efficient calculation of sparse Jacobians</li></ul><h2 id="Tutorials"><a class="docs-heading-anchor" href="#Tutorials">Tutorials</a><a id="Tutorials-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorials" title="Permalink"></a></h2><h3 id="Tutorial-1:-Fast-Dense-Jacobians"><a class="docs-heading-anchor" href="#Tutorial-1:-Fast-Dense-Jacobians">Tutorial 1: Fast Dense Jacobians</a><a id="Tutorial-1:-Fast-Dense-Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-1:-Fast-Dense-Jacobians" title="Permalink"></a></h3><p>It&#39;s always fun to start out with a tutorial before jumping into the details! Suppose we had the functions:</p><pre><code class="language-julia hljs">using FiniteDiff, StaticArrays
+
+fcalls = 0
+function f(dx,x) # in-place
+  global fcalls += 1
+  for i in 2:length(x)-1
+    dx[i] = x[i-1] - 2x[i] + x[i+1]
+  end
+  dx[1] = -2x[1] + x[2]
+  dx[end] = x[end-1] - 2x[end]
+  nothing
+end
+
+const N = 10
+handleleft(x,i) = i==1 ? zero(eltype(x)) : x[i-1]
+handleright(x,i) = i==length(x) ? zero(eltype(x)) : x[i+1]
+function g(x) # out-of-place
+  global fcalls += 1
+  @SVector [handleleft(x,i) - 2x[i] + handleright(x,i) for i in 1:N]
+end</code></pre><p>and we wanted to calculate the derivatives of them. The simplest thing we can do is ask for the Jacobian. If we want to allocate the result, we&#39;d use the allocating function <code>finite_difference_jacobian</code> on a 1-argument function <code>g</code>:</p><pre><code class="language-julia hljs">x = @SVector rand(N)
+FiniteDiff.finite_difference_jacobian(g,x)
+
+#=
+10×10 SArray{Tuple{10,10},Float64,2,100} with indices SOneTo(10)×SOneTo(10):
+ -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0
+=#</code></pre><p>FiniteDiff.jl assumes you&#39;re a smart cookie, and so if you used an out-of-place function then it&#39;ll not mutate vectors at all, and is thus compatible with objects like StaticArrays and will give you a fast Jacobian.</p><p>But if you wanted to use mutation, then we&#39;d have to use the in-place function <code>f</code> and call the mutating form:</p><pre><code class="language-julia hljs">x = rand(10)
+output = zeros(10,10)
+FiniteDiff.finite_difference_jacobian!(output,f,x)
+output
+
+#=
+10×10 Array{Float64,2}:
+ -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0
+=#</code></pre><p>But what if you want this to be completely non-allocating on your mutating form? Then you need to preallocate a cache:</p><pre><code class="language-julia hljs">cache = FiniteDiff.JacobianCache(x)</code></pre><p>and now using this cache avoids allocating:</p><pre><code class="language-julia hljs">@time FiniteDiff.finite_difference_jacobian!(output,f,x,cache) # 0.000008 seconds (7 allocations: 224 bytes)</code></pre><p>And that&#39;s pretty much it! Gradients and Hessians work similarly: out of place doesn&#39;t index, and in-place avoids allocations. Either way, you&#39;re fast. GPUs etc. all work.</p><h3 id="Tutorial-2:-Fast-Sparse-Jacobians"><a class="docs-heading-anchor" href="#Tutorial-2:-Fast-Sparse-Jacobians">Tutorial 2: Fast Sparse Jacobians</a><a id="Tutorial-2:-Fast-Sparse-Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-2:-Fast-Sparse-Jacobians" title="Permalink"></a></h3><p>Now let&#39;s exploit sparsity. If we knew the sparsity pattern we could write it down analytically as a sparse matrix, but let&#39;s assume we don&#39;t. Thus we can use <a href="https://github.com/JuliaDiffEq/SparsityDetection.jl">SparsityDetection.jl</a> to automatically get the sparsity pattern of the Jacobian as a sparse matrix:</p><pre><code class="language-julia hljs">using SparsityDetection, SparseArrays
+in = rand(10)
+out = similar(in)
+sparsity_pattern = sparsity!(f,out,in)
+sparsejac = Float64.(sparse(sparsity_pattern))</code></pre><p>Then we can use <a href="https://github.com/JuliaDiffEq/SparseDiffTools.jl">SparseDiffTools.jl</a> to get the color vector:</p><pre><code class="language-julia hljs">using SparseDiffTools
+colors = matrix_colors(sparsejac)</code></pre><p>Now we can do sparse differentiation by passing the color vector and the sparsity pattern:</p><pre><code class="language-julia hljs">sparsecache = FiniteDiff.JacobianCache(x,colorvec=colors,sparsity=sparsejac)
+FiniteDiff.finite_difference_jacobian!(sparsejac,f,x,sparsecache)</code></pre><p>Note that the number of <code>f</code> evaluations to fill a Jacobian is <code>1+maximum(colors)</code>. By default, <code>colors=1:length(x)</code>, so in this case we went from 10 function calls to 4. The sparser the matrix, the more the gain! We can measure this as well:</p><pre><code class="language-julia hljs">fcalls = 0
+FiniteDiff.finite_difference_jacobian!(output,f,x,cache)
+fcalls #11
+
+fcalls = 0
+FiniteDiff.finite_difference_jacobian!(sparsejac,f,x,sparsecache)
+fcalls #4</code></pre><h3 id="Tutorial-3:-Fast-Tridiagonal-Jacobians"><a class="docs-heading-anchor" href="#Tutorial-3:-Fast-Tridiagonal-Jacobians">Tutorial 3: Fast Tridiagonal Jacobians</a><a id="Tutorial-3:-Fast-Tridiagonal-Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-3:-Fast-Tridiagonal-Jacobians" title="Permalink"></a></h3><p>Handling dense matrices? Easy. Handling sparse matrices? Cool stuff. Automatically specializing on the exact structure of a matrix? Even better. FiniteDiff can specialize on types which implement the <a href="https://github.com/JuliaDiffEq/ArrayInterfaceCore.jl">ArrayInterfaceCore.jl</a> interface. This includes:</p><ul><li>Diagonal</li><li>Bidiagonal</li><li>UpperTriangular and LowerTriangular</li><li>Tridiagonal and SymTridiagonal</li><li><a href="https://github.com/JuliaMatrices/BandedMatrices.jl">BandedMatrices.jl</a></li><li><a href="https://github.com/JuliaMatrices/BlockBandedMatrices.jl">BlockBandedMatrices.jl</a></li></ul><p>Our previous example had a Tridiagonal Jacobian, so let&#39;s use this. If we just do</p><pre><code class="language-julia hljs">using ArrayInterfaceCore, LinearAlgebra
+tridiagjac = Tridiagonal(output)
+colors = matrix_colors(jac)</code></pre><p>we get the analytical solution to the optimal matrix colors for our structured Jacobian. Now we can use this in our differencing routines:</p><pre><code class="language-julia hljs">tridiagcache = FiniteDiff.JacobianCache(x,colorvec=colors,sparsity=tridiagjac)
+FiniteDiff.finite_difference_jacobian!(tridiagjac,f,x,tridiagcache)</code></pre><p>It&#39;ll use a special iteration scheme dependent on the matrix type to accelerate it beyond general sparse usage.</p><h3 id="Tutorial-4:-Fast-Block-Banded-Matrices"><a class="docs-heading-anchor" href="#Tutorial-4:-Fast-Block-Banded-Matrices">Tutorial 4: Fast Block Banded Matrices</a><a id="Tutorial-4:-Fast-Block-Banded-Matrices-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorial-4:-Fast-Block-Banded-Matrices" title="Permalink"></a></h3><p>Now let&#39;s showcase a difficult example. Say we had a large system of partial differential equations, with a function like:</p><pre><code class="language-julia hljs">function pde(out, x)
+	x = reshape(x, 100, 100)
+	out = reshape(out, 100, 100)
+	for i in 1:100
+		for j in 1:100
+			out[i, j] = x[i, j] + x[max(i -1, 1), j] + x[min(i+1, size(x, 1)), j] +  x[i, max(j-1, 1)]  + x[i, min(j+1, size(x, 2))]
+		end
+	end
+	return vec(out)
+end
+x = rand(10000)</code></pre><p>In this case, we can see that our sparsity pattern is a BlockBandedMatrix, so let&#39;s specialize the Jacobian calculation on this fact:</p><pre><code class="language-julia hljs">using FillArrays, BlockBandedMatrices
+Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
+colorsbbb = ArrayInterfaceCore.matrix_colors(Jbbb)
+bbbcache = FiniteDiff.JacobianCache(x,colorvec=colorsbbb,sparsity=Jbbb)
+FiniteDiff.finite_difference_jacobian!(Jbbb, pde, x, bbbcache)</code></pre><p>And boom, a fast Jacobian filling algorithm on your special matrix.</p><h2 id="General-Structure"><a class="docs-heading-anchor" href="#General-Structure">General Structure</a><a id="General-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#General-Structure" title="Permalink"></a></h2><p>The general structure of the library is as follows. You can call the differencing functions directly and this will allocate a temporary cache to solve the problem with. To make this non-allocating for repeat calls, you can call the cache construction functions. Each cache construction function has two possibilities: one version where you give it prototype arrays and it generates the cache variables, and one fully non-allocating version where you give it the cache variables. This is summarized as:</p><ul><li>Just want a quick derivative? Calculating once? Call the differencing function.</li><li>Going to calculate the derivative multiple times but don&#39;t have cache arrays around? Use the allocating cache and then pass this into the differencing function (this will allocate only in the one cache construction).</li><li>Have cache variables around from your own algorithm and want to re-use them in the differencing functions? Use the non-allocating cache construction and pass the cache to the differencing function.</li></ul><h2 id="f-Definitions"><a class="docs-heading-anchor" href="#f-Definitions">f Definitions</a><a id="f-Definitions-1"></a><a class="docs-heading-anchor-permalink" href="#f-Definitions" title="Permalink"></a></h2><p>In all functions, the inplace form is <code>f!(dx,x)</code> while the out of place form is <code>dx = f(x)</code>.</p><h2 id="colorvec-Vectors"><a class="docs-heading-anchor" href="#colorvec-Vectors">colorvec Vectors</a><a id="colorvec-Vectors-1"></a><a class="docs-heading-anchor-permalink" href="#colorvec-Vectors" title="Permalink"></a></h2><p>colorvec vectors are allowed to be supplied to the Jacobian routines, and these are the directional derivatives for constructing the Jacobian. For example, an accurate NxN tridiagonal Jacobian can be computed in just 4 <code>f</code> calls by using <code>colorvec=repeat(1:3,N÷3)</code>. For information on automatically generating colorvec vectors of sparse matrices, see <a href="https://github.com/JuliaDiff/SparseDiffTools.jl">SparseDiffTools.jl</a>.</p><p>Hessian coloring support is coming soon!</p><h2 id="Scalar-Derivatives"><a class="docs-heading-anchor" href="#Scalar-Derivatives">Scalar Derivatives</a><a id="Scalar-Derivatives-1"></a><a class="docs-heading-anchor-permalink" href="#Scalar-Derivatives" title="Permalink"></a></h2><pre><code class="language-julia hljs">FiniteDiff.finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x), f_x::Union{Nothing,T}=nothing)</code></pre><h2 id="Multi-Point-Derivatives"><a class="docs-heading-anchor" href="#Multi-Point-Derivatives">Multi-Point Derivatives</a><a id="Multi-Point-Derivatives-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-Point-Derivatives" title="Permalink"></a></h2><h3 id="Differencing-Calls"><a class="docs-heading-anchor" href="#Differencing-Calls">Differencing Calls</a><a id="Differencing-Calls-1"></a><a class="docs-heading-anchor-permalink" href="#Differencing-Calls" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Cache-less but non-allocating if `fx` and `epsilon` are supplied
+# fx must be f(x)
+FiniteDiff.finite_difference_derivative(
+    f,
+    x          :: AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),      # return type of f
+    fx         :: Union{Nothing,AbstractArray{&lt;:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{&lt;:Real}} = nothing;
+    [epsilon_factor])
+
+FiniteDiff.finite_difference_derivative!(
+    df         :: AbstractArray{&lt;:Number},
+    f,
+    x          :: AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    fx         :: Union{Nothing,AbstractArray{&lt;:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{&lt;:Real}}   = nothing;
+    [epsilon_factor])
+
+# Cached
+FiniteDiff.finite_difference_derivative!(
+    df::AbstractArray{&lt;:Number},
+    f,
+    x::AbstractArray{&lt;:Number},
+    cache::DerivativeCache{T1,T2,fdtype,returntype};
+    [epsilon_factor])</code></pre><h3 id="Allocating-and-Non-Allocating-Constructor"><a class="docs-heading-anchor" href="#Allocating-and-Non-Allocating-Constructor">Allocating and Non-Allocating Constructor</a><a id="Allocating-and-Non-Allocating-Constructor-1"></a><a class="docs-heading-anchor-permalink" href="#Allocating-and-Non-Allocating-Constructor" title="Permalink"></a></h3><pre><code class="language-julia hljs">FiniteDiff.DerivativeCache(
+    x          :: AbstractArray{&lt;:Number},
+    fx         :: Union{Nothing,AbstractArray{&lt;:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{&lt;:Real}} = nothing,
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x))</code></pre><p>This allocates either <code>fx</code> or <code>epsilon</code> if these are nothing and they are needed. <code>fx</code> is the current call of <code>f(x)</code> and is required for forward-differencing (otherwise is not necessary).</p><h2 id="Gradients"><a class="docs-heading-anchor" href="#Gradients">Gradients</a><a id="Gradients-1"></a><a class="docs-heading-anchor-permalink" href="#Gradients" title="Permalink"></a></h2><p>Gradients are either a vector-&gt;scalar map <code>f(x)</code>, or a scalar-&gt;vector map <code>f(fx,x)</code> if <code>inplace=Val{true}</code> and <code>fx=f(x)</code> if <code>inplace=Val{false}</code>.</p><h3 id="Differencing-Calls-2"><a class="docs-heading-anchor" href="#Differencing-Calls-2">Differencing Calls</a><a class="docs-heading-anchor-permalink" href="#Differencing-Calls-2" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Cache-less
+FiniteDiff.finite_difference_gradient(
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x),
+    inplace::Type{Val{T3}}=Val{true};
+    [epsilon_factor])
+FiniteDiff.finite_difference_gradient!(
+    df,
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(df),
+    inplace::Type{Val{T3}}=Val{true};
+    [epsilon_factor])
+
+# Cached
+FiniteDiff.finite_difference_gradient!(
+    df::AbstractArray{&lt;:Number},
+    f,
+    x::AbstractArray{&lt;:Number},
+    cache::GradientCache;
+    [epsilon_factor])</code></pre><h3 id="Allocating-Cache-Constructor"><a class="docs-heading-anchor" href="#Allocating-Cache-Constructor">Allocating Cache Constructor</a><a id="Allocating-Cache-Constructor-1"></a><a class="docs-heading-anchor-permalink" href="#Allocating-Cache-Constructor" title="Permalink"></a></h3><pre><code class="language-julia hljs">FiniteDiff.GradientCache(
+    df         :: Union{&lt;:Number,AbstractArray{&lt;:Number}},
+    x          :: Union{&lt;:Number, AbstractArray{&lt;:Number}},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(df),
+    inplace    :: Type{Val{T3}} = Val{true})</code></pre><h3 id="Non-Allocating-Cache-Constructor"><a class="docs-heading-anchor" href="#Non-Allocating-Cache-Constructor">Non-Allocating Cache Constructor</a><a id="Non-Allocating-Cache-Constructor-1"></a><a class="docs-heading-anchor-permalink" href="#Non-Allocating-Cache-Constructor" title="Permalink"></a></h3><pre><code class="language-julia hljs">FiniteDiff.GradientCache(
+    fx         :: Union{Nothing,&lt;:Number,AbstractArray{&lt;:Number}},
+    c1         :: Union{Nothing,AbstractArray{&lt;:Number}},
+    c2         :: Union{Nothing,AbstractArray{&lt;:Number}},
+    c3         :: Union{Nothing,AbstractArray{&lt;:Number}},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(fx),
+    inplace    :: Type{Val{T3}} = Val{true})</code></pre><p>Note that here <code>fx</code> is a cached function call of <code>f</code>. If you provide <code>fx</code>, then <code>fx</code> will be used in the forward differencing method to skip a function call. It is on you to make sure that you update <code>cache.fx</code> every time before calling <code>FiniteDiff.finite_difference_gradient!</code>. If <code>fx</code> is an immutable, e.g. a scalar or  a <code>StaticArray</code>, <code>cache.fx</code> should be updated using <code>@set</code> from <a href="https://github.com/jw3126/Setfield.jl">Setfield.jl</a>. A good use of this is if you have a cache array for the output of <code>fx</code> already being used, you can make it alias into the differencing algorithm here.</p><h2 id="Jacobians"><a class="docs-heading-anchor" href="#Jacobians">Jacobians</a><a id="Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobians" title="Permalink"></a></h2><p>Jacobians are for functions <code>f!(fx,x)</code> when using in-place <code>finite_difference_jacobian!</code>, and <code>fx = f(x)</code> when using out-of-place <code>finite_difference_jacobian</code>. The out-of-place jacobian will return a similar type as <code>jac_prototype</code> if it is not a <code>nothing</code>. For non-square Jacobians, a cache which specifies the vector <code>fx</code> is required.</p><p>For sparse differentiation, pass a <code>colorvec</code> of matrix colors. <code>sparsity</code> should be a sparse or structured matrix (<code>Tridiagonal</code>, <code>Banded</code>, etc. according to the ArrayInterfaceCore.jl specs) to allow for decompression, otherwise the result will be the colorvec compressed Jacobian.</p><h3 id="Differencing-Calls-3"><a class="docs-heading-anchor" href="#Differencing-Calls-3">Differencing Calls</a><a class="docs-heading-anchor-permalink" href="#Differencing-Calls-3" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Cache-less
+FiniteDiff.finite_difference_jacobian(
+    f,
+    x          :: AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:central},
+    returntype :: Type{T2}=eltype(x),
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = 1:length(x),
+    sparsity = nothing,
+    jac_prototype = nothing)
+
+finite_difference_jacobian!(J::AbstractMatrix,
+    f,
+    x::AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:forward},
+    returntype :: Type{T2}=eltype(x),
+    f_in       :: Union{T2,Nothing}=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = 1:length(x),
+    sparsity = ArrayInterfaceCore.has_sparsestruct(J) ? J : nothing)
+
+# Cached
+FiniteDiff.finite_difference_jacobian(
+    f,
+    x,
+    cache::JacobianCache;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = cache.colorvec,
+    sparsity = cache.sparsity,
+    jac_prototype = nothing)
+
+FiniteDiff.finite_difference_jacobian!(
+    J::AbstractMatrix{&lt;:Number},
+    f,
+    x::AbstractArray{&lt;:Number},
+    cache::JacobianCache;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = cache.colorvec,
+    sparsity = cache.sparsity)</code></pre><h3 id="Allocating-Cache-Constructor-2"><a class="docs-heading-anchor" href="#Allocating-Cache-Constructor-2">Allocating Cache Constructor</a><a class="docs-heading-anchor-permalink" href="#Allocating-Cache-Constructor-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">FiniteDiff.JacobianCache(
+              x,
+              fdtype     :: Type{T1} = Val{:central},
+              returntype :: Type{T2} = eltype(x),
+              colorvec = 1:length(x)
+              sparsity = nothing)</code></pre><p>This assumes the Jacobian is square.</p><h3 id="Non-Allocating-Cache-Constructor-2"><a class="docs-heading-anchor" href="#Non-Allocating-Cache-Constructor-2">Non-Allocating Cache Constructor</a><a class="docs-heading-anchor-permalink" href="#Non-Allocating-Cache-Constructor-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">FiniteDiff.JacobianCache(
+              x1 ,
+              fx ,
+              fx1,
+              fdtype     :: Type{T1} = Val{:central},
+              returntype :: Type{T2} = eltype(fx),
+              colorvec = 1:length(x1),
+              sparsity = nothing)</code></pre><h2 id="Hessians"><a class="docs-heading-anchor" href="#Hessians">Hessians</a><a id="Hessians-1"></a><a class="docs-heading-anchor-permalink" href="#Hessians" title="Permalink"></a></h2><p>Hessians are for functions <code>f(x)</code> which return a scalar.</p><h3 id="Differencing-Calls-4"><a class="docs-heading-anchor" href="#Differencing-Calls-4">Differencing Calls</a><a class="docs-heading-anchor-permalink" href="#Differencing-Calls-4" title="Permalink"></a></h3><pre><code class="language-julia hljs">#Cacheless
+finite_difference_hessian(f, x::AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:hcentral},
+    inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep)
+
+finite_difference_hessian!(H::AbstractMatrix,f,
+    x::AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:hcentral},
+    inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep)
+
+#Cached
+finite_difference_hessian(
+    f,x,
+    cache::HessianCache{T,fdtype,inplace};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep)
+
+finite_difference_hessian!(H,f,x,
+                           cache::HessianCache{T,fdtype,inplace};
+                           relstep = default_relstep(fdtype, eltype(x)),
+                           absstep = relstep)</code></pre><h3 id="Allocating-Cache-Calls"><a class="docs-heading-anchor" href="#Allocating-Cache-Calls">Allocating Cache Calls</a><a id="Allocating-Cache-Calls-1"></a><a class="docs-heading-anchor-permalink" href="#Allocating-Cache-Calls" title="Permalink"></a></h3><pre><code class="language-julia hljs">HessianCache(x,fdtype::Type{T1}=Val{:hcentral},
+                        inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><h3 id="Non-Allocating-Cache-Calls"><a class="docs-heading-anchor" href="#Non-Allocating-Cache-Calls">Non-Allocating Cache Calls</a><a id="Non-Allocating-Cache-Calls-1"></a><a class="docs-heading-anchor-permalink" href="#Non-Allocating-Cache-Calls" title="Permalink"></a></h3><pre><code class="language-julia hljs">HessianCache(xpp,xpm,xmp,xmm,
+                      fdtype::Type{T1}=Val{:hcentral},
+                      inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><h2 id="Contributing"><a class="docs-heading-anchor" href="#Contributing">Contributing</a><a id="Contributing-1"></a><a class="docs-heading-anchor-permalink" href="#Contributing" title="Permalink"></a></h2><ul><li>Please refer to the <a href="https://github.com/SciML/ColPrac/blob/master/README.md">SciML ColPrac: Contributor&#39;s Guide on Collaborative Practices for Community Packages</a> for guidance on PRs, issues, and other matters relating to contributing to SciML.</li><li>See the <a href="https://github.com/SciML/SciMLStyle">SciML Style Guide</a> for common coding practices and other style decisions.</li><li>There are a few community forums:<ul><li>The #diffeq-bridged and #sciml-bridged channels in the <a href="https://julialang.org/slack/">Julia Slack</a></li><li>The #diffeq-bridged and #sciml-bridged channels in the <a href="https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged">Julia Zulip</a></li><li>On the <a href="https://discourse.julialang.org">Julia Discourse forums</a></li><li>See also <a href="https://sciml.ai/community/">SciML Community page</a></li></ul></li></ul><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this SciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Project.toml`
+  [e30172f5] Documenter v0.27.24
+  [6a86dc24] FiniteDiff v2.20.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.9.0
+Commit 8e630552924 (2023-05-07 11:25 UTC)
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 2 × Intel(R) Xeon(R) CPU E5-2673 v4 @ 2.30GHz
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-14.0.6 (ORCJIT, broadwell)
+  Threads: 1 on 2 virtual cores</code></pre></details><details><summary>A more complete overview of all dependencies and their versions is also provided.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Manifest.toml`
+  [a4c015fc] ANSIColoredPrinters v0.0.1
+  [79e6a3ab] Adapt v3.6.2
+  [4fba245c] ArrayInterface v7.4.3
+  [187b0558] ConstructionBase v1.5.2
+  [ffbed154] DocStringExtensions v0.9.3
+  [e30172f5] Documenter v0.27.24
+  [6a86dc24] FiniteDiff v2.20.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`
+  [b5f81e59] IOCapture v0.2.2
+  [682c06a0] JSON v0.21.4
+  [1914dd2f] MacroTools v0.5.10
+  [69de0a69] Parsers v2.5.9
+  [aea7be01] PrecompileTools v1.1.1
+  [21216c6a] Preferences v1.4.0
+  [ae029012] Requires v1.3.0
+  [efcf1570] Setfield v1.1.1
+  [66db9d55] SnoopPrecompile v1.0.3
+  [90137ffa] StaticArrays v1.5.24
+  [1e83bf80] StaticArraysCore v1.4.0
+  [0dad84c5] ArgTools v1.1.1
+  [56f22d72] Artifacts
+  [2a0f44e3] Base64
+  [ade2ca70] Dates
+  [f43a241f] Downloads v1.6.0
+  [7b1f6079] FileWatching
+  [9fa8497b] Future
+  [b77e0a4c] InteractiveUtils
+  [b27032c2] LibCURL v0.6.3
+  [76f85450] LibGit2
+  [8f399da3] Libdl
+  [37e2e46d] LinearAlgebra
+  [56ddb016] Logging
+  [d6f4376e] Markdown
+  [a63ad114] Mmap
+  [ca575930] NetworkOptions v1.2.0
+  [44cfe95a] Pkg v1.9.0
+  [de0858da] Printf
+  [3fa0cd96] REPL
+  [9a3f8284] Random
+  [ea8e919c] SHA v0.7.0
+  [9e88b42a] Serialization
+  [6462fe0b] Sockets
+  [2f01184e] SparseArrays
+  [10745b16] Statistics v1.9.0
+  [4607b0f0] SuiteSparse
+  [fa267f1f] TOML v1.0.3
+  [a4e569a6] Tar v1.10.0
+  [8dfed614] Test
+  [cf7118a7] UUIDs
+  [4ec0a83e] Unicode
+  [e66e0078] CompilerSupportLibraries_jll v1.0.2+0
+  [deac9b47] LibCURL_jll v7.84.0+0
+  [29816b5a] LibSSH2_jll v1.10.2+0
+  [c8ffd9c3] MbedTLS_jll v2.28.2+0
+  [14a3606d] MozillaCACerts_jll v2022.10.11
+  [4536629a] OpenBLAS_jll v0.3.21+4
+  [bea87d4a] SuiteSparse_jll v5.10.1+6
+  [83775a58] Zlib_jll v1.2.13+0
+  [8e850b90] libblastrampoline_jll v5.7.0+0
+  [8e850ede] nghttp2_jll v1.48.0+0
+  [3f19e933] p7zip_jll v17.4.0+0</code></pre></details>You can also download the 
+<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.20.0/assets/Manifest.toml">manifest</a> file and the
+<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.20.0/assets/Project.toml">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="finitediff/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Friday 12 May 2023 14:01">Friday 12 May 2023</span>. Using Julia version 1.9.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
