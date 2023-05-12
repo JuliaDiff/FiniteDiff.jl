@@ -20,7 +20,7 @@ function.
 #### FiniteDiff.jl vs FiniteDifferences.jl
 [FiniteDiff.jl](https://github.com/JuliaDiff/FiniteDiff.jl) and [FiniteDifferences.jl](https://github.com/JuliaDiff/FiniteDifferences.jl)
 are similar libraries: both calculate approximate derivatives numerically.
-You should definately use one or the other, rather than the legacy [Calculus.jl](https://github.com/JuliaMath/Calculus.jl) finite differencing, or reimplementing it yourself.
+You should definitely use one or the other, rather than the legacy [Calculus.jl](https://github.com/JuliaMath/Calculus.jl) finite differencing, or reimplementing it yourself.
 At some point in the future they might merge, or one might depend on the other.
 Right now here are the differences:
 
