@@ -10,6 +10,14 @@ Setfield = "efcf1570-3423-57d1-acb7-fd33fddbac46"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
+[weakdeps]
+BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
+BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
+
+[extensions]
+FiniteDiffBandedMatricesExt = "BandedMatrices"
+FiniteDiffBlockBandedMatricesExt = "BlockBandedMatrices"
+
 [compat]
 ArrayInterface = "7"
 Requires = "1.0"
