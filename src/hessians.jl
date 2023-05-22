@@ -5,16 +5,19 @@ struct HessianCache{T,fdtype,inplace}
     xmm::T
 end
 
+_hessian_inplace(::Type{T}) where T = Val(ArrayInterface.ismutable(T))
+_hessian_inplace(x) = _hessian_inplace(typeof(x))
+
 function HessianCache(xpp,xpm,xmp,xmm,
                       fdtype=Val(:hcentral),
-                      inplace = x isa StaticArray ? Val(false) : Val(true))
+                      inplace = _hessian_inplace(x))
     fdtype isa Type && (fdtype = fdtype())
     inplace isa Type && (inplace = inplace())
     HessianCache{typeof(xpp),fdtype,inplace}(xpp,xpm,xmp,xmm)
 end
 
 function HessianCache(x, fdtype=Val(:hcentral),
-                      inplace = x isa StaticArray ? Val(false) : Val(true))
+                      inplace = _hessian_inplace(x))
     cx = copy(x)
     fdtype isa Type && (fdtype = fdtype())
     inplace isa Type && (inplace = inplace())
@@ -23,7 +26,7 @@ end
 
 function finite_difference_hessian(f, x,
     fdtype  = Val(:hcentral),
-    inplace = x isa StaticArray ? Val(false) : Val(true);
+    inplace = _hessian_inplace(x);
     relstep = default_relstep(fdtype, eltype(x)),
     absstep = relstep)
 
@@ -45,7 +48,7 @@ end
 function finite_difference_hessian!(H,f,
     x,
     fdtype  = Val(:hcentral),
-    inplace = x isa StaticArray ? Val(false) : Val(true);
+    inplace = _hessian_inplace(x);
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep)
 

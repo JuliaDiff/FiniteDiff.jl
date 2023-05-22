@@ -13,10 +13,12 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 [weakdeps]
 BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
 BlockBandedMatrices = "ffab5731-97b5-5995-9138-79e8c1846df0"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [extensions]
 FiniteDiffBandedMatricesExt = "BandedMatrices"
 FiniteDiffBlockBandedMatricesExt = "BlockBandedMatrices"
+FiniteDiffStaticArraysExt = "StaticArrays"
 
 [compat]
 ArrayInterface = "7"
@@ -33,4 +35,4 @@ SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "BlockBandedMatrices", "BandedMatrices", "Pkg", "SafeTestsets"]
+test = ["Test", "BlockBandedMatrices", "BandedMatrices", "Pkg", "SafeTestsets", "StaticArrays"]
