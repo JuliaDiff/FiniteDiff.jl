@@ -5,8 +5,16 @@ struct HessianCache{T,fdtype,inplace}
     xmm::T
 end
 
+#used to dispatch on StaticArrays
 _hessian_inplace(::Type{T}) where T = Val(ArrayInterface.ismutable(T))
 _hessian_inplace(x) = _hessian_inplace(typeof(x))
+__Symmetric(x) = Symmetric(x)
+
+function mutable_zeromatrix(x)
+    A = ArrayInterface.zeromatrix(x)
+    ArrayInterface.ismutable(A) ? A : Base.copymutable(A)
+end
+
 
 function HessianCache(xpp,xpm,xmp,xmm,
                       fdtype=Val(:hcentral),
@@ -39,10 +47,10 @@ function finite_difference_hessian(
     cache::HessianCache{T,fdtype,inplace};
     relstep=default_relstep(fdtype, eltype(x)),
     absstep=relstep) where {T,fdtype,inplace}
-    _H = false .* x .* x'
-    _H isa SMatrix ? H = MArray(_H) : H = _H
+    H = mutable_zeromatrix(x)
     finite_difference_hessian!(H, f, x, cache; relstep=relstep, absstep=absstep)
-    Symmetric(_H isa SMatrix ? SArray(H) : H)
+    __Symmetric(H)
+    Symmetric(H isa SMatrix ? SArray(H) : H)
 end
 
 function finite_difference_hessian!(H,f,
