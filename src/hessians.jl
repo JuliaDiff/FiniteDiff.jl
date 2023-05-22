@@ -50,7 +50,6 @@ function finite_difference_hessian(
     H = mutable_zeromatrix(x)
     finite_difference_hessian!(H, f, x, cache; relstep=relstep, absstep=absstep)
     __Symmetric(H)
-    Symmetric(H isa SMatrix ? SArray(H) : H)
 end
 
 function finite_difference_hessian!(H,f,
