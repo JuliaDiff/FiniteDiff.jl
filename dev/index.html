@@ -230,14 +230,14 @@ finite_difference_hessian!(H,f,x,
                       fdtype::Type{T1}=Val{:hcentral},
                       inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><h2 id="Contributing"><a class="docs-heading-anchor" href="#Contributing">Contributing</a><a id="Contributing-1"></a><a class="docs-heading-anchor-permalink" href="#Contributing" title="Permalink"></a></h2><ul><li>Please refer to the <a href="https://github.com/SciML/ColPrac/blob/master/README.md">SciML ColPrac: Contributor&#39;s Guide on Collaborative Practices for Community Packages</a> for guidance on PRs, issues, and other matters relating to contributing to SciML.</li><li>See the <a href="https://github.com/SciML/SciMLStyle">SciML Style Guide</a> for common coding practices and other style decisions.</li><li>There are a few community forums:<ul><li>The #diffeq-bridged and #sciml-bridged channels in the <a href="https://julialang.org/slack/">Julia Slack</a></li><li>The #diffeq-bridged and #sciml-bridged channels in the <a href="https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged">Julia Zulip</a></li><li>On the <a href="https://discourse.julialang.org">Julia Discourse forums</a></li><li>See also <a href="https://sciml.ai/community/">SciML Community page</a></li></ul></li></ul><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this SciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Project.toml`
   [e30172f5] Documenter v0.27.24
-  [6a86dc24] FiniteDiff v2.20.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.9.0
+  [6a86dc24] FiniteDiff v2.21.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.9.0
 Commit 8e630552924 (2023-05-07 11:25 UTC)
 Platform Info:
   OS: Linux (x86_64-linux-gnu)
-  CPU: 2 × Intel(R) Xeon(R) Platinum 8272CL CPU @ 2.60GHz
+  CPU: 2 × Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz
   WORD_SIZE: 64
   LIBM: libopenlibm
-  LLVM: libLLVM-14.0.6 (ORCJIT, skylake-avx512)
+  LLVM: libLLVM-14.0.6 (ORCJIT, icelake-server)
   Threads: 1 on 2 virtual cores</code></pre></details><details><summary>A more complete overview of all dependencies and their versions is also provided.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Manifest.toml`
   [a4c015fc] ANSIColoredPrinters v0.0.1
   [79e6a3ab] Adapt v3.6.2
@@ -245,7 +245,7 @@ Platform Info:
   [187b0558] ConstructionBase v1.5.2
   [ffbed154] DocStringExtensions v0.9.3
   [e30172f5] Documenter v0.27.24
-  [6a86dc24] FiniteDiff v2.20.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`
+  [6a86dc24] FiniteDiff v2.21.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`
   [b5f81e59] IOCapture v0.2.3
   [682c06a0] JSON v0.21.4
   [1914dd2f] MacroTools v0.5.10
@@ -296,5 +296,5 @@ Platform Info:
   [8e850b90] libblastrampoline_jll v5.7.0+0
   [8e850ede] nghttp2_jll v1.48.0+0
   [3f19e933] p7zip_jll v17.4.0+0</code></pre></details>You can also download the 
-<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.20.0/assets/Manifest.toml">manifest</a> file and the
-<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.20.0/assets/Project.toml">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="finitediff/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Sunday 28 May 2023 15:17">Sunday 28 May 2023</span>. Using Julia version 1.9.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.21.0/assets/Manifest.toml">manifest</a> file and the
+<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.21.0/assets/Project.toml">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="finitediff/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Sunday 28 May 2023 15:17">Sunday 28 May 2023</span>. Using Julia version 1.9.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
