@@ -5,7 +5,7 @@ if isdefined(Base, :get_extension)
     using BandedMatrices: BandedMatrices
 else
     using ..FiniteDiff: FiniteDiff, ArrayInterface
-    using ..BandedMatrices: BlockBandedMatrices
+    using ..BandedMatrices: BandedMatrices
 end
 
 FiniteDiff._use_findstructralnz(::BandedMatrices.BandedMatrix) = false
