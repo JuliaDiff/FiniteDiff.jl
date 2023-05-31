@@ -100,7 +100,7 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 deps = ["ArrayInterface", "LinearAlgebra", "Requires", "Setfield", "SparseArrays"]
 path = "/home/runner/work/FiniteDiff.jl/FiniteDiff.jl"
 uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
-version = "2.21.0"
+version = "2.21.1"
 
     [deps.FiniteDiff.extensions]
     FiniteDiffBandedMatricesExt = "BandedMatrices"
