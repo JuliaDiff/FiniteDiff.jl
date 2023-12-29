@@ -22,7 +22,7 @@ end
     return eps(T)
 end
 
-default_relstep(v::Type, T) = default_relstep(v(), T)
+default_relstep(::Type{V}, T) where V = default_relstep(V(), T)
 @inline function default_relstep(::Val{fdtype}, ::Type{T}) where {fdtype,T<:Number}
     if fdtype==:forward
         return sqrt(eps(real(T)))
