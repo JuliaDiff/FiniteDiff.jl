@@ -194,7 +194,7 @@ function finite_difference_jacobian(
             x_save = ArrayInterface.allowed_getindex(vecx, i)
             epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
             _vecx1 = setindex(vecx, x_save+epsilon, i)
-            _x1 = reshape(_vecx1, axes(x))
+            _x1 = ArrayInterface.restructure(x,_vecx1)
             vecfx1 = _vec(f(_x1))
             dx = (vecfx1-vecfx) / epsilon
             return dx
