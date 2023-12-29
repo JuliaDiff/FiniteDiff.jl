@@ -229,43 +229,40 @@ finite_difference_hessian!(H,f,x,
                         inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><h3 id="Non-Allocating-Cache-Calls"><a class="docs-heading-anchor" href="#Non-Allocating-Cache-Calls">Non-Allocating Cache Calls</a><a id="Non-Allocating-Cache-Calls-1"></a><a class="docs-heading-anchor-permalink" href="#Non-Allocating-Cache-Calls" title="Permalink"></a></h3><pre><code class="language-julia hljs">HessianCache(xpp,xpm,xmp,xmm,
                       fdtype::Type{T1}=Val{:hcentral},
                       inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><h2 id="Contributing"><a class="docs-heading-anchor" href="#Contributing">Contributing</a><a id="Contributing-1"></a><a class="docs-heading-anchor-permalink" href="#Contributing" title="Permalink"></a></h2><ul><li>Please refer to the <a href="https://github.com/SciML/ColPrac/blob/master/README.md">SciML ColPrac: Contributor&#39;s Guide on Collaborative Practices for Community Packages</a> for guidance on PRs, issues, and other matters relating to contributing to SciML.</li><li>See the <a href="https://github.com/SciML/SciMLStyle">SciML Style Guide</a> for common coding practices and other style decisions.</li><li>There are a few community forums:<ul><li>The #diffeq-bridged and #sciml-bridged channels in the <a href="https://julialang.org/slack/">Julia Slack</a></li><li>The #diffeq-bridged and #sciml-bridged channels in the <a href="https://julialang.zulipchat.com/#narrow/stream/279055-sciml-bridged">Julia Zulip</a></li><li>On the <a href="https://discourse.julialang.org">Julia Discourse forums</a></li><li>See also <a href="https://sciml.ai/community/">SciML Community page</a></li></ul></li></ul><h2 id="Reproducibility"><a class="docs-heading-anchor" href="#Reproducibility">Reproducibility</a><a id="Reproducibility-1"></a><a class="docs-heading-anchor-permalink" href="#Reproducibility" title="Permalink"></a></h2><details><summary>The documentation of this SciML package was built using these direct dependencies,</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Project.toml`
-  [e30172f5] Documenter v0.27.25
-  [6a86dc24] FiniteDiff v2.21.1 `~/work/FiniteDiff.jl/FiniteDiff.jl`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.9.3
-Commit bed2cd540a1 (2023-08-24 14:43 UTC)
+⌅ [e30172f5] Documenter v0.27.25
+  [6a86dc24] FiniteDiff v2.22.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated`</code></pre></details><details><summary>and using this machine and Julia version.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Julia Version 1.10.0
+Commit 3120989f39b (2023-12-25 18:01 UTC)
 Build Info:
   Official https://julialang.org/ release
 Platform Info:
   OS: Linux (x86_64-linux-gnu)
-  CPU: 2 × Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz
+  CPU: 4 × AMD EPYC 7763 64-Core Processor
   WORD_SIZE: 64
   LIBM: libopenlibm
-  LLVM: libLLVM-14.0.6 (ORCJIT, icelake-server)
-  Threads: 1 on 2 virtual cores</code></pre></details><details><summary>A more complete overview of all dependencies and their versions is also provided.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Manifest.toml`
+  LLVM: libLLVM-15.0.7 (ORCJIT, znver3)
+  Threads: 1 on 4 virtual cores</code></pre></details><details><summary>A more complete overview of all dependencies and their versions is also provided.</summary><pre class="documenter-example-output"><code class="nohighlight hljs ansi">Status `~/work/FiniteDiff.jl/FiniteDiff.jl/docs/Manifest.toml`
   [a4c015fc] ANSIColoredPrinters v0.0.1
-  [79e6a3ab] Adapt v3.6.2
-  [4fba245c] ArrayInterface v7.4.11
-  [187b0558] ConstructionBase v1.5.3
+  [79e6a3ab] Adapt v4.0.0
+  [4fba245c] ArrayInterface v7.7.0
+  [187b0558] ConstructionBase v1.5.4
   [ffbed154] DocStringExtensions v0.9.3
-  [e30172f5] Documenter v0.27.25
-  [6a86dc24] FiniteDiff v2.21.1 `~/work/FiniteDiff.jl/FiniteDiff.jl`
+⌅ [e30172f5] Documenter v0.27.25
+  [6a86dc24] FiniteDiff v2.22.0 `~/work/FiniteDiff.jl/FiniteDiff.jl`
   [b5f81e59] IOCapture v0.2.3
   [682c06a0] JSON v0.21.4
-  [1914dd2f] MacroTools v0.5.11
-  [69de0a69] Parsers v2.7.2
+  [1914dd2f] MacroTools v0.5.12
+  [69de0a69] Parsers v2.8.1
   [aea7be01] PrecompileTools v1.2.0
-  [21216c6a] Preferences v1.4.0
+  [21216c6a] Preferences v1.4.1
   [ae029012] Requires v1.3.0
   [efcf1570] Setfield v1.1.1
   [1e83bf80] StaticArraysCore v1.4.2
-  [0dad84c5] ArgTools v1.1.1
   [56f22d72] Artifacts
   [2a0f44e3] Base64
   [ade2ca70] Dates
-  [f43a241f] Downloads v1.6.0
-  [7b1f6079] FileWatching
   [9fa8497b] Future
   [b77e0a4c] InteractiveUtils
-  [b27032c2] LibCURL v0.6.3
   [76f85450] LibGit2
   [8f399da3] Libdl
   [37e2e46d] LinearAlgebra
@@ -273,30 +270,25 @@ Platform Info:
   [d6f4376e] Markdown
   [a63ad114] Mmap
   [ca575930] NetworkOptions v1.2.0
-  [44cfe95a] Pkg v1.9.2
   [de0858da] Printf
   [3fa0cd96] REPL
   [9a3f8284] Random
   [ea8e919c] SHA v0.7.0
   [9e88b42a] Serialization
   [6462fe0b] Sockets
-  [2f01184e] SparseArrays
+  [2f01184e] SparseArrays v1.10.0
   [4607b0f0] SuiteSparse
   [fa267f1f] TOML v1.0.3
-  [a4e569a6] Tar v1.10.0
   [8dfed614] Test
   [cf7118a7] UUIDs
   [4ec0a83e] Unicode
-  [e66e0078] CompilerSupportLibraries_jll v1.0.5+0
-  [deac9b47] LibCURL_jll v7.84.0+0
-  [29816b5a] LibSSH2_jll v1.10.2+0
-  [c8ffd9c3] MbedTLS_jll v2.28.2+0
-  [14a3606d] MozillaCACerts_jll v2022.10.11
-  [4536629a] OpenBLAS_jll v0.3.21+4
-  [bea87d4a] SuiteSparse_jll v5.10.1+6
-  [83775a58] Zlib_jll v1.2.13+0
-  [8e850b90] libblastrampoline_jll v5.8.0+0
-  [8e850ede] nghttp2_jll v1.48.0+0
-  [3f19e933] p7zip_jll v17.4.0+0</code></pre></details>You can also download the 
-<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.21.1/assets/Manifest.toml">manifest</a> file and the
-<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.21.1/assets/Project.toml">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="finitediff/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Monday 4 September 2023 22:33">Monday 4 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  [e66e0078] CompilerSupportLibraries_jll v1.0.5+1
+  [e37daf67] LibGit2_jll v1.6.4+0
+  [29816b5a] LibSSH2_jll v1.11.0+1
+  [c8ffd9c3] MbedTLS_jll v2.28.2+1
+  [4536629a] OpenBLAS_jll v0.3.23+2
+  [bea87d4a] SuiteSparse_jll v7.2.1+1
+  [8e850b90] libblastrampoline_jll v5.8.0+1
+Info Packages marked with ⌅ have new versions available but compatibility constraints restrict them from upgrading. To see why use `status --outdated -m`</code></pre></details>You can also download the 
+<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.22.0/assets/Manifest.toml">manifest</a> file and the
+<a href="https://github.com/SciML/FiniteDiff.jl/tree/gh-pages/v2.22.0/assets/Project.toml">project</a> file.</article><nav class="docs-footer"><a class="docs-footer-nextpage" href="finitediff/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Friday 29 December 2023 07:34">Friday 29 December 2023</span>. Using Julia version 1.10.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
