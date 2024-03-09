@@ -287,7 +287,7 @@ FiniteDiff.finite_difference_derivative(f, x::T, fdtype::Type{T1}=Val{:central},
     returntype::Type{T2}=eltype(x), f_x::Union{Nothing,T}=nothing)
 ```
 
-## Multi-Point Derivatives
+## Multi-Dimensional Derivatives
 
 ### Differencing Calls
 
