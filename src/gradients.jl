@@ -5,6 +5,16 @@ struct GradientCache{CacheType1,CacheType2,CacheType3,CacheType4,fdtype,returnty
     c3::CacheType4
 end
 
+"""
+    FiniteDiff.GradientCache(
+        df         :: Union{<:Number,AbstractArray{<:Number}},
+        x          :: Union{<:Number, AbstractArray{<:Number}},
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(df),
+        inplace    :: Type{Val{T3}} = Val{true})
+
+Allocating Cache Constructor
+"""
 function GradientCache(
     df,
     x,
@@ -55,13 +65,20 @@ function GradientCache(
 end
 
 """
-    GradientCache(c1, c2, c3, fx, fdtype = Val(:central), returntype = eltype(fx), inplace = Val(false))
+    FiniteDiff.GradientCache(
+        fx         :: Union{Nothing,<:Number,AbstractArray{<:Number}},
+        c1         :: Union{Nothing,AbstractArray{<:Number}},
+        c2         :: Union{Nothing,AbstractArray{<:Number}},
+        c3         :: Union{Nothing,AbstractArray{<:Number}},
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(fx),
+        inplace    :: Type{Val{T3}} = Val{true})
 
-Construct a non-allocating gradient cache.
+Non-Allocating Cache Constructor
 
 # Arguments 
-- `c1`, `c2`, `c3`: (Non-aliased) caches for the input vector.
 - `fx`: Cached function call.
+- `c1`, `c2`, `c3`: (Non-aliased) caches for the input vector.
 - `fdtype = Val(:central)`: Method for cmoputing the finite difference.
 - `returntype = eltype(fx)`: Element type for the returned function value.
 - `inplace = Val(false)`: Whether the function is computed in-place or not.
@@ -96,6 +113,19 @@ function GradientCache(
     GradientCache{Fx,T,T,T,fdtype,returntype,inplace}(fx, c1, c2, c3)
 end
 
+"""
+    FiniteDiff.finite_difference_gradient(
+        f,
+        x,
+        fdtype::Type{T1}=Val{:central},
+        returntype::Type{T2}=eltype(x),
+        inplace::Type{Val{T3}}=Val{true};
+        [epsilon_factor])
+
+Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
+
+Cache-less.
+"""
 function finite_difference_gradient(
     f,
     x,
@@ -133,6 +163,20 @@ function finite_difference_gradient(
     finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep, dir=dir)
 end
 
+"""
+    FiniteDiff.finite_difference_gradient!(
+        df,
+        f,
+        x,
+        fdtype::Type{T1}=Val{:central},
+        returntype::Type{T2}=eltype(df),
+        inplace::Type{Val{T3}}=Val{true};
+        [epsilon_factor])
+
+Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
+
+Cache-less.
+"""
 function finite_difference_gradient!(
     df,
     f,
@@ -150,6 +194,18 @@ function finite_difference_gradient!(
     finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep)
 end
 
+"""
+    FiniteDiff.finite_difference_gradient!(
+        df::AbstractArray{<:Number},
+        f,
+        x::AbstractArray{<:Number},
+        cache::GradientCache;
+        [epsilon_factor])
+
+Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
+
+Cached.
+"""
 function finite_difference_gradient(
     f,
     x,

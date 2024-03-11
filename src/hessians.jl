@@ -15,7 +15,17 @@ function mutable_zeromatrix(x)
     ArrayInterface.ismutable(A) ? A : Base.copymutable(A)
 end
 
+"""
+    HessianCache(
+        xpp,
+        xpm,
+        xmp,
+        xmm,
+        fdtype::Type{T1}=Val{:hcentral},
+        inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
 
+Non-allocating cache constructor.
+"""
 function HessianCache(xpp,xpm,xmp,xmm,
                       fdtype=Val(:hcentral),
                       inplace = _hessian_inplace(x))
@@ -24,6 +34,14 @@ function HessianCache(xpp,xpm,xmp,xmm,
     HessianCache{typeof(xpp),fdtype,inplace}(xpp,xpm,xmp,xmm)
 end
 
+"""
+    HessianCache(
+        x,
+        fdtype::Type{T1}=Val{:hcentral},
+        inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
+
+Allocating cache constructor.
+"""
 function HessianCache(x, fdtype=Val(:hcentral),
                       inplace = _hessian_inplace(x))
     cx = copy(x)
@@ -32,6 +50,17 @@ function HessianCache(x, fdtype=Val(:hcentral),
     HessianCache{typeof(cx),fdtype,inplace}(cx, copy(x), copy(x), copy(x))
 end
 
+"""
+    finite_difference_hessian(
+        f,
+        x::AbstractArray{<:Number},
+        fdtype     :: Type{T1}=Val{:hcentral},
+        inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep)
+
+Cache-less.
+"""
 function finite_difference_hessian(f, x,
     fdtype  = Val(:hcentral),
     inplace = _hessian_inplace(x);
@@ -42,6 +71,16 @@ function finite_difference_hessian(f, x,
     finite_difference_hessian(f, x, cache; relstep=relstep, absstep=absstep)
 end
 
+"""
+    finite_difference_hessian(
+        f,
+        x,
+        cache::HessianCache{T,fdtype,inplace};
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep)
+
+Cached.
+"""
 function finite_difference_hessian(
     f,x,
     cache::HessianCache{T,fdtype,inplace};
@@ -52,6 +91,18 @@ function finite_difference_hessian(
     __Symmetric(H)
 end
 
+"""
+    finite_difference_hessian!(
+        H::AbstractMatrix,
+        f,
+        x::AbstractArray{<:Number},
+        fdtype     :: Type{T1}=Val{:hcentral},
+        inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep)
+
+Cache-less.
+"""
 function finite_difference_hessian!(H,f,
     x,
     fdtype  = Val(:hcentral),
@@ -63,6 +114,17 @@ function finite_difference_hessian!(H,f,
     finite_difference_hessian!(H, f, x, cache; relstep=relstep, absstep=absstep)
 end
 
+"""
+    finite_difference_hessian!(
+        H,
+        f,
+        x,
+        cache::HessianCache{T,fdtype,inplace};
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
+
+Cached.
+"""
 function finite_difference_hessian!(H,f,x,
                                     cache::HessianCache{T,fdtype,inplace};
                                     relstep = default_relstep(fdtype, eltype(x)),
