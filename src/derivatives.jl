@@ -1,6 +1,12 @@
-#=
-Single-point derivatives of scalar->scalar maps.
-=#
+"""
+    FiniteDiff.finite_difference_derivative(
+        f, x::T,
+        fdtype::Type{T1}=Val{:central},
+        returntype::Type{T2}=eltype(x),
+        f_x::Union{Nothing,T}=nothing)
+
+Single-point derivative of scalar->scalar maps.
+"""
 function finite_difference_derivative(
     f,
     x::T,
@@ -33,6 +39,18 @@ struct DerivativeCache{CacheType1, CacheType2, fdtype, returntype}
     epsilon :: CacheType2
 end
 
+"""
+    FiniteDiff.DerivativeCache(
+        x          :: AbstractArray{<:Number},
+        fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+        epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing,
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(x))
+
+This allocates either `fx` or `epsilon` if these are nothing and they are needed.
+`fx` is the current call of `f(x)` and is required for forward-differencing
+(otherwise is not necessary).
+"""
 function DerivativeCache(
     x          :: AbstractArray{<:Number},
     fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
@@ -68,9 +86,20 @@ function DerivativeCache(
     DerivativeCache{typeof(_fx),typeof(_epsilon),fdtype,returntype}(_fx,_epsilon)
 end
 
-#=
-Compute the derivative df of a scalar-valued map f at a collection of points x.
-=#
+"""
+    FiniteDiff.finite_difference_derivative(
+        f,
+        x          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(x),      # return type of f
+        fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+        epsilon    :: Union{Nothing,AbstractArray{<:Real}} = nothing;
+        [epsilon_factor])
+
+Compute the derivative `df` of a scalar-valued map `f` at a collection of points `x`.
+
+Cache-less.
+"""
 function finite_difference_derivative(
     f,
     x,
@@ -85,6 +114,21 @@ function finite_difference_derivative(
     finite_difference_derivative!(df, f, x, fdtype, returntype, fx, epsilon; relstep=relstep, absstep=absstep)
 end
 
+"""
+    FiniteDiff.finite_difference_derivative!(
+        df         :: AbstractArray{<:Number},
+        f,
+        x          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(x),
+        fx         :: Union{Nothing,AbstractArray{<:Number}} = nothing,
+        epsilon    :: Union{Nothing,AbstractArray{<:Real}}   = nothing;
+        [epsilon_factor])
+
+Compute the derivative `df` of a scalar-valued map `f` at a collection of points `x`.
+
+Cache-less but non-allocating if `fx` and `epsilon` are supplied (`fx` must be `f(x)`).
+"""
 function finite_difference_derivative!(
     df,
     f,
@@ -100,6 +144,18 @@ function finite_difference_derivative!(
     finite_difference_derivative!(df, f, x, cache; relstep=relstep, absstep=absstep)
 end
 
+"""
+    FiniteDiff.finite_difference_derivative!(
+        df::AbstractArray{<:Number},
+        f,
+        x::AbstractArray{<:Number},
+        cache::DerivativeCache{T1,T2,fdtype,returntype};
+        [epsilon_factor])
+    
+Compute the derivative `df` of a scalar-valued map `f` at a collection of points `x`.
+
+Cached.
+"""
 function finite_difference_derivative!(
     df,
     f,

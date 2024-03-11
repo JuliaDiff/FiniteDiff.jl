@@ -34,6 +34,18 @@ function JacobianCache(
     JacobianCache(x1,_fx,_fx1,fdtype,returntype;colorvec=colorvec,sparsity=sparsity)
 end
 
+"""
+    FiniteDiff.JacobianCache(
+        x,
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(x),
+        colorvec = 1:length(x)
+        sparsity = nothing)
+
+Allocating Cache Constructor.
+
+This assumes the Jacobian is square.
+"""
 function JacobianCache(
     x ,
     fx,
@@ -66,6 +78,18 @@ function JacobianCache(
     JacobianCache(x1,_fx,_fx1,fdtype,returntype;colorvec=colorvec,sparsity=sparsity)
 end
 
+"""
+    FiniteDiff.JacobianCache(
+        x1 ,
+        fx ,
+        fx1,
+        fdtype     :: Type{T1} = Val{:central},
+        returntype :: Type{T2} = eltype(fx),
+        colorvec = 1:length(x1),
+        sparsity = nothing)
+
+Non-Allocating Cache Constructor.
+"""
 function JacobianCache(
     x1 ,
     fx ,
@@ -132,6 +156,20 @@ function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     size(Ji) != (nrows, ncols) ? reshape(Ji, (nrows, ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)
 end
 
+"""
+    FiniteDiff.finite_difference_jacobian(
+        f,
+        x          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1}=Val{:central},
+        returntype :: Type{T2}=eltype(x),
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep,
+        colorvec = 1:length(x),
+        sparsity = nothing,
+        jac_prototype = nothing)
+
+Cache-less.
+"""
 function finite_difference_jacobian(f, x,
     fdtype     = Val(:forward),
     returntype = eltype(x),
@@ -154,6 +192,19 @@ end
 
 void_setindex!(args...) = (setindex!(args...); return)
 
+"""
+    FiniteDiff.finite_difference_jacobian(
+        f,
+        x,
+        cache::JacobianCache;
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep,
+        colorvec = cache.colorvec,
+        sparsity = cache.sparsity,
+        jac_prototype = nothing)
+
+Cached.
+"""
 function finite_difference_jacobian(
     f,
     x,
@@ -295,6 +346,21 @@ function finite_difference_jacobian(
     J
 end
 
+"""
+    finite_difference_jacobian!(
+        J::AbstractMatrix,
+        f,
+        x::AbstractArray{<:Number},
+        fdtype     :: Type{T1}=Val{:forward},
+        returntype :: Type{T2}=eltype(x),
+        f_in       :: Union{T2,Nothing}=nothing;
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep,
+        colorvec = 1:length(x),
+        sparsity = ArrayInterfaceCore.has_sparsestruct(J) ? J : nothing)
+
+Cache-less.
+"""
 function finite_difference_jacobian!(J,
     f,
     x,
@@ -338,6 +404,19 @@ function _findstructralnz(A::DenseMatrix)
     I, J
 end
 
+"""
+    FiniteDiff.finite_difference_jacobian!(
+        J::AbstractMatrix{<:Number},
+        f,
+        x::AbstractArray{<:Number},
+        cache::JacobianCache;
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep,
+        colorvec = cache.colorvec,
+        sparsity = cache.sparsity)
+
+Cached.
+"""
 function finite_difference_jacobian!(
     J,
     f,
