@@ -1,6 +1,6 @@
 name = "FiniteDiff"
 uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
-version = "2.22.0"
+version = "2.23.0"
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
@@ -25,7 +25,7 @@ ArrayInterface = "7"
 Requires = "1.0"
 Setfield = "1"
 StaticArrays = "1.0"
-julia = "1.6"
+julia = "1.10"
 
 [extras]
 BandedMatrices = "aae01518-5342-5314-be14-df237901396f"
