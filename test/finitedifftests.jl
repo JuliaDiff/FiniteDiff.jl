@@ -348,17 +348,17 @@ end
     _g(x) = x[1]^2 + x[2]
     _∇g(x) = [2x[1], 1.0]
     x = [1.0, 3.0]
-    fx = _g(x) 
+    fx = _g(x)
     c1, c2 = zero(x), zero(x)
     c3 = zero(x)
     res = zero(x)
     gcache = FiniteDiff.GradientCache{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}, Val(:forward), Float64, Val(false)}(fx, c1, c2, c3)
     FiniteDiff.finite_difference_gradient!(res, _g, x, gcache)
-    @test res ≈ _∇g(x) 
+    @test res ≈ _∇g(x)
     x = [2.7, 1.0]
     gcache = @set gcache.fx = _g(x)
     FiniteDiff.finite_difference_gradient!(res, _g, x, gcache)
-    @test res ≈ _∇g(x) 
+    @test res ≈ _∇g(x)
 end
 
 # Jacobian tests
@@ -488,7 +488,7 @@ f_in = oopf(x)
     @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, complex_cache), J_ref) < 1e-14
 end
 
-# Test default colorvec construction 
+# Test default colorvec construction
 θ = rand(2)
 y0 = rand(1)
 cache = FiniteDiff.JacobianCache(copy(θ), copy(y0), copy(y0), Val(:forward))
@@ -539,4 +539,12 @@ Base.getindex(x::ImmutableVector, i::Integer) = x.x[i]
         FiniteDiff.finite_difference_jacobian!(J, (out, in) -> out .= in, ImmutableVector(ones(2)), difftype)
         @test J ≈ Matrix(I, 2, 2)
     end
+end
+
+@testset "Hessian Cache test" begin
+    # https://github.com/JuliaDiff/FiniteDiff.jl/issues/185
+    f(x) = sum(abs2, x)
+    x1, x2 = float.(1:4), float.(5:8);
+    @test FiniteDiff.finite_difference_hessian(f, x1, FiniteDiff.HessianCache(x1)) == Diagonal(2*ones(4))
+    @test FiniteDiff.finite_difference_hessian(f, x1, FiniteDiff.HessianCache(x2)) == Diagonal(2*ones(4))
 end
