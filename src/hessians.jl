@@ -137,6 +137,12 @@ function finite_difference_hessian!(H,f,x,
 
     if inplace === Val(true)
         _xpp, _xpm, _xmp, _xmm = xpp, xpm, xmp, xmm
+        copyto!(xpp,x)
+        copyto!(xpm,x)
+        copyto!(xmp,x)
+        copyto!(xmm,x)
+    else # ignore the cache since immutable
+        xpp, xpm, xmp, xmm = copy(x), copy(x), copy(x), copy(x)
     end
 
     for i = 1:n
