@@ -23,6 +23,7 @@ FiniteDiffStaticArraysExt = "StaticArrays"
 [compat]
 ArrayInterface = "7"
 BandedMatrices = "1"
+BlockBandedMatrices = "0.13"
 Requires = "1.0"
 Setfield = "1"
 StaticArrays = "1.0"
