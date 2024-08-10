@@ -5,7 +5,7 @@ Fast non-allocating calculations of gradients, Jacobians, and Hessians with spar
 """
 module FiniteDiff
 
-using LinearAlgebra, SparseArrays, ArrayInterface, Requires
+using LinearAlgebra, SparseArrays, ArrayInterface
 
 import Base: resize!
 
@@ -40,19 +40,5 @@ include("derivatives.jl")
 include("gradients.jl")
 include("jacobians.jl")
 include("hessians.jl")
-
-if !isdefined(Base,:get_extension)
-    using StaticArrays
-    include("../ext/FiniteDiffStaticArraysExt.jl")
-    using Requires
-    function __init__()
-        @require BandedMatrices="aae01518-5342-5314-be14-df237901396f" begin
-            include("../ext/FiniteDiffBandedMatricesExt.jl")
-        end
-        @require BlockBandedMatrices="ffab5731-97b5-5995-9138-79e8c1846df0" begin
-            include("../ext/FiniteDiffBlockBandedMatricesExt.jl")
-        end 
-    end
-end
 
 end # module
