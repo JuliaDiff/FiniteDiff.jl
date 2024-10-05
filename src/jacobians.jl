@@ -125,14 +125,6 @@ function JacobianCache(
     JacobianCache{typeof(_x1),typeof(_x2),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_x2,_fx,fx1,colorvec,sparsity)
 end
 
-function _make_Ji(::SparseMatrixCSC, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
-    pick_inds = [i for i in 1:length(rows_index) if colorvec[cols_index[i]] == color_i]
-    rows_index_c = rows_index[pick_inds]
-    cols_index_c = cols_index[pick_inds]
-    Ji = sparse(rows_index_c, cols_index_c, dx[rows_index_c],nrows,ncols)
-    Ji
-end
-
 function _make_Ji(::AbstractArray, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
     pick_inds = [i for i in 1:length(rows_index) if colorvec[cols_index[i]] == color_i]
     rows_index_c = rows_index[pick_inds]
@@ -144,12 +136,6 @@ function _make_Ji(::AbstractArray, rows_index,cols_index,dx,colorvec,color_i,nro
     Ji = [j==cols_index_c[i] ? dx[i] : false for i in 1:nrows, j in 1:ncols]
     Ji
 end
-
-function _make_Ji(::SparseMatrixCSC, xtype, dx, color_i, nrows, ncols)
-    Ji = sparse(1:nrows,fill(color_i,nrows),dx,nrows,ncols)
-    Ji
-end
-
 
 function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     Ji = mapreduce(i -> i==color_i ? dx : zero(dx), hcat, 1:ncols)
@@ -445,11 +431,7 @@ function finite_difference_jacobian!(
     end
 
     if sparsity !== nothing
-        if J isa AbstractSparseMatrix
-            fill!(nonzeros(J),false)
-        else
-            fill!(J,false)
-        end
+        fill_matrix!(J, false)
     end
 
     # fast path if J and sparsity are both AbstractSparseMatrix and have the same sparsity pattern
@@ -497,11 +479,7 @@ function finite_difference_jacobian!(
                     J[rows_index, cols_index] .+= (colorvec[cols_index] .== color_i) .* vfx1[rows_index]
                     += means requires a zero'd out start
                     =#
-                    if J isa AbstractSparseMatrix
-                        @. void_setindex!((J.nzval,), getindex((J.nzval,), rows_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx1,), rows_index), rows_index)
-                    else
-                        @. void_setindex!((J,), getindex((J,), rows_index, cols_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx1,), rows_index), rows_index, cols_index)
-                    end
+                    fast_jacobian_setindex!(J, rows_index, cols_index, _color, color_i, vfx1)
                 end
                 # Now return x1 back to its original value
                 @. x1 = x1 - epsilon * (_color == color_i)
@@ -535,11 +513,7 @@ function finite_difference_jacobian!(
                         _colorediteration!(J,sparsity,rows_index,cols_index,vfx1,colorvec,color_i,n)
                     end
                 else
-                    if J isa AbstractSparseMatrix
-                        @. void_setindex!((J.nzval,), getindex((J.nzval,), rows_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx1,), rows_index), rows_index)
-                    else
-                        @. void_setindex!((J,), getindex((J,), rows_index, cols_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx1,), rows_index), rows_index, cols_index)
-                    end
+                    fast_jacobian_setindex!(J, rows_index, cols_index, _color, color_i, vfx1)
                 end
                 @. x1 = x1 - epsilon * (_color == color_i)
                 @. x  = x  + epsilon * (_color == color_i)
@@ -565,11 +539,7 @@ function finite_difference_jacobian!(
                         _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,n)
                     end
                 else
-                   if J isa AbstractSparseMatrix
-                        @. void_setindex!((J.nzval,), getindex((J.nzval,), rows_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx,),rows_index), rows_index)
-                    else
-                        @. void_setindex!((J,), getindex((J,), rows_index, cols_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx,), rows_index), rows_index, cols_index)
-                    end
+                    fast_jacobian_setindex!(J, rows_index, cols_index, _color, color_i, vfx)
                 end
                 @. x1 = x1 - im * epsilon * (_color == color_i)
             end
@@ -583,7 +553,13 @@ end
 function resize!(cache::JacobianCache, i::Int)
     resize!(cache.x1,  i)
     resize!(cache.fx,  i)
-    cache.fx1 != nothing && resize!(cache.fx1, i)
+    cache.fx1 !== nothing && resize!(cache.fx1, i)
     cache.colorvec = 1:i
     nothing
+end
+
+@inline fill_matrix!(J, v) = fill!(J, v)
+
+@inline function fast_jacobian_setindex!(J, rows_index, cols_index, _color, color_i, vfx)
+    @. void_setindex!((J,), getindex((J,), rows_index, cols_index) + (getindex((_color,), cols_index) == color_i) * getindex((vfx,), rows_index), rows_index, cols_index)
 end

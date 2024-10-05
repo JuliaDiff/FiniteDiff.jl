@@ -5,7 +5,7 @@ Fast non-allocating calculations of gradients, Jacobians, and Hessians with spar
 """
 module FiniteDiff
 
-using LinearAlgebra, SparseArrays, ArrayInterface
+using LinearAlgebra, ArrayInterface
 
 import Base: resize!
 
