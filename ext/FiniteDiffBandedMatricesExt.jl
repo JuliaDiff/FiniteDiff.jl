@@ -16,9 +16,9 @@ FiniteDiff._use_findstructralnz(::BandedMatrices.BandedMatrix) = false
     nrows = size(Jac,1)
     l,u = BandedMatrices.bandwidths(Jac)
     #data = BandedMatrices.bandeddata(Jac)
-    @inbounds for col_index in max(1,1-l):min(ncols,ncols+u)
+    for col_index in max(1,1-l):min(ncols,ncols+u)
         if colorvec[col_index] == color_i
-            @inbounds for row_index in max(1,col_index-u):min(nrows,col_index+l)
+            for row_index in max(1,col_index-u):min(nrows,col_index+l)
                 #data[u+row_index-col_index+1,col_index] = vfx[row_index]
                 Jac[row_index,col_index]=vfx[row_index]
             end

@@ -18,9 +18,9 @@ function FiniteDiff._make_Ji(::SparseMatrixCSC, xtype, dx, color_i, nrows, ncols
 end
 
 @inline function FiniteDiff._colorediteration!(J, sparsity::SparseMatrixCSC, rows_index, cols_index, vfx, colorvec, color_i, ncols)
-    @inbounds for col_index in 1:ncols
+    for col_index in 1:ncols
         if colorvec[col_index] == color_i
-            @inbounds for row_index in view(sparsity.rowval, sparsity.colptr[col_index]:sparsity.colptr[col_index+1]-1)
+            for row_index in view(sparsity.rowval, sparsity.colptr[col_index]:sparsity.colptr[col_index+1]-1)
                 J[row_index, col_index] = vfx[row_index]
             end
         end
@@ -36,9 +36,9 @@ end
 # iteration_utils.jl
 ## fast version for the case where J and sparsity have the same sparsity pattern
 @inline function FiniteDiff._colorediteration!(Jsparsity::SparseMatrixCSC, vfx, colorvec, color_i, ncols)
-    @inbounds for col_index in 1:ncols
+    for col_index in 1:ncols
         if colorvec[col_index] == color_i
-            @inbounds for spidx in nzrange(Jsparsity, col_index)
+            for spidx in nzrange(Jsparsity, col_index)
                 row_index = Jsparsity.rowval[spidx]
                 Jsparsity.nzval[spidx] = vfx[row_index]
             end
