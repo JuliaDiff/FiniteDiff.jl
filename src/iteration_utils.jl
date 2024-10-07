@@ -1,5 +1,5 @@
 @inline function _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,ncols)
-    @inbounds for i in 1:length(cols_index)
+    for i in 1:length(cols_index)
         if colorvec[cols_index[i]] == color_i
             J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
         end
