@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Tutorials · FiniteDiff.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://docs.sciml.ai/FiniteDiff/stable/tutorials/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="FiniteDiff.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">FiniteDiff.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Tutorials</a><ul class="internal"><li><a class="tocitem" href="#Fast-Dense-Jacobians"><span>Fast Dense Jacobians</span></a></li><li><a class="tocitem" href="#Fast-Sparse-Jacobians"><span>Fast Sparse Jacobians</span></a></li><li><a class="tocitem" href="#Fast-Tridiagonal-Jacobians"><span>Fast Tridiagonal Jacobians</span></a></li><li><a class="tocitem" href="#Fast-Block-Banded-Matrices"><span>Fast Block Banded Matrices</span></a></li></ul></li><li><a class="tocitem" href="../api/">API</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Tutorials</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Tutorials</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/master/docs/src/tutorials.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Tutorials"><a class="docs-heading-anchor" href="#Tutorials">Tutorials</a><a id="Tutorials-1"></a><a class="docs-heading-anchor-permalink" href="#Tutorials" title="Permalink"></a></h1><h2 id="Fast-Dense-Jacobians"><a class="docs-heading-anchor" href="#Fast-Dense-Jacobians">Fast Dense Jacobians</a><a id="Fast-Dense-Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Fast-Dense-Jacobians" title="Permalink"></a></h2><p>It&#39;s always fun to start out with a tutorial before jumping into the details! Suppose we had the functions:</p><pre><code class="language-julia hljs">using FiniteDiff, StaticArrays
+
+fcalls = 0
+function f(dx,x) # in-place
+  global fcalls += 1
+  for i in 2:length(x)-1
+    dx[i] = x[i-1] - 2x[i] + x[i+1]
+  end
+  dx[1] = -2x[1] + x[2]
+  dx[end] = x[end-1] - 2x[end]
+  nothing
+end
+
+const N = 10
+handleleft(x,i) = i==1 ? zero(eltype(x)) : x[i-1]
+handleright(x,i) = i==length(x) ? zero(eltype(x)) : x[i+1]
+function g(x) # out-of-place
+  global fcalls += 1
+  @SVector [handleleft(x,i) - 2x[i] + handleright(x,i) for i in 1:N]
+end</code></pre><p>and we wanted to calculate the derivatives of them. The simplest thing we can do is ask for the Jacobian. If we want to allocate the result, we&#39;d use the allocating function <code>finite_difference_jacobian</code> on a 1-argument function <code>g</code>:</p><pre><code class="language-julia hljs">x = @SVector rand(N)
+FiniteDiff.finite_difference_jacobian(g,x)
+
+#=
+10×10 SArray{Tuple{10,10},Float64,2,100} with indices SOneTo(10)×SOneTo(10):
+ -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0
+=#</code></pre><p>FiniteDiff.jl assumes you&#39;re a smart cookie, and so if you used an out-of-place function then it&#39;ll not mutate vectors at all, and is thus compatible with objects like StaticArrays and will give you a fast Jacobian.</p><p>But if you wanted to use mutation, then we&#39;d have to use the in-place function <code>f</code> and call the mutating form:</p><pre><code class="language-julia hljs">x = rand(10)
+output = zeros(10,10)
+FiniteDiff.finite_difference_jacobian!(output,f,x)
+output
+
+#=
+10×10 Array{Float64,2}:
+ -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0   0.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0   1.0
+  0.0   0.0   0.0   0.0   0.0   0.0   0.0   0.0   1.0  -2.0
+=#</code></pre><p>But what if you want this to be completely non-allocating on your mutating form? Then you need to preallocate a cache:</p><pre><code class="language-julia hljs">cache = FiniteDiff.JacobianCache(x)</code></pre><p>and now using this cache avoids allocating:</p><pre><code class="language-julia hljs">@time FiniteDiff.finite_difference_jacobian!(output,f,x,cache) # 0.000008 seconds (7 allocations: 224 bytes)</code></pre><p>And that&#39;s pretty much it! Gradients and Hessians work similarly: out of place doesn&#39;t index, and in-place avoids allocations. Either way, you&#39;re fast. GPUs etc. all work.</p><h2 id="Fast-Sparse-Jacobians"><a class="docs-heading-anchor" href="#Fast-Sparse-Jacobians">Fast Sparse Jacobians</a><a id="Fast-Sparse-Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Fast-Sparse-Jacobians" title="Permalink"></a></h2><p>Now let&#39;s exploit sparsity. If we knew the sparsity pattern we could write it down analytically as a sparse matrix, but let&#39;s assume we don&#39;t. Thus we can use <a href="https://github.com/JuliaDiffEq/SparsityDetection.jl">SparsityDetection.jl</a> to automatically get the sparsity pattern of the Jacobian as a sparse matrix:</p><pre><code class="language-julia hljs">using SparsityDetection, SparseArrays
+in = rand(10)
+out = similar(in)
+sparsity_pattern = sparsity!(f,out,in)
+sparsejac = Float64.(sparse(sparsity_pattern))</code></pre><p>Then we can use <a href="https://github.com/JuliaDiffEq/SparseDiffTools.jl">SparseDiffTools.jl</a> to get the color vector:</p><pre><code class="language-julia hljs">using SparseDiffTools
+colors = matrix_colors(sparsejac)</code></pre><p>Now we can do sparse differentiation by passing the color vector and the sparsity pattern:</p><pre><code class="language-julia hljs">sparsecache = FiniteDiff.JacobianCache(x,colorvec=colors,sparsity=sparsejac)
+FiniteDiff.finite_difference_jacobian!(sparsejac,f,x,sparsecache)</code></pre><p>Note that the number of <code>f</code> evaluations to fill a Jacobian is <code>1+maximum(colors)</code>. By default, <code>colors=1:length(x)</code>, so in this case we went from 10 function calls to 4. The sparser the matrix, the more the gain! We can measure this as well:</p><pre><code class="language-julia hljs">fcalls = 0
+FiniteDiff.finite_difference_jacobian!(output,f,x,cache)
+fcalls #11
+
+fcalls = 0
+FiniteDiff.finite_difference_jacobian!(sparsejac,f,x,sparsecache)
+fcalls #4</code></pre><h2 id="Fast-Tridiagonal-Jacobians"><a class="docs-heading-anchor" href="#Fast-Tridiagonal-Jacobians">Fast Tridiagonal Jacobians</a><a id="Fast-Tridiagonal-Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Fast-Tridiagonal-Jacobians" title="Permalink"></a></h2><p>Handling dense matrices? Easy. Handling sparse matrices? Cool stuff. Automatically specializing on the exact structure of a matrix? Even better. FiniteDiff can specialize on types which implement the <a href="https://github.com/JuliaDiffEq/ArrayInterfaceCore.jl">ArrayInterfaceCore.jl</a> interface. This includes:</p><ul><li>Diagonal</li><li>Bidiagonal</li><li>UpperTriangular and LowerTriangular</li><li>Tridiagonal and SymTridiagonal</li><li><a href="https://github.com/JuliaMatrices/BandedMatrices.jl">BandedMatrices.jl</a></li><li><a href="https://github.com/JuliaMatrices/BlockBandedMatrices.jl">BlockBandedMatrices.jl</a></li></ul><p>Our previous example had a Tridiagonal Jacobian, so let&#39;s use this. If we just do</p><pre><code class="language-julia hljs">using ArrayInterfaceCore, LinearAlgebra
+tridiagjac = Tridiagonal(output)
+colors = matrix_colors(jac)</code></pre><p>we get the analytical solution to the optimal matrix colors for our structured Jacobian. Now we can use this in our differencing routines:</p><pre><code class="language-julia hljs">tridiagcache = FiniteDiff.JacobianCache(x,colorvec=colors,sparsity=tridiagjac)
+FiniteDiff.finite_difference_jacobian!(tridiagjac,f,x,tridiagcache)</code></pre><p>It&#39;ll use a special iteration scheme dependent on the matrix type to accelerate it beyond general sparse usage.</p><h2 id="Fast-Block-Banded-Matrices"><a class="docs-heading-anchor" href="#Fast-Block-Banded-Matrices">Fast Block Banded Matrices</a><a id="Fast-Block-Banded-Matrices-1"></a><a class="docs-heading-anchor-permalink" href="#Fast-Block-Banded-Matrices" title="Permalink"></a></h2><p>Now let&#39;s showcase a difficult example. Say we had a large system of partial differential equations, with a function like:</p><pre><code class="language-julia hljs">function pde(out, x)
+	x = reshape(x, 100, 100)
+	out = reshape(out, 100, 100)
+	for i in 1:100
+		for j in 1:100
+			out[i, j] = x[i, j] + x[max(i -1, 1), j] + x[min(i+1, size(x, 1)), j] +  x[i, max(j-1, 1)]  + x[i, min(j+1, size(x, 2))]
+		end
+	end
+	return vec(out)
+end
+x = rand(10000)</code></pre><p>In this case, we can see that our sparsity pattern is a BlockBandedMatrix, so let&#39;s specialize the Jacobian calculation on this fact:</p><pre><code class="language-julia hljs">using FillArrays, BlockBandedMatrices
+Jbbb = BandedBlockBandedMatrix(Ones(10000, 10000), fill(100, 100), fill(100, 100), (1, 1), (1, 1))
+colorsbbb = ArrayInterfaceCore.matrix_colors(Jbbb)
+bbbcache = FiniteDiff.JacobianCache(x,colorvec=colorsbbb,sparsity=Jbbb)
+FiniteDiff.finite_difference_jacobian!(Jbbb, pde, x, bbbcache)</code></pre><p>And boom, a fast Jacobian filling algorithm on your special matrix.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../api/">API »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Monday 7 October 2024 11:16">Monday 7 October 2024</span>. Using Julia version 1.10.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
