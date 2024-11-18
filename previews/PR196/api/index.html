@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>API · FiniteDiff.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link rel="canonical" href="https://docs.sciml.ai/FiniteDiff/stable/api/"/><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/favicon.ico" rel="icon" type="image/x-icon"/></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="FiniteDiff.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">FiniteDiff.jl</a></span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../tutorials/">Tutorials</a></li><li class="is-active"><a class="tocitem" href>API</a><ul class="internal"><li><a class="tocitem" href="#Derivatives"><span>Derivatives</span></a></li><li><a class="tocitem" href="#Gradients"><span>Gradients</span></a></li><li><a class="tocitem" href="#Jacobians"><span>Jacobians</span></a></li><li><a class="tocitem" href="#Hessians"><span>Hessians</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>API</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>API</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/master/docs/src/api.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="API"><a class="docs-heading-anchor" href="#API">API</a><a id="API-1"></a><a class="docs-heading-anchor-permalink" href="#API" title="Permalink"></a></h1><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff" href="#FiniteDiff"><code>FiniteDiff</code></a> — <span class="docstring-category">Module</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff</code></pre><p>Fast non-allocating calculations of gradients, Jacobians, and Hessians with sparsity support.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/FiniteDiff.jl#L1-L5">source</a></section></article><h2 id="Derivatives"><a class="docs-heading-anchor" href="#Derivatives">Derivatives</a><a id="Derivatives-1"></a><a class="docs-heading-anchor-permalink" href="#Derivatives" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_derivative" href="#FiniteDiff.finite_difference_derivative"><code>FiniteDiff.finite_difference_derivative</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.finite_difference_derivative(
+    f, x::T,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x),
+    f_x::Union{Nothing,T}=nothing)</code></pre><p>Single-point derivative of scalar-&gt;scalar maps.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/derivatives.jl#L1-L9">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.finite_difference_derivative(
+    f,
+    x          :: AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),      # return type of f
+    fx         :: Union{Nothing,AbstractArray{&lt;:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{&lt;:Real}} = nothing;
+    [epsilon_factor])</code></pre><p>Compute the derivative <code>df</code> of a scalar-valued map <code>f</code> at a collection of points <code>x</code>.</p><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/derivatives.jl#L89-L102">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_derivative!" href="#FiniteDiff.finite_difference_derivative!"><code>FiniteDiff.finite_difference_derivative!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.finite_difference_derivative!(
+    df         :: AbstractArray{&lt;:Number},
+    f,
+    x          :: AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    fx         :: Union{Nothing,AbstractArray{&lt;:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{&lt;:Real}}   = nothing;
+    [epsilon_factor])</code></pre><p>Compute the derivative <code>df</code> of a scalar-valued map <code>f</code> at a collection of points <code>x</code>.</p><p>Cache-less but non-allocating if <code>fx</code> and <code>epsilon</code> are supplied (<code>fx</code> must be <code>f(x)</code>).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/derivatives.jl#L117-L131">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.finite_difference_derivative!(
+    df::AbstractArray{&lt;:Number},
+    f,
+    x::AbstractArray{&lt;:Number},
+    cache::DerivativeCache{T1,T2,fdtype,returntype};
+    [epsilon_factor])</code></pre><p>Compute the derivative <code>df</code> of a scalar-valued map <code>f</code> at a collection of points <code>x</code>.</p><p>Cached.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/derivatives.jl#L147-L158">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.DerivativeCache" href="#FiniteDiff.DerivativeCache"><code>FiniteDiff.DerivativeCache</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.DerivativeCache(
+    x          :: AbstractArray{&lt;:Number},
+    fx         :: Union{Nothing,AbstractArray{&lt;:Number}} = nothing,
+    epsilon    :: Union{Nothing,AbstractArray{&lt;:Real}} = nothing,
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x))</code></pre><p>This allocates either <code>fx</code> or <code>epsilon</code> if these are nothing and they are needed. <code>fx</code> is the current call of <code>f(x)</code> and is required for forward-differencing (otherwise is not necessary).</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/derivatives.jl#L42-L53">source</a></section></article><h2 id="Gradients"><a class="docs-heading-anchor" href="#Gradients">Gradients</a><a id="Gradients-1"></a><a class="docs-heading-anchor-permalink" href="#Gradients" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_gradient" href="#FiniteDiff.finite_difference_gradient"><code>FiniteDiff.finite_difference_gradient</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.finite_difference_gradient(
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(x),
+    inplace::Type{Val{T3}}=Val{true};
+    [epsilon_factor])</code></pre><p>Gradients are either a vector-&gt;scalar map <code>f(x)</code>, or a scalar-&gt;vector map <code>f(fx,x)</code> if <code>inplace=Val{true}</code> and <code>fx=f(x)</code> if <code>inplace=Val{false}</code>.</p><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/gradients.jl#L116-L128">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.finite_difference_gradient!(
+    df::AbstractArray{&lt;:Number},
+    f,
+    x::AbstractArray{&lt;:Number},
+    cache::GradientCache;
+    [epsilon_factor])</code></pre><p>Gradients are either a vector-&gt;scalar map <code>f(x)</code>, or a scalar-&gt;vector map <code>f(fx,x)</code> if <code>inplace=Val{true}</code> and <code>fx=f(x)</code> if <code>inplace=Val{false}</code>.</p><p>Cached.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/gradients.jl#L197-L208">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_gradient!" href="#FiniteDiff.finite_difference_gradient!"><code>FiniteDiff.finite_difference_gradient!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.finite_difference_gradient!(
+    df,
+    f,
+    x,
+    fdtype::Type{T1}=Val{:central},
+    returntype::Type{T2}=eltype(df),
+    inplace::Type{Val{T3}}=Val{true};
+    [epsilon_factor])</code></pre><p>Gradients are either a vector-&gt;scalar map <code>f(x)</code>, or a scalar-&gt;vector map <code>f(fx,x)</code> if <code>inplace=Val{true}</code> and <code>fx=f(x)</code> if <code>inplace=Val{false}</code>.</p><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/gradients.jl#L166-L179">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.GradientCache" href="#FiniteDiff.GradientCache"><code>FiniteDiff.GradientCache</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.GradientCache(
+    df         :: Union{&lt;:Number,AbstractArray{&lt;:Number}},
+    x          :: Union{&lt;:Number, AbstractArray{&lt;:Number}},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(df),
+    inplace    :: Type{Val{T3}} = Val{true})</code></pre><p>Allocating Cache Constructor</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/gradients.jl#L8-L17">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.GradientCache(
+    fx         :: Union{Nothing,&lt;:Number,AbstractArray{&lt;:Number}},
+    c1         :: Union{Nothing,AbstractArray{&lt;:Number}},
+    c2         :: Union{Nothing,AbstractArray{&lt;:Number}},
+    c3         :: Union{Nothing,AbstractArray{&lt;:Number}},
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(fx),
+    inplace    :: Type{Val{T3}} = Val{true})</code></pre><p>Non-Allocating Cache Constructor</p><p><strong>Arguments</strong></p><ul><li><code>fx</code>: Cached function call.</li><li><code>c1</code>, <code>c2</code>, <code>c3</code>: (Non-aliased) caches for the input vector.</li><li><code>fdtype = Val(:central)</code>: Method for cmoputing the finite difference.</li><li><code>returntype = eltype(fx)</code>: Element type for the returned function value.</li><li><code>inplace = Val(false)</code>: Whether the function is computed in-place or not.</li></ul><p><strong>Output</strong></p><p>The output is a <a href="#FiniteDiff.GradientCache"><code>GradientCache</code></a> struct.</p><pre><code class="language-julia hljs">julia&gt; x = [1.0, 3.0]
+2-element Vector{Float64}:
+ 1.0
+ 3.0
+
+julia&gt; _f = x -&gt; x[1] + x[2]
+#13 (generic function with 1 method)
+
+julia&gt; fx = _f(x)
+4.0
+
+julia&gt; gradcache = GradientCache(copy(x), copy(x), copy(x), fx)
+GradientCache{Float64, Vector{Float64}, Vector{Float64}, Vector{Float64}, Val{:central}(), Float64, Val{false}()}(4.0, [1.0, 3.0], [1.0, 3.0], [1.0, 3.0])</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/gradients.jl#L67-L104">source</a></section></article><p>Gradients are either a vector-&gt;scalar map <code>f(x)</code>, or a scalar-&gt;vector map <code>f(fx,x)</code> if <code>inplace=Val{true}</code> and <code>fx=f(x)</code> if <code>inplace=Val{false}</code>.</p><p>Note that here <code>fx</code> is a cached function call of <code>f</code>. If you provide <code>fx</code>, then <code>fx</code> will be used in the forward differencing method to skip a function call. It is on you to make sure that you update <code>cache.fx</code> every time before calling <code>FiniteDiff.finite_difference_gradient!</code>. If <code>fx</code> is an immutable, e.g. a scalar or  a <code>StaticArray</code>, <code>cache.fx</code> should be updated using <code>@set</code> from <a href="https://github.com/jw3126/Setfield.jl">Setfield.jl</a>. A good use of this is if you have a cache array for the output of <code>fx</code> already being used, you can make it alias into the differencing algorithm here.</p><h2 id="Jacobians"><a class="docs-heading-anchor" href="#Jacobians">Jacobians</a><a id="Jacobians-1"></a><a class="docs-heading-anchor-permalink" href="#Jacobians" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_jacobian" href="#FiniteDiff.finite_difference_jacobian"><code>FiniteDiff.finite_difference_jacobian</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.finite_difference_jacobian(
+    f,
+    x          :: AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:central},
+    returntype :: Type{T2}=eltype(x),
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = 1:length(x),
+    sparsity = nothing,
+    jac_prototype = nothing)</code></pre><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/jacobians.jl#L145-L158">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.finite_difference_jacobian(
+    f,
+    x,
+    cache::JacobianCache;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = cache.colorvec,
+    sparsity = cache.sparsity,
+    jac_prototype = nothing)</code></pre><p>Cached.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/jacobians.jl#L181-L193">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_jacobian!" href="#FiniteDiff.finite_difference_jacobian!"><code>FiniteDiff.finite_difference_jacobian!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">finite_difference_jacobian!(
+    J::AbstractMatrix,
+    f,
+    x::AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:forward},
+    returntype :: Type{T2}=eltype(x),
+    f_in       :: Union{T2,Nothing}=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = 1:length(x),
+    sparsity = ArrayInterfaceCore.has_sparsestruct(J) ? J : nothing)</code></pre><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/jacobians.jl#L335-L349">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.finite_difference_jacobian!(
+    J::AbstractMatrix{&lt;:Number},
+    f,
+    x::AbstractArray{&lt;:Number},
+    cache::JacobianCache;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    colorvec = cache.colorvec,
+    sparsity = cache.sparsity)</code></pre><p>Cached.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/jacobians.jl#L393-L405">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.JacobianCache" href="#FiniteDiff.JacobianCache"><code>FiniteDiff.JacobianCache</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">FiniteDiff.JacobianCache(
+    x,
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(x),
+    colorvec = 1:length(x)
+    sparsity = nothing)</code></pre><p>Allocating Cache Constructor.</p><p>This assumes the Jacobian is square.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/jacobians.jl#L37-L48">source</a></section><section><div><pre><code class="nohighlight hljs">FiniteDiff.JacobianCache(
+    x1 ,
+    fx ,
+    fx1,
+    fdtype     :: Type{T1} = Val{:central},
+    returntype :: Type{T2} = eltype(fx),
+    colorvec = 1:length(x1),
+    sparsity = nothing)</code></pre><p>Non-Allocating Cache Constructor.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/jacobians.jl#L81-L92">source</a></section></article><p>Jacobians are for functions <code>f!(fx,x)</code> when using in-place <code>finite_difference_jacobian!</code>, and <code>fx = f(x)</code> when using out-of-place <code>finite_difference_jacobian</code>. The out-of-place jacobian will return a similar type as <code>jac_prototype</code> if it is not a <code>nothing</code>. For non-square Jacobians, a cache which specifies the vector <code>fx</code> is required.</p><p>For sparse differentiation, pass a <code>colorvec</code> of matrix colors. <code>sparsity</code> should be a sparse or structured matrix (<code>Tridiagonal</code>, <code>Banded</code>, etc. according to the ArrayInterfaceCore.jl specs) to allow for decompression, otherwise the result will be the colorvec compressed Jacobian.</p><h2 id="Hessians"><a class="docs-heading-anchor" href="#Hessians">Hessians</a><a id="Hessians-1"></a><a class="docs-heading-anchor-permalink" href="#Hessians" title="Permalink"></a></h2><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_hessian" href="#FiniteDiff.finite_difference_hessian"><code>FiniteDiff.finite_difference_hessian</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">finite_difference_hessian(
+    f,
+    x::AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:hcentral},
+    inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep)</code></pre><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/hessians.jl#L53-L63">source</a></section><section><div><pre><code class="nohighlight hljs">finite_difference_hessian(
+    f,
+    x,
+    cache::HessianCache{T,fdtype,inplace};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep)</code></pre><p>Cached.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/hessians.jl#L74-L83">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.finite_difference_hessian!" href="#FiniteDiff.finite_difference_hessian!"><code>FiniteDiff.finite_difference_hessian!</code></a> — <span class="docstring-category">Function</span></header><section><div><pre><code class="language-julia hljs">finite_difference_hessian!(
+    H::AbstractMatrix,
+    f,
+    x::AbstractArray{&lt;:Number},
+    fdtype     :: Type{T1}=Val{:hcentral},
+    inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep)</code></pre><p>Cache-less.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/hessians.jl#L94-L105">source</a></section><section><div><pre><code class="nohighlight hljs">finite_difference_hessian!(
+    H,
+    f,
+    x,
+    cache::HessianCache{T,fdtype,inplace};
+    relstep = default_relstep(fdtype, eltype(x)),
+    absstep = relstep)</code></pre><p>Cached.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/hessians.jl#L117-L127">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="FiniteDiff.HessianCache" href="#FiniteDiff.HessianCache"><code>FiniteDiff.HessianCache</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">HessianCache(
+    xpp,
+    xpm,
+    xmp,
+    xmm,
+    fdtype::Type{T1}=Val{:hcentral},
+    inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><p>Non-allocating cache constructor.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/hessians.jl#L18-L28">source</a></section><section><div><pre><code class="nohighlight hljs">HessianCache(
+    x,
+    fdtype::Type{T1}=Val{:hcentral},
+    inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})</code></pre><p>Allocating cache constructor.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaDiff/FiniteDiff.jl/blob/6b5512f818d057bdab438c76697beb354c8288b9/src/hessians.jl#L37-L44">source</a></section></article><p>Hessians are for functions <code>f(x)</code> which return a scalar.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../tutorials/">« Tutorials</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Monday 18 November 2024 21:48">Monday 18 November 2024</span>. Using Julia version 1.11.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
