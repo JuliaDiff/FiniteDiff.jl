@@ -238,7 +238,7 @@ function finite_difference_gradient!(
     # c1 denotes x1, c2 is epsilon
     fx, c1, c2, c3 = cache.fx, cache.c1, cache.c2, cache.c3
     if fdtype != Val(:complex) && ArrayInterface.fast_scalar_indexing(c2)
-        @. c2 = compute_epsilon(fdtype, x, relstep, absstep, dir)
+        @. c2 = compute_epsilon(fdtype, one(eltype(x)), relstep, absstep, dir)
         copyto!(c1, x)
     end
     copyto!(c3, x)
