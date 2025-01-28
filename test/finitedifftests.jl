@@ -382,20 +382,34 @@ df = zero(x)
 df_ref = diag(J_ref)
 epsilon = zero(x)
 forward_cache = FiniteDiff.JacobianCache(x, Val{:forward}, eltype(x))
+forward_jvp_cache = FiniteDiff.JVPCache(x, Val{:forward})
 @test forward_cache.colorvec == 1:length(x)
 central_cache = FiniteDiff.JacobianCache(x, Val{:central}, eltype(x))
+central_jvp_cache = FiniteDiff.JVPCache(x, Val{:central})
 complex_cache = FiniteDiff.JacobianCache(x, Val{:complex}, eltype(x))
 f_in = copy(y)
+vdir = rand(2)
+jvp_ref = J_ref*vdir
 
 @time @testset "Out-of-Place Jacobian StridedArray real-valued tests" begin
-    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache), J_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_jacobian(oopff, x, forward_cache, dir=-1), J_ref) < 1e-4
-    @test_throws Any err_func(FiniteDiff.finite_difference_jacobian(oopff, x, forward_cache), J_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache, f_in), J_ref) < 1e-4
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache), J_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopff, x, forward_cache, dir=-1), J_ref) < 1e-6
+    @test_throws Any err_func(FiniteDiff.finite_difference_jacobian(oopff, x, forward_cache), J_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, forward_cache, f_in), J_ref) < 1e-6
     @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, central_cache), J_ref) < 1e-8
     @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, Val{:central}), J_ref) < 1e-8
     @test err_func(FiniteDiff.finite_difference_jacobian(oopf, x, complex_cache), J_ref) < 1e-14
+end
+
+@time @testset "Out-of-Place JVP StridedArray real-valued tests" begin
+    @test err_func(FiniteDiff.finite_difference_jvp(oopf, x, vdir, forward_jvp_cache), jvp_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jvp(oopff, x, vdir, forward_jvp_cache, dir=-1), jvp_ref) < 1e-6
+    @test_throws Any err_func(FiniteDiff.finite_difference_jvp(oopff, x, vdir, forward_jvp_cache), jvp_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jvp(oopf, x, vdir, forward_jvp_cache, relstep=sqrt(eps())), jvp_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jvp(oopf, x, vdir, forward_jvp_cache, f_in), jvp_ref) < 1e-6
+    @test err_func(FiniteDiff.finite_difference_jvp(oopf, x, vdir, central_jvp_cache), jvp_ref) < 1e-8
+    @test err_func(FiniteDiff.finite_difference_jvp(oopf, x, vdir, Val{:central}), jvp_ref) < 1e-8
 end
 
 function test_iipJac(J_ref, args...; kwargs...)
@@ -404,14 +418,30 @@ function test_iipJac(J_ref, args...; kwargs...)
     _J
 end
 @time @testset "inPlace Jacobian StridedArray real-valued tests" begin
-    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache), J_ref) < 1e-4
-    @test err_func(test_iipJac(J_ref, iipff, x, forward_cache, dir=-1), J_ref) < 1e-4
-    @test_throws Any err_func(test_iipJac(J_ref, iipff, x, forward_cache), J_ref) < 1e-4
-    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-4
-    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache, f_in), J_ref) < 1e-4
+    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache), J_ref) < 1e-6
+    @test err_func(test_iipJac(J_ref, iipff, x, forward_cache, dir=-1), J_ref) < 1e-6
+    @test_throws Any err_func(test_iipJac(J_ref, iipff, x, forward_cache), J_ref) < 1e-6
+    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache, relstep=sqrt(eps())), J_ref) < 1e-6
+    @test err_func(test_iipJac(J_ref, iipf, x, forward_cache, f_in), J_ref) < 1e-6
     @test err_func(test_iipJac(J_ref, iipf, x, central_cache), J_ref) < 1e-8
     @test err_func(test_iipJac(J_ref, iipf, x, Val{:central}), J_ref) < 1e-8
     @test err_func(test_iipJac(J_ref, iipf, x, complex_cache), J_ref) < 1e-14
+end
+
+function test_iipJVP(jvp_ref, args...; kwargs...)
+    _jvp = zero(jvp_ref)
+    FiniteDiff.finite_difference_jvp!(_jvp, args...; kwargs...)
+    _jvp
+end
+
+@time @testset "inPlace JVP StridedArray real-valued tests" begin
+    @test err_func(test_iipJVP(jvp_ref, iipf, x, vdir, forward_jvp_cache), jvp_ref) < 1e-6
+    @test err_func(test_iipJVP(jvp_ref, iipff, x, vdir, forward_jvp_cache, dir=-1), jvp_ref) < 1e-6
+    @test_throws Any err_func(test_iipJVP(jvp_ref, iipff, x, vdir, forward_jvp_cache), jvp_ref) < 1e-6
+    @test err_func(test_iipJVP(jvp_ref, iipf, x, vdir, forward_jvp_cache, relstep=sqrt(eps())), jvp_ref) < 1e-6
+    @test err_func(test_iipJVP(jvp_ref, iipf, x, vdir, forward_jvp_cache, f_in), jvp_ref) < 1e-6
+    @test err_func(test_iipJVP(jvp_ref, iipf, x, vdir, central_jvp_cache), jvp_ref) < 1e-8
+    @test err_func(test_iipJVP(jvp_ref, iipf, x, vdir, Val{:central}), jvp_ref) < 1e-8
 end
 
 function iipf(fvec, x)
