@@ -86,7 +86,7 @@ function finite_difference_jvp(
     end
     (; x1, fx1) = cache
 
-    tmp = sqrt(dot(_vec(x), _vec(v)))
+    tmp = sqrt(abs(dot(_vec(x), _vec(v))))
     epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
     if fdtype == Val(:forward)
         fx = f_in isa Nothing ? f(x) : f_in
@@ -167,7 +167,7 @@ function finite_difference_jvp!(
     end
 
     (;x1, fx1) = cache
-    tmp = sqrt(dot(_vec(x), _vec(v)))
+    tmp = sqrt(abs(dot(_vec(x), _vec(v))))
     epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
     if fdtype == Val(:forward)
         if f_in isa Nothing
