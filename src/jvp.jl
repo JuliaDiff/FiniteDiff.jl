@@ -97,7 +97,7 @@ function finite_difference_jvp(
         fx1 = f(x1)
         x1 = @. x - epsilon * v
         fx = f(x1)
-        fx1 = @. (fx1-fx)/2epsilon
+        fx1 = @. (fx1-fx)/(2epsilon)
     else
         fdtype_error(eltype(x))
     end
