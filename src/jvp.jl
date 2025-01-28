@@ -177,7 +177,7 @@ function finite_difference_jvp!(
         end
         @. x1 = x + epsilon * v
         f(jvp, x1)
-        @. jvp = (jvp-fx)/epsilon
+        @. jvp = (jvp-fx1)/epsilon
     elseif fdtype == Val(:central)
         @. x1 = x - epsilon * v
         f(fx1, x1)
