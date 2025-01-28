@@ -84,21 +84,20 @@ function finite_difference_jvp(
     if fdtype == Val(:complex)
         ArgumentError("finite_difference_jvp doesn't support :complex-mode finite diff")
     end
-    (; x1, fx1) = cache
 
     tmp = sqrt(abs(dot(_vec(x), _vec(v))))
     epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
     if fdtype == Val(:forward)
         fx = f_in isa Nothing ? f(x) : f_in
-        @. x1 =  x + epsilon * v
+        x1 =  @. x + epsilon * v
         fx1 = f(x1)
-        @. fx1 = (fx1-fx)/epsilon
+        fx1 = @. (fx1-fx)/epsilon
     elseif fdtype == Val(:central)
-        @. x1 = x + epsilon * v
+        x1 = @. x + epsilon * v
         fx1 = f(x1)
-        @. x1 = x - epsilon * v
+        x1 = @. x - epsilon * v
         fx = f(x1)
-        @. fx1 = (fx1-fx)/(2epsilon)
+        fx1 = @. (fx1-fx)/epsilon
     else
         fdtype_error(eltype(x))
     end
