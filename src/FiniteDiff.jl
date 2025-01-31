@@ -40,5 +40,6 @@ include("derivatives.jl")
 include("gradients.jl")
 include("jacobians.jl")
 include("hessians.jl")
+include("jvp.jl")
 
 end # module
