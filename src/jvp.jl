@@ -30,7 +30,7 @@ function JVPCache(
     fx,
     fdtype::Union{Val{FD},Type{FD}} = Val(:forward)) where {FD}
     fdtype isa Type && (fdtype = fdtype())
-    JVPCache{typeof(x), typeof(fx), fdtype}(copy(x),fx)
+    JVPCache{typeof(x), typeof(fx), fdtype}(x,fx)
 end
 
 """
