@@ -120,7 +120,9 @@ end
         fdtype::Type{T1}=Val{:central},
         returntype::Type{T2}=eltype(x),
         inplace::Type{Val{T3}}=Val{true};
-        [epsilon_factor])
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep,
+        dir=true)
 
 Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
 
@@ -171,7 +173,8 @@ end
         fdtype::Type{T1}=Val{:central},
         returntype::Type{T2}=eltype(df),
         inplace::Type{Val{T3}}=Val{true};
-        [epsilon_factor])
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep)
 
 Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
 
@@ -200,7 +203,9 @@ end
         f,
         x::AbstractArray{<:Number},
         cache::GradientCache;
-        [epsilon_factor])
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep
+        dir=true)
 
 Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
 

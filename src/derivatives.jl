@@ -150,7 +150,9 @@ end
         f,
         x::AbstractArray{<:Number},
         cache::DerivativeCache{T1,T2,fdtype,returntype};
-        [epsilon_factor])
+        relstep=default_relstep(fdtype, eltype(x)),
+        absstep=relstep,
+        dir=true)
     
 Compute the derivative `df` of a scalar-valued map `f` at a collection of points `x`.
 

@@ -152,7 +152,8 @@ end
         absstep=relstep,
         colorvec = 1:length(x),
         sparsity = nothing,
-        jac_prototype = nothing)
+        jac_prototype = nothing,
+        dir=true)
 
 Cache-less.
 """
@@ -187,7 +188,8 @@ void_setindex!(args...) = (setindex!(args...); return)
         absstep=relstep,
         colorvec = cache.colorvec,
         sparsity = cache.sparsity,
-        jac_prototype = nothing)
+        jac_prototype = nothing,
+        dir=true)
 
 Cached.
 """
@@ -399,7 +401,8 @@ end
         relstep=default_relstep(fdtype, eltype(x)),
         absstep=relstep,
         colorvec = cache.colorvec,
-        sparsity = cache.sparsity)
+        sparsity = cache.sparsity,
+        dir=true)
 
 Cached.
 """
