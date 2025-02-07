@@ -120,7 +120,8 @@ end
         fdtype::Type{T1}=Val{:central},
         returntype::Type{T2}=eltype(x),
         inplace::Type{Val{T3}}=Val{true};
-        [epsilon_factor])
+        [epsilon_factor],
+        dir=true)
 
 Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
 
@@ -200,6 +201,7 @@ end
         f,
         x::AbstractArray{<:Number},
         cache::GradientCache;
+        dir=true
         [epsilon_factor])
 
 Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.

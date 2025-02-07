@@ -146,7 +146,8 @@ end
         v::AbstractArray{<:Number},
         cache::JVPCache;
         relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,)
+        absstep=relstep,
+        dir=true)
 
 Cached.
 """
