@@ -162,7 +162,12 @@ function finite_difference_gradient(
         end
     end
     cache = GradientCache(df, x, fdtype, returntype, inplace)
-    finite_difference_gradient!(df, f, x, cache, relstep=relstep, absstep=absstep, dir=dir)
+    if typeof(x) <: AbstractArray && fdtype == Val(:central)
+        df = finite_difference_gradient(f, x, cache, relstep=relstep, absstep=absstep, dir=dir)
+    else
+        df = finite_difference_gradient!(df,f, x, cache, relstep=relstep, absstep=absstep, dir=dir)
+    end
+    return df
 end
 
 """
@@ -230,6 +235,29 @@ end
 
 # vector of derivatives of a vector->scalar map by each component of a vector x
 # this ignores the value of "inplace", because it doesn't make much sense
+function finite_difference_gradient(
+    f,
+    x::AbstractVector{<:Number},
+    cache::GradientCache{T1,T2,T3,T4,fdtype,returntype,inplace};
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    dir=true) where {T1,T2,T3,T4,fdtype,returntype,inplace}
+
+    df = deepcopy(x) # how to get correct output type here cache.returntype
+
+    if fdtype == Val(:central)
+        @inbounds for i ∈ eachindex(x)
+            epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
+            c1 = f(setindex(x,x[i]+epsilon ,i))
+            c2 = f(setindex(x,x[i]-epsilon ,i))
+            dfi = (c1-c2)/(2epsilon)
+            df = setindex(df,dfi,i)
+        end
+    else
+        fdtype_error(returntype)
+    end
+    df
+end
 function finite_difference_gradient!(
     df,
     f,
