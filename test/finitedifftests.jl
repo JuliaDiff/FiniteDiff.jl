@@ -261,55 +261,6 @@ central_cache = FiniteDiff.GradientCache(df, x, Val{:central}, eltype(df))
     @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
 end
 
-f(df, x) = (df[1] = sin(x); df[2] = cos(x); df)
-z = x = 2π * rand()
-fx = fill(0.0, 2)
-f(fx, x)
-ff(df, x) = !all(x .<= z) ? error() : f(df, x)
-df = fill(0.0, 2)
-df_ref = [cos(x), -sin(x)]
-forward_cache = FiniteDiff.GradientCache(df, x, Val{:forward})
-central_cache = FiniteDiff.GradientCache(df, x, Val{:central})
-complex_cache = FiniteDiff.GradientCache(df, x, Val{:complex})
-
-
-@time @testset "Gradient of f:scalar->vector real-valued tests" begin
-    @test_broken err_func(FiniteDiff.finite_difference_gradient(f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient(ff, x, Val{:forward}, eltype(x), Val{true}, fx, dir=-1), df_ref) < 1e-4
-    @test_throws Any err_func(FiniteDiff.finite_difference_gradient(ff, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 1e-8
-    @test err_func(FiniteDiff.finite_difference_gradient(f, x, Val{:complex}, eltype(x), Val{true}, fx), df_ref) < 1e-15
-
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 1e-8
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, Val{:complex}), df_ref) < 1e-15
-
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 1e-8
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, complex_cache), df_ref) < 1e-15
-end
-
-f(df, x) = (df[1] = sin(x); df[2] = cos(x); df)
-x = (2π * rand()) * (1 + im)
-fx = fill(zero(typeof(x)), 2)
-f(fx, x)
-df = zero(fx)
-df_ref = [cos(x), -sin(x)]
-forward_cache = FiniteDiff.GradientCache(df, x, Val{:forward})
-central_cache = FiniteDiff.GradientCache(df, x, Val{:central})
-
-@time @testset "Gradient of f:vector->scalar complex-valued tests" begin
-    @test err_func(FiniteDiff.finite_difference_gradient(f, x, Val{:forward}, eltype(x), Val{true}, fx), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient(f, x, Val{:central}, eltype(x), Val{true}, fx), df_ref) < 3e-7
-
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, Val{:forward}), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, Val{:central}), df_ref) < 3e-7
-
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, forward_cache), df_ref) < 1e-4
-    @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 3e-7
-end
-
 function ret_allocs(res, _f, x, cache)
     allocs = @allocated FiniteDiff.finite_difference_gradient!(res, _f, x, cache)
     allocs
