@@ -1,69 +1,51 @@
-# API
+# API Reference
 
 ```@docs
 FiniteDiff
 ```
 
-## Derivatives
+FiniteDiff.jl provides fast, non-allocating finite difference calculations with support for sparsity patterns and various array types. The API is organized into several categories:
 
-```@docs
-FiniteDiff.finite_difference_derivative
-FiniteDiff.finite_difference_derivative!
-FiniteDiff.DerivativeCache
-```
+## Function Categories
 
-## Gradients
+### [Derivatives](@ref derivatives)
+Single and multi-point derivatives of scalar functions.
 
-```@docs
-FiniteDiff.finite_difference_gradient
-FiniteDiff.finite_difference_gradient!
-FiniteDiff.GradientCache
-```
+### [Gradients](@ref gradients)  
+Gradients of scalar-valued functions with respect to vector inputs.
 
-Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
+### [Jacobians](@ref jacobians)
+Jacobian matrices of vector-valued functions, including sparse Jacobian support.
 
-Note that here `fx` is a cached function call of `f`. If you provide `fx`, then
-`fx` will be used in the forward differencing method to skip a function call.
-It is on you to make sure that you update `cache.fx` every time before
-calling `FiniteDiff.finite_difference_gradient!`. If `fx` is an immutable, e.g. a scalar or 
-a `StaticArray`, `cache.fx` should be updated using `@set` from [Setfield.jl](https://github.com/jw3126/Setfield.jl).
-A good use of this is if you have a cache array for the output of `fx` already being used, you can make it alias
-into the differencing algorithm here.
+### [Hessians](@ref hessians)
+Hessian matrices of scalar-valued functions.
 
-## Jacobians
+### [Jacobian-Vector Products](@ref jvp)
+Efficient computation of directional derivatives without forming full Jacobians.
 
-```@docs
-FiniteDiff.finite_difference_jacobian
-FiniteDiff.finite_difference_jacobian!
-FiniteDiff.JacobianCache
-```
+### [Utilities](@ref utilities)
+Internal utilities and helper functions.
 
-Jacobians are for functions `f!(fx,x)` when using in-place `finite_difference_jacobian!`,
-and `fx = f(x)` when using out-of-place `finite_difference_jacobian`. The out-of-place
-jacobian will return a similar type as `jac_prototype` if it is not a `nothing`. For non-square
-Jacobians, a cache which specifies the vector `fx` is required.
+## Quick Start
 
-For sparse differentiation, pass a `colorvec` of matrix colors. `sparsity` should be a sparse
-or structured matrix (`Tridiagonal`, `Banded`, etc. according to the ArrayInterfaceCore.jl specs)
-to allow for decompression, otherwise the result will be the colorvec compressed Jacobian.
+All functions follow a consistent API pattern:
 
-## Hessians
+- **Cache-less versions**: `finite_difference_*` - convenient but allocate temporary arrays
+- **In-place versions**: `finite_difference_*!` - efficient, non-allocating when used with caches  
+- **Cache constructors**: `*Cache` - pre-allocate work arrays for repeated computations
 
-```@docs
-FiniteDiff.finite_difference_hessian
-FiniteDiff.finite_difference_hessian!
-FiniteDiff.HessianCache
-```
+## Method Selection
 
-Hessians are for functions `f(x)` which return a scalar.
+Choose your finite difference method based on accuracy and performance needs:
 
-## Jacobian-Vector Products (JVP)
+- **Forward differences**: Fast, `O(h)` accuracy, requires `O(n)` function evaluations
+- **Central differences**: More accurate `O(h²)`, requires `O(2n)` function evaluations
+- **Complex step**: Machine precision accuracy, `O(n)` evaluations, requires complex-analytic functions
 
-```@docs
-FiniteDiff.finite_difference_jvp
-FiniteDiff.finite_difference_jvp!
-FiniteDiff.JVPCache
-```
+## Performance Tips
 
-JVP functions compute the Jacobian-vector product `J(x) * v` efficiently without computing the full Jacobian matrix. This is particularly useful when you only need directional derivatives.
+1. **Use caches** for repeated computations to avoid allocations
+2. **Consider sparsity** for large Jacobians with known sparsity patterns
+3. **Choose appropriate methods** based on your accuracy requirements
+4. **Leverage JVPs** when you only need directional derivatives
 
