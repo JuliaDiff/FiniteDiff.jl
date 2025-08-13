@@ -8,5 +8,6 @@ pages = [
     "Jacobians" => "jacobians.md",
     "Hessians" => "hessians.md",
     "Jacobian-Vector Products" => "jvp.md",
-    "Utilities" => "utilities.md"
+    "Step Size Selection" => "epsilons.md",
+    "Internal Utilities" => "utilities.md"
 ]
