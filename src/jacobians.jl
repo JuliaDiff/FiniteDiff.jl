@@ -125,6 +125,27 @@ function JacobianCache(
     JacobianCache{typeof(_x1),typeof(_x2),typeof(_fx),typeof(fx1),typeof(colorvec),typeof(sparsity),fdtype,returntype}(_x1,_x2,_fx,fx1,colorvec,sparsity)
 end
 
+"""
+    _make_Ji(::AbstractArray, rows_index, cols_index, dx, colorvec, color_i, nrows, ncols)
+
+Internal function to construct the Jacobian contribution matrix for sparse Jacobian computation.
+
+Creates a matrix `Ji` that represents the contribution of the `color_i` color group 
+to the Jacobian. This is used in graph-coloring based sparse Jacobian computation.
+
+# Arguments
+- `::AbstractArray`: Array type dispatch
+- `rows_index`: Row indices of non-zero elements
+- `cols_index`: Column indices of non-zero elements  
+- `dx`: Computed finite difference values
+- `colorvec`: Vector assigning colors to columns
+- `color_i`: Current color being processed
+- `nrows`: Number of rows in the Jacobian
+- `ncols`: Number of columns in the Jacobian
+
+# Returns
+- `Ji`: Matrix containing the Jacobian entries for the current color
+"""
 function _make_Ji(::AbstractArray, rows_index,cols_index,dx,colorvec,color_i,nrows,ncols)
     pick_inds = [i for i in 1:length(rows_index) if colorvec[cols_index[i]] == color_i]
     rows_index_c = rows_index[pick_inds]
@@ -137,6 +158,26 @@ function _make_Ji(::AbstractArray, rows_index,cols_index,dx,colorvec,color_i,nro
     Ji
 end
 
+"""
+    _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
+
+Internal function to construct the Jacobian contribution matrix for dense Jacobian computation.
+
+Creates a matrix `Ji` by placing the finite difference vector `dx` in the column 
+corresponding to `color_i`, with zeros elsewhere. This is used for dense Jacobian
+computation without sparsity structure.
+
+# Arguments
+- `::AbstractArray`: Array type dispatch
+- `xtype`: Type of the input vector (for type stability)
+- `dx`: Computed finite difference values
+- `color_i`: Current color/column being processed
+- `nrows`: Number of rows in the Jacobian
+- `ncols`: Number of columns in the Jacobian
+
+# Returns
+- `Ji`: Matrix containing the Jacobian entries for the current column
+"""
 function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
     Ji = mapreduce(i -> i==color_i ? dx : zero(dx), hcat, 1:ncols)
     size(Ji) != (nrows, ncols) ? reshape(Ji, (nrows, ncols)) : Ji #branch when size(dx) == (1,) => size(Ji) == (1,) while size(J) == (1,1)

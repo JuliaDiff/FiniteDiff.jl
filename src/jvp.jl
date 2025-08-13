@@ -1,3 +1,16 @@
+"""
+    JVPCache{X1, FX1, FDType}
+
+Cache structure for Jacobian-vector product (JVP) computations.
+
+Stores temporary arrays needed for efficient JVP computation without repeated allocations.
+The JVP computes `J(x) * v` where `J(x)` is the Jacobian of function `f` at point `x` 
+and `v` is a vector.
+
+# Fields
+- `x1::X1`: Temporary array for perturbed input values
+- `fx1::FX1`: Temporary array for function evaluations
+"""
 mutable struct JVPCache{X1, FX1, FDType}
     x1  :: X1
     fx1 :: FX1
@@ -6,9 +19,25 @@ end
 """
     FiniteDiff.JVPCache(
         x,
-        fdtype     :: Type{T1} = Val{:forward})
+        fdtype::Type{T1} = Val{:forward})
 
-Allocating Cache Constructor.
+Allocating cache constructor for Jacobian-vector product computations.
+
+Creates a `JVPCache` by allocating temporary arrays with the same structure as `x`.
+This constructor is convenient but allocates memory for the cache arrays.
+
+# Arguments
+- `x`: Input vector whose structure determines the cache array sizes
+- `fdtype::Type{T1} = Val{:forward}`: Finite difference method type
+
+# Returns
+- `JVPCache` with allocated temporary arrays for JVP computation
+
+# Examples
+```julia
+x = [1.0, 2.0, 3.0]
+cache = JVPCache(x, Val(:forward))
+```
 """
 function JVPCache(
     x,
@@ -21,9 +50,31 @@ end
     FiniteDiff.JVPCache(
         x,
         fx1,
-        fdtype     :: Type{T1} = Val{:forward},
+        fdtype::Type{T1} = Val{:forward})
 
-Non-Allocating Cache Constructor.
+Non-allocating cache constructor for Jacobian-vector product computations.
+
+Creates a `JVPCache` using pre-allocated arrays `x` and `fx1`. This constructor
+is memory-efficient as it reuses existing arrays without additional allocation.
+
+# Arguments
+- `x`: Pre-allocated array for perturbed input values
+- `fx1`: Pre-allocated array for function evaluations
+- `fdtype::Type{T1} = Val{:forward}`: Finite difference method type
+
+# Returns
+- `JVPCache` using the provided arrays as cache storage
+
+# Examples
+```julia
+x = [1.0, 2.0, 3.0]
+fx1 = similar(x)
+cache = JVPCache(x, fx1, Val(:forward))
+```
+
+# Notes
+The arrays `x` and `fx1` will be modified during JVP computations. Ensure they
+are not used elsewhere if their values need to be preserved.
 """
 function JVPCache(
     x,

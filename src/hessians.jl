@@ -5,11 +5,52 @@ struct HessianCache{T,fdtype,inplace}
     xmm::T
 end
 
-#used to dispatch on StaticArrays
+"""
+    _hessian_inplace(::Type{T}) where T
+    _hessian_inplace(x)
+
+Internal function to determine if Hessian computation should be performed in-place.
+
+Returns `Val(true)` if the array type is mutable and supports in-place operations,
+`Val(false)` otherwise. Used to dispatch on StaticArrays vs mutable arrays.
+
+# Arguments
+- `::Type{T}` or `x`: Array type or array instance
+
+# Returns
+- `Val(true)` if the array type supports in-place mutation
+- `Val(false)` if the array type is immutable (e.g., StaticArray)
+"""
 _hessian_inplace(::Type{T}) where T = Val(ArrayInterface.ismutable(T))
 _hessian_inplace(x) = _hessian_inplace(typeof(x))
+
+"""
+    __Symmetric(x)
+
+Internal utility function that wraps a matrix in a `Symmetric` view.
+
+# Arguments
+- `x`: Matrix to be wrapped
+
+# Returns
+- `Symmetric(x)`: Symmetric view of the matrix
+"""
 __Symmetric(x) = Symmetric(x)
 
+"""
+    mutable_zeromatrix(x)
+
+Internal utility function to create a mutable zero matrix with the same structure as `x`.
+
+Creates a zero matrix compatible with `x` and ensures it's mutable for in-place operations.
+If the created matrix is immutable, it converts it to a mutable copy.
+
+# Arguments
+- `x`: Array whose structure should be matched
+
+# Returns
+- Mutable zero matrix with the same dimensions and compatible type as `x`
+"""
 function mutable_zeromatrix(x)
     A = ArrayInterface.zeromatrix(x)
     ArrayInterface.ismutable(A) ? A : Base.copymutable(A)
