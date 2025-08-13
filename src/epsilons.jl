@@ -85,6 +85,10 @@ For complex step differentiation, the step size is simply the machine epsilon `e
 which provides optimal accuracy since complex step differentiation doesn't suffer from
 subtractive cancellation errors.
 
+!!! warn
+
+   `f` must be a function of a real variable which also happens to be complex analytic when the input is complex!
+
 # Arguments
 - `::Val{:complex}`: Finite difference type indicator for complex step differentiation
 - `x::T`: Point at which to compute the step size (unused, type determines epsilon)
