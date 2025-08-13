@@ -130,9 +130,9 @@ The JVP is computed using the finite difference approximation:
 where `h` is the step size and `v` is the direction vector.
 
 # Notes
-- Requires only `O(1)` or `O(2)` function evaluations (vs `O(n)` for full Jacobian)
-- Forward differences: 1 extra function evaluation, `O(h)` accuracy
-- Central differences: 2 extra function evaluations, `O(h²)` accuracy
+- Requires only `2` function evaluations (vs `O(n)` for full Jacobian)
+- Forward differences: 2 function evaluations, `O(h)` accuracy
+- Central differences: 2 function evaluations, `O(h²)` accuracy
 - Particularly efficient when `v` is sparse or when only one directional derivative is needed
 """
 function finite_difference_jvp(f, x, v,
