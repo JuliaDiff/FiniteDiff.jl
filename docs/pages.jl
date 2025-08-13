@@ -3,13 +3,10 @@
 pages = [
     "Home" => "index.md",
     "Tutorials" => "tutorials.md",
-    "API Reference" => [
-        "Overview" => "api.md",
-        "Derivatives" => "derivatives.md",
-        "Gradients" => "gradients.md", 
-        "Jacobians" => "jacobians.md",
-        "Hessians" => "hessians.md",
-        "Jacobian-Vector Products" => "jvp.md",
-        "Utilities" => "utilities.md"
-    ]
+    "Derivatives" => "derivatives.md",
+    "Gradients" => "gradients.md", 
+    "Jacobians" => "jacobians.md",
+    "Hessians" => "hessians.md",
+    "Jacobian-Vector Products" => "jvp.md",
+    "Utilities" => "utilities.md"
 ]

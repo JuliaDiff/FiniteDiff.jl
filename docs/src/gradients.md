@@ -2,19 +2,6 @@
 
 Functions for computing gradients of scalar-valued functions with respect to vector inputs.
 
-## Functions
-
-```@docs
-FiniteDiff.finite_difference_gradient
-FiniteDiff.finite_difference_gradient!
-```
-
-## Cache
-
-```@docs
-FiniteDiff.GradientCache
-```
-
 ## Function Types
 
 Gradients support two types of function mappings:
@@ -36,3 +23,16 @@ When using `GradientCache` with pre-computed function values:
 - You must update `cache.fx` before each call to `finite_difference_gradient!`
 - For immutable types (scalars, `StaticArray`), use `@set` from [Setfield.jl](https://github.com/jw3126/Setfield.jl)
 - Consider aliasing existing arrays into the cache for memory efficiency
+
+## Functions
+
+```@docs
+FiniteDiff.finite_difference_gradient
+FiniteDiff.finite_difference_gradient!
+```
+
+## Cache
+
+```@docs
+FiniteDiff.GradientCache
+```

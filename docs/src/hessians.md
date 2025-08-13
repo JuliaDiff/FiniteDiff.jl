@@ -2,19 +2,6 @@
 
 Functions for computing Hessian matrices of scalar-valued functions.
 
-## Functions
-
-```@docs
-FiniteDiff.finite_difference_hessian
-FiniteDiff.finite_difference_hessian!
-```
-
-## Cache
-
-```@docs
-FiniteDiff.HessianCache
-```
-
 ## Function Requirements
 
 Hessian functions are designed for scalar-valued functions `f(x)` where:
@@ -43,3 +30,16 @@ where `eᵢ` is the i-th unit vector and `hᵢ` is the step size in dimension i.
 ## StaticArrays Support
 
 The cache constructor automatically detects `StaticArray` types and adjusts the `inplace` parameter accordingly for optimal performance.
+
+## Functions
+
+```@docs
+FiniteDiff.finite_difference_hessian
+FiniteDiff.finite_difference_hessian!
+```
+
+## Cache
+
+```@docs
+FiniteDiff.HessianCache
+```

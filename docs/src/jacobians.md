@@ -2,19 +2,6 @@
 
 Functions for computing Jacobian matrices of vector-valued functions.
 
-## Functions
-
-```@docs
-FiniteDiff.finite_difference_jacobian
-FiniteDiff.finite_difference_jacobian!
-```
-
-## Cache
-
-```@docs
-FiniteDiff.JacobianCache
-```
-
 ## Function Types
 
 Jacobians support the following function signatures:
@@ -39,3 +26,16 @@ FiniteDiff.jl provides efficient sparse Jacobian computation using graph colorin
 - **Sparse Jacobians**: Use graph coloring to reduce function evaluations significantly
 
 For non-square Jacobians, specify the output vector `fx` when creating the cache to ensure proper sizing.
+
+## Functions
+
+```@docs
+FiniteDiff.finite_difference_jacobian
+FiniteDiff.finite_difference_jacobian!
+```
+
+## Cache
+
+```@docs
+FiniteDiff.JacobianCache
+```

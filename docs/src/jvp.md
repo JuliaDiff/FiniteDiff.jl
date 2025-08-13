@@ -2,19 +2,6 @@
 
 Functions for computing Jacobian-vector products efficiently without forming the full Jacobian matrix.
 
-## Functions
-
-```@docs
-FiniteDiff.finite_difference_jvp
-FiniteDiff.finite_difference_jvp!
-```
-
-## Cache
-
-```@docs
-FiniteDiff.JVPCache
-```
-
 ## Mathematical Background
 
 The JVP computes `J(x) * v` where `J(x)` is the Jacobian of function `f` at point `x` and `v` is a direction vector. This is computed using finite difference approximations:
@@ -46,3 +33,16 @@ JVP is particularly useful for:
 
 - **Complex step**: JVP does not currently support complex step differentiation (`Val(:complex)`)
 - **In-place functions**: For in-place function evaluation, ensure proper cache sizing
+
+## Functions
+
+```@docs
+FiniteDiff.finite_difference_jvp
+FiniteDiff.finite_difference_jvp!
+```
+
+## Cache
+
+```@docs
+FiniteDiff.JVPCache
+```
