@@ -23,6 +23,7 @@ open(joinpath(@__DIR__, "src", "index.md"), "w") do io
     for line in eachline(joinpath(dirname(@__DIR__), "README.md"))
         println(io, line)
     end
+    
     for line in eachline(joinpath(@__DIR__, "src", "reproducibility.md"))
         println(io, line)
     end
