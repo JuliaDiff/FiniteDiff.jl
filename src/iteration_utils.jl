@@ -22,10 +22,11 @@ This function implements the core loop of the graph-coloring sparse Jacobian
 algorithm. It assigns finite difference values to the appropriate entries
 in the Jacobian matrix for all columns sharing the same color.
 """
-@inline function _colorediteration!(J,sparsity,rows_index,cols_index,vfx,colorvec,color_i,ncols)
+@inline function _colorediteration!(
+        J, sparsity, rows_index, cols_index, vfx, colorvec, color_i, ncols)
     for i in 1:length(cols_index)
         if colorvec[cols_index[i]] == color_i
-            J[rows_index[i],cols_index[i]] = vfx[rows_index[i]]
+            J[rows_index[i], cols_index[i]] = vfx[rows_index[i]]
         end
     end
 end

@@ -12,8 +12,8 @@ and `v` is a vector.
 - `fx1::FX1`: Temporary array for function evaluations
 """
 mutable struct JVPCache{X1, FX1, FDType}
-    x1  :: X1
-    fx1 :: FX1
+    x1::X1
+    fx1::FX1
 end
 
 """
@@ -40,8 +40,8 @@ cache = JVPCache(x, Val(:forward))
 ```
 """
 function JVPCache(
-    x,
-    fdtype::Union{Val{FD},Type{FD}} = Val(:forward)) where {FD}
+        x,
+        fdtype::Union{Val{FD}, Type{FD}} = Val(:forward)) where {FD}
     fdtype isa Type && (fdtype = fdtype())
     JVPCache{typeof(x), typeof(x), fdtype}(copy(x), copy(x))
 end
@@ -77,31 +77,70 @@ The arrays `x` and `fx1` will be modified during JVP computations. Ensure they
 are not used elsewhere if their values need to be preserved.
 """
 function JVPCache(
-    x,
-    fx,
-    fdtype::Union{Val{FD},Type{FD}} = Val(:forward)) where {FD}
+        x,
+        fx,
+        fdtype::Union{Val{FD}, Type{FD}} = Val(:forward)) where {FD}
     fdtype isa Type && (fdtype = fdtype())
-    JVPCache{typeof(x), typeof(fx), fdtype}(x,fx)
+    JVPCache{typeof(x), typeof(fx), fdtype}(x, fx)
 end
 
 """
     FiniteDiff.finite_difference_jvp(
         f,
-        x          :: AbstractArray{<:Number},
-        v          :: AbstractArray{<:Number},
-        fdtype     :: Type{T1}=Val{:central},
+        x::AbstractArray{<:Number},
+        v::AbstractArray{<:Number},
+        fdtype::Type{T1}=Val{:forward},
+        f_in=nothing;
         relstep=default_relstep(fdtype, eltype(x)),
         absstep=relstep)
 
-Cache-less.
+Compute the Jacobian-vector product `J(x) * v` using finite differences.
+
+This function computes the directional derivative of `f` at `x` in direction `v`
+without explicitly forming the Jacobian matrix. This is more efficient than
+computing the full Jacobian when only `J*v` is needed.
+
+# Arguments
+- `f`: Function to differentiate (vector→vector map)
+- `x::AbstractArray{<:Number}`: Point at which to evaluate the Jacobian
+- `v::AbstractArray{<:Number}`: Direction vector for the product
+- `fdtype::Type{T1}=Val{:forward}`: Finite difference method (`:forward`, `:central`)
+- `f_in=nothing`: Pre-computed `f(x)` value (if available)
+
+# Keyword Arguments
+- `relstep`: Relative step size (default: method-dependent optimal value)
+- `absstep=relstep`: Absolute step size fallback
+
+# Returns
+- Vector `J(x) * v` representing the Jacobian-vector product
+
+# Examples
+```julia
+f(x) = [x[1]^2 + x[2], x[1] * x[2], x[2]^3]
+x = [1.0, 2.0]
+v = [1.0, 0.0]  # Direction vector
+jvp = finite_difference_jvp(f, x, v)  # Directional derivative
+```
+
+# Mathematical Background
+The JVP is computed using the finite difference approximation:
+- Forward: `J(x) * v ≈ (f(x + h*v) - f(x)) / h`
+- Central: `J(x) * v ≈ (f(x + h*v) - f(x - h*v)) / (2h)`
+
+where `h` is the step size and `v` is the direction vector.
+
+# Notes
+- Requires only `O(1)` or `O(2)` function evaluations (vs `O(n)` for full Jacobian)
+- Forward differences: 1 extra function evaluation, `O(h)` accuracy
+- Central differences: 2 extra function evaluations, `O(h²)` accuracy
+- Particularly efficient when `v` is sparse or when only one directional derivative is needed
 """
 function finite_difference_jvp(f, x, v,
-    fdtype     = Val(:forward),
-    f_in       = nothing;
-    relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep,
-    dir=true)
-
+        fdtype = Val(:forward),
+        f_in = nothing;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep,
+        dir = true)
     if f_in isa Nothing
         fx = f(x)
     else
@@ -123,15 +162,14 @@ end
 Cached.
 """
 function finite_difference_jvp(
-    f,
-    x,
-    v,
-    cache::JVPCache{X1, FX1, fdtype},
-    f_in=nothing;
-    relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep,
-    dir=true) where {X1, FX1, fdtype}
-
+        f,
+        x,
+        v,
+        cache::JVPCache{X1, FX1, fdtype},
+        f_in = nothing;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep,
+        dir = true) where {X1, FX1, fdtype}
     if fdtype == Val(:complex)
         ArgumentError("finite_difference_jvp doesn't support :complex-mode finite diff")
     end
@@ -140,7 +178,7 @@ function finite_difference_jvp(
     epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
     if fdtype == Val(:forward)
         fx = f_in isa Nothing ? f(x) : f_in
-        x1 =  @. x + epsilon * v
+        x1 = @. x + epsilon * v
         fx1 = f(x1)
         fx1 = @. (fx1-fx)/epsilon
     elseif fdtype == Val(:central)
@@ -170,18 +208,18 @@ end
 Cache-less.
 """
 function finite_difference_jvp!(jvp,
-    f,
-    x,
-    v,
-    fdtype     = Val(:forward),
-    f_in       = nothing;
-    relstep=default_relstep(fdtype, eltype(x)),
-    absstep=relstep)
+        f,
+        x,
+        v,
+        fdtype = Val(:forward),
+        f_in = nothing;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
     if !isnothing(f_in)
         cache = JVPCache(x, f_in, fdtype)
     elseif fdtype == Val(:forward)
         fx = zero(x)
-        f(fx,x)
+        f(fx, x)
         cache = JVPCache(x, fx, fdtype)
     else
         cache = JVPCache(x, fdtype)
@@ -203,21 +241,20 @@ end
 Cached.
 """
 function finite_difference_jvp!(
-    jvp,
-    f,
-    x,
-    v,
-    cache::JVPCache{X1, FX1, fdtype},
-    f_in = nothing;
-    relstep = default_relstep(fdtype, eltype(x)),
-    absstep = relstep,
-    dir = true) where {X1, FX1, fdtype}
-
+        jvp,
+        f,
+        x,
+        v,
+        cache::JVPCache{X1, FX1, fdtype},
+        f_in = nothing;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep,
+        dir = true) where {X1, FX1, fdtype}
     if fdtype == Val(:complex)
         ArgumentError("finite_difference_jvp doesn't support :complex-mode finite diff")
     end
 
-    (;x1, fx1) = cache
+    (; x1, fx1) = cache
     tmp = sqrt(abs(dot(_vec(x), _vec(v))))
     epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
     if fdtype == Val(:forward)
@@ -242,7 +279,7 @@ function finite_difference_jvp!(
 end
 
 function resize!(cache::JVPCache, i::Int)
-    resize!(cache.x1,  i)
+    resize!(cache.x1, i)
     cache.fx1 !== nothing && resize!(cache.fx1, i)
     nothing
 end

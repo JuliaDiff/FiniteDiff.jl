@@ -23,7 +23,8 @@ when `x` is large, and an absolute step when `x` is small.
 
 Reference: Numerical Recipes, chapter 5.7.
 """
-@inline function compute_epsilon(::Val{:forward}, x::T, relstep::Real, absstep::Real, dir::Real) where T<:Number
+@inline function compute_epsilon(
+        ::Val{:forward}, x::T, relstep::Real, absstep::Real, dir::Real) where {T <: Number}
     return max(relstep*abs(x), absstep)*dir
 end
 
@@ -46,7 +47,8 @@ when `x` is large, and an absolute step when `x` is small.
 # Returns
 - Step size `ϵ` for central finite difference: `(f(x + ϵ) - f(x - ϵ)) / (2ϵ)`
 """
-@inline function compute_epsilon(::Val{:central}, x::T, relstep::Real, absstep::Real, dir=nothing) where T<:Number
+@inline function compute_epsilon(::Val{:central}, x::T, relstep::Real,
+        absstep::Real, dir = nothing) where {T <: Number}
     return max(relstep*abs(x), absstep)
 end
 
@@ -69,7 +71,8 @@ when `x` is large, and an absolute step when `x` is small.
 # Returns
 - Step size `ϵ` for Hessian central finite differences
 """
-@inline function compute_epsilon(::Val{:hcentral}, x::T, relstep::Real, absstep::Real, dir=nothing) where T<:Number
+@inline function compute_epsilon(::Val{:hcentral}, x::T, relstep::Real,
+        absstep::Real, dir = nothing) where {T <: Number}
     return max(relstep*abs(x), absstep)
 end
 
@@ -94,7 +97,8 @@ subtractive cancellation errors.
 Complex step differentiation computes derivatives as `imag(f(x + iϵ)) / ϵ` where `ϵ = eps(T)`.
 This method provides machine precision accuracy without subtractive cancellation.
 """
-@inline function compute_epsilon(::Val{:complex}, x::T, ::Union{Nothing,T}=nothing, ::Union{Nothing,T}=nothing, dir=nothing) where T<:Real
+@inline function compute_epsilon(::Val{:complex}, x::T, ::Union{Nothing, T} = nothing,
+        ::Union{Nothing, T} = nothing, dir = nothing) where {T <: Real}
     return eps(T)
 end
 
@@ -122,8 +126,8 @@ These step sizes minimize the total error (truncation + round-off) for each meth
 - Central differences have O(h²) truncation error, optimal h ~ eps^(1/3)
 - Hessian methods have O(h²) truncation error but involve more operations
 """
-default_relstep(::Type{V}, T) where V = default_relstep(V(), T)
-@inline function default_relstep(::Val{fdtype}, ::Type{T}) where {fdtype,T<:Number}
+default_relstep(::Type{V}, T) where {V} = default_relstep(V(), T)
+@inline function default_relstep(::Val{fdtype}, ::Type{T}) where {fdtype, T <: Number}
     if fdtype==:forward
         return sqrt(eps(real(T)))
     elseif fdtype==:central
@@ -148,7 +152,7 @@ Throw an informative error for unsupported finite difference type combinations.
 - For `Complex` return types: suggests `Val{:forward}`, `Val{:central}` (no complex step)
 - For other types: suggests the return type should be Real or Complex subtype
 """
-function fdtype_error(::Type{T}=Float64) where T
+function fdtype_error(::Type{T} = Float64) where {T}
     if T<:Real
         error("Unrecognized fdtype: valid values are Val{:forward}, Val{:central} and Val{:complex}.")
     elseif T<:Complex
