@@ -56,3 +56,14 @@ FiniteDiff.HessianCache
 ```
 
 Hessians are for functions `f(x)` which return a scalar.
+
+## Jacobian-Vector Products (JVP)
+
+```@docs
+FiniteDiff.finite_difference_jvp
+FiniteDiff.finite_difference_jvp!
+FiniteDiff.JVPCache
+```
+
+JVP functions compute the Jacobian-vector product `J(x) * v` efficiently without computing the full Jacobian matrix. This is particularly useful when you only need directional derivatives.
+
