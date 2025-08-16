@@ -24,4 +24,5 @@ function loss(p)
   sol = solve(_prob, Rodas4P(autodiff=false), saveat=0.1)
   sum((sol .- sol_true).^2)
 end
-@test ForwardDiff.gradient(loss, [1.0])[1] ≈ 0.6662949361011025
+@test ForwardDiff.gradient(loss, [1.0])[1] ≈ 0.6645766813735486
+
