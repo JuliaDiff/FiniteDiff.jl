@@ -372,7 +372,7 @@ function finite_difference_gradient!(
     end
     copyto!(c3, x)
     if fdtype == Val(:forward)
-        fx0 = typeof(fx) != Nothing ? fx : f(x)
+        fx0 = fx === nothing ? fx : f(x)
         for i in eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
