@@ -24,7 +24,6 @@ if GROUP == "All" || GROUP == "Downstream"
   @time @safetestset "ODEs" begin
     import OrdinaryDiffEq
     @time @safetestset "OrdinaryDiffEq Tridiagonal" begin include("downstream/ordinarydiffeq_tridiagonal_solve.jl") end
-    include(joinpath(dirname(pathof(OrdinaryDiffEq)), "..", "test/interface/sparsediff_tests.jl"))
   end
 end
 

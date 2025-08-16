@@ -372,37 +372,23 @@ function finite_difference_gradient!(
     end
     copyto!(c3, x)
     if fdtype == Val(:forward)
+        fx0 = fx !== nothing ? fx : f(x)
         for i in eachindex(x)
             epsilon = compute_epsilon(fdtype, x[i], relstep, absstep, dir)
             x_old = x[i]
-            if typeof(fx) != Nothing
-                c3[i] += epsilon
-                dfi = (f(c3) - fx) / epsilon
-                c3[i] = x_old
-            else
-                fx0 = f(x)
-                c3[i] += epsilon
-                dfi = (f(c3) - fx0) / epsilon
-                c3[i] = x_old
-            end
+            c3[i] += epsilon
+            dfi = (f(c3) - fx0) / epsilon
+            c3[i] = x_old
 
             df[i] = real(dfi)
             if eltype(df) <: Complex
                 if eltype(x) <: Complex
                     c3[i] += im * epsilon
-                    if typeof(fx) != Nothing
-                        dfi = (f(c3) - fx) / (im * epsilon)
-                    else
-                        dfi = (f(c3) - fx0) / (im * epsilon)
-                    end
+                    dfi = (f(c3) - fx0) / (im * epsilon)
                     c3[i] = x_old
                 else
                     c1[i] += im * epsilon
-                    if typeof(fx) != Nothing
-                        dfi = (f(c1) - fx) / (im * epsilon)
-                    else
-                        dfi = (f(c1) - fx0) / (im * epsilon)
-                    end
+                    dfi = (f(c1) - fx0) / (im * epsilon)
                     c1[i] = x_old
                 end
                 df[i] -= im * imag(dfi)
