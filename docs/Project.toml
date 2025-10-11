@@ -4,3 +4,6 @@ FiniteDiff = "6a86dc24-6348-571c-b903-95158fe2bd41"
 
 [compat]
 Documenter = "1"
+
+[sources]
+FiniteDiff = {path = ".."}
