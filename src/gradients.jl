@@ -85,7 +85,7 @@ Non-Allocating Cache Constructor
 # Output 
 The output is a [`GradientCache`](@ref) struct.
 
-```julia
+```julia-repl
 julia> x = [1.0, 3.0]
 2-element Vector{Float64}:
  1.0
