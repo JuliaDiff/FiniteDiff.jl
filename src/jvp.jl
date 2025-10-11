@@ -17,9 +17,7 @@ mutable struct JVPCache{X1, FX1, FDType}
 end
 
 """
-    FiniteDiff.JVPCache(
-        x,
-        fdtype::Type{T1} = Val{:forward})
+    FiniteDiff.JVPCache(x, fdtype::Type{T1} = Val{:forward})
 
 Allocating cache constructor for Jacobian-vector product computations.
 
@@ -47,10 +45,7 @@ function JVPCache(
 end
 
 """
-    FiniteDiff.JVPCache(
-        x,
-        fx1,
-        fdtype::Type{T1} = Val{:forward})
+    FiniteDiff.JVPCache(x, fx1, fdtype::Type{T1} = Val{:forward})
 
 Non-allocating cache constructor for Jacobian-vector product computations.
 
@@ -87,12 +82,12 @@ end
 """
     FiniteDiff.finite_difference_jvp(
         f,
-        x::AbstractArray{<:Number},
-        v::AbstractArray{<:Number},
-        fdtype::Type{T1}=Val{:forward},
-        f_in=nothing;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep)
+        x      :: AbstractArray{<:Number},
+        v      :: AbstractArray{<:Number},
+        fdtype :: Type{T1}                = Val{:forward},
+        f_in                              = nothing;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
 
 Compute the Jacobian-vector product `J(x) * v` using finite differences.
 
@@ -156,8 +151,8 @@ end
         x,
         v,
         cache::JVPCache;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
 
 Cached.
 """
@@ -195,15 +190,15 @@ end
 
 """
     finite_difference_jvp!(
-        jvp::AbstractArray{<:Number},
+        jvp        :: AbstractArray{<:Number},
         f,
-        x::AbstractArray{<:Number},
-        v::AbstractArray{<:Number},
-        fdtype     :: Type{T1}=Val{:forward},
-        returntype :: Type{T2}=eltype(x),
-        f_in       :: Union{T2,Nothing}=nothing;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep)
+        x          :: AbstractArray{<:Number},
+        v          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1}          = Val{:forward},
+        returntype :: Type{T2}          = eltype(x),
+        f_in       :: Union{T2,Nothing} = nothing;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
 
 Cache-less.
 """
@@ -229,14 +224,14 @@ end
 
 """
     FiniteDiff.finite_difference_jvp!(
-        jvp::AbstractArray{<:Number},
+        jvp   :: AbstractArray{<:Number},
         f,
-        x::AbstractArray{<:Number},
-        v::AbstractArray{<:Number},
-        cache::JVPCache;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
-        dir=true)
+        x     :: AbstractArray{<:Number},
+        v     :: AbstractArray{<:Number},
+        cache :: JVPCache;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep,
+        dir     = true)
 
 Cached.
 """

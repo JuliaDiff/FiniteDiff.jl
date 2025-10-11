@@ -81,11 +81,11 @@ end
 
 """
     FiniteDiff.JacobianCache(
-        x1 ,
-        fx ,
+        x1,
+        fx,
         fx1,
         fdtype     :: Type{T1} = Val{:central},
-        returntype :: Type{T2} = eltype(fx),
+        returntype :: Type{T2} = eltype(fx);
         colorvec = 1:length(x1),
         sparsity = nothing)
 
@@ -189,16 +189,16 @@ end
 """
     FiniteDiff.finite_difference_jacobian(
         f,
-        x::AbstractArray{<:Number},
-        fdtype::Type{T1}=Val{:forward},
-        returntype::Type{T2}=eltype(x),
-        f_in=nothing;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
-        colorvec=1:length(x),
-        sparsity=nothing,
-        jac_prototype=nothing,
-        dir=true)
+        x          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1} = Val{:forward},
+        returntype :: Type{T2} = eltype(x),
+        f_in                   = nothing;
+        relstep       = default_relstep(fdtype, eltype(x)),
+        absstep       = relstep,
+        colorvec      = 1:length(x),
+        sparsity      = nothing,
+        jac_prototype = nothing,
+        dir           = true)
 
 Compute the Jacobian matrix of function `f` at point `x` using finite differences.
 
@@ -265,12 +265,12 @@ void_setindex!(args...) = (setindex!(args...); return)
         f,
         x,
         cache::JacobianCache;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
-        colorvec = cache.colorvec,
-        sparsity = cache.sparsity,
+        relstep       = default_relstep(fdtype, eltype(x)),
+        absstep       = relstep,
+        colorvec      = cache.colorvec,
+        sparsity      = cache.sparsity,
         jac_prototype = nothing,
-        dir=true)
+        dir           = true)
 
 Cached.
 """
@@ -421,14 +421,14 @@ end
 
 """
     finite_difference_jacobian!(
-        J::AbstractMatrix,
+        J          :: AbstractMatrix,
         f,
-        x::AbstractArray{<:Number},
-        fdtype     :: Type{T1}=Val{:forward},
-        returntype :: Type{T2}=eltype(x),
+        x          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1} = Val{:forward},
+        returntype :: Type{T2} = eltype(x),
         f_in       :: Union{T2,Nothing}=nothing;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
+        relstep  = default_relstep(fdtype, eltype(x)),
+        absstep  = relstep,
         colorvec = 1:length(x),
         sparsity = ArrayInterfaceCore.has_sparsestruct(J) ? J : nothing)
 
@@ -480,15 +480,15 @@ end
 
 """
     FiniteDiff.finite_difference_jacobian!(
-        J::AbstractMatrix{<:Number},
+        J     :: AbstractMatrix{<:Number},
         f,
-        x::AbstractArray{<:Number},
-        cache::JacobianCache;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
+        x     :: AbstractArray{<:Number},
+        cache :: JacobianCache;
+        relstep  = default_relstep(fdtype, eltype(x)),
+        absstep  = relstep,
         colorvec = cache.colorvec,
         sparsity = cache.sparsity,
-        dir=true)
+        dir      = true)
 
 Cached.
 """
