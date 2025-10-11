@@ -23,7 +23,7 @@ open(joinpath(@__DIR__, "src", "index.md"), "w") do io
     for line in eachline(joinpath(dirname(@__DIR__), "README.md"))
         println(io, line)
     end
-    
+
     for line in eachline(joinpath(@__DIR__, "src", "reproducibility.md"))
         println(io, line)
     end
@@ -38,6 +38,7 @@ makedocs(sitename="FiniteDiff.jl",
     doctest=false,
     format=Documenter.HTML(assets=["assets/favicon.ico"],
         canonical="https://docs.sciml.ai/FiniteDiff/stable/"),
+    warnonly=[:missing_docs],
     pages=pages)
 
 deploydocs(repo="github.com/JuliaDiff/FiniteDiff.jl.git"; push_preview=true)
