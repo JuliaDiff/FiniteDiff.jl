@@ -334,7 +334,7 @@ end
         res = zero(x)
         FiniteDiff.finite_difference_gradient!(res, _f, x, cache)
         @test res ≈ _∇f(x)
-        @test_broken ret_allocs(res, _f, x, cache) == 0
+        @test ret_allocs(res, _f, x, cache) == 0
 
         # Can we now change the field?
         _x = rand(2)
@@ -342,7 +342,7 @@ end
         _cache = @set _cache.fx = _f(_x)
         FiniteDiff.finite_difference_gradient!(res, _f,_x, _cache)
         @test res ≈ _∇f(_x)
-        @test_broken ret_allocs(res, _f, _x, _cache) == 0
+        @test ret_allocs(res, _f, _x, _cache) == 0
     end
 
     _g(x) = x[1]^2 + x[2]
