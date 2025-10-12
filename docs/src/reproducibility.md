@@ -35,20 +35,22 @@ You can also download the
 <a href="
 ```
 ```@eval
-using TOML
+using TOML, Markdown
 version = TOML.parse(read("../../Project.toml",String))["version"]
 name = TOML.parse(read("../../Project.toml",String))["name"]
 link = "https://github.com/SciML/"*name*".jl/tree/gh-pages/v"*version*"/assets/Manifest.toml"
+Markdown.MD(link)
 ```
 ```@raw html
 ">manifest</a> file and the
 <a href="
 ```
 ```@eval
-using TOML
+using TOML, Markdown
 version = TOML.parse(read("../../Project.toml",String))["version"]
 name = TOML.parse(read("../../Project.toml",String))["name"]
 link = "https://github.com/SciML/"*name*".jl/tree/gh-pages/v"*version*"/assets/Project.toml"
+Markdown.MD(link)
 ```
 ```@raw html
 ">project</a> file.

@@ -85,7 +85,7 @@ Non-Allocating Cache Constructor
 # Output 
 The output is a [`GradientCache`](@ref) struct.
 
-```julia
+```julia-repl
 julia> x = [1.0, 3.0]
 2-element Vector{Float64}:
  1.0
@@ -116,12 +116,12 @@ end
     FiniteDiff.finite_difference_gradient(
         f,
         x,
-        fdtype::Type{T1}=Val{:central},
-        returntype::Type{T2}=eltype(x),
-        inplace::Type{Val{T3}}=Val{true};
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep,
-        dir=true)
+        fdtype     :: Type{T1}      = Val{:central},
+        returntype :: Type{T2}      = eltype(x),
+        inplace    :: Type{Val{T3}} = Val{true};
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep,
+        dir     = true)
 
 Compute the gradient of function `f` at point `x` using finite differences.
 
@@ -235,13 +235,13 @@ end
 
 """
     FiniteDiff.finite_difference_gradient!(
-        df::AbstractArray{<:Number},
+        df    :: AbstractArray{<:Number},
         f,
-        x::AbstractArray{<:Number},
-        cache::GradientCache;
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep
-        dir=true)
+        x     :: AbstractArray{<:Number},
+        cache :: GradientCache;
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep
+        dir     = true)
 
 Gradients are either a vector->scalar map `f(x)`, or a scalar->vector map `f(fx,x)` if `inplace=Val{true}` and `fx=f(x)` if `inplace=Val{false}`.
 

@@ -58,12 +58,9 @@ end
 
 """
     HessianCache(
-        xpp,
-        xpm,
-        xmp,
-        xmm,
-        fdtype::Type{T1}=Val{:hcentral},
-        inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
+        xpp, xpm, xmp, xmm,
+        fdtype  :: Type{T1}      = Val{:hcentral},
+        inplace :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
 
 Non-allocating cache constructor.
 """
@@ -78,8 +75,8 @@ end
 """
     HessianCache(
         x,
-        fdtype::Type{T1}=Val{:hcentral},
-        inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
+        fdtype  :: Type{T1}      = Val{:hcentral},
+        inplace :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false})
 
 Allocating cache constructor.
 """
@@ -94,11 +91,11 @@ end
 """
     finite_difference_hessian(
         f,
-        x::AbstractArray{<:Number},
-        fdtype::Type{T1}=Val{:hcentral},
-        inplace::Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep)
+        x       :: AbstractArray{<:Number},
+        fdtype  :: Type{T1}      = Val{:hcentral},
+        inplace :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
 
 Compute the Hessian matrix of scalar function `f` at point `x` using finite differences.
 
@@ -171,13 +168,13 @@ end
 
 """
     finite_difference_hessian!(
-        H::AbstractMatrix,
+        H          :: AbstractMatrix,
         f,
-        x::AbstractArray{<:Number},
-        fdtype     :: Type{T1}=Val{:hcentral},
+        x          :: AbstractArray{<:Number},
+        fdtype     :: Type{T1} = Val{:hcentral},
         inplace    :: Type{Val{T2}} = x isa StaticArray ? Val{true} : Val{false};
-        relstep=default_relstep(fdtype, eltype(x)),
-        absstep=relstep)
+        relstep = default_relstep(fdtype, eltype(x)),
+        absstep = relstep)
 
 Cache-less.
 """
