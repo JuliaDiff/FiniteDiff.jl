@@ -578,3 +578,81 @@ end
     @test FiniteDiff.finite_difference_hessian(f, x1, FiniteDiff.HessianCache(x1)) == Diagonal(2*ones(4))
     @test FiniteDiff.finite_difference_hessian(f, x1, FiniteDiff.HessianCache(x2)) == Diagonal(2*ones(4))
 end
+
+# Batched Jacobian tests (issue #210)
+@time @testset "Batched Jacobian tests" begin
+    # Out-of-place batched function: f(X) where X is n×k, returns m×k
+    function oopf_scalar(x)
+        [(x[1] + 3) * (x[2]^3 - 7) + 18,
+            sin(x[2] * exp(x[1]) - 1)]
+    end
+    function oopf_batch(X::AbstractMatrix)
+        hcat([oopf_scalar(X[:, j]) for j in 1:size(X, 2)]...)
+    end
+    # Also handle single vector input for the batch function
+    oopf_batch(x::AbstractVector) = oopf_scalar(x)
+
+    # In-place batched function: f(FX, X) where X is n×k, FX is m×k
+    function iipf_batch(FX::AbstractMatrix, X::AbstractMatrix)
+        for j in 1:size(X, 2)
+            FX[1, j] = (X[1, j] + 3) * (X[2, j]^3 - 7) + 18
+            FX[2, j] = sin(X[2, j] * exp(X[1, j]) - 1)
+        end
+    end
+
+    x = [1.5, 0.7]
+    J_ref = [[-7 + x[2]^3 3 * (3 + x[1]) * x[2]^2];
+             [exp(x[1]) * x[2] * cos(1 - exp(x[1]) * x[2]) exp(x[1]) * cos(1 - exp(x[1]) * x[2])]]
+
+    @testset "Out-of-place batch" begin
+        J_fwd = FiniteDiff.finite_difference_jacobian(oopf_batch, x, Val{:forward}; batch=true)
+        @test err_func(J_fwd, J_ref) < 1e-6
+
+        # With f_in provided
+        f_in = oopf_scalar(x)
+        J_fwd2 = FiniteDiff.finite_difference_jacobian(oopf_batch, x, Val{:forward}, eltype(x), f_in; batch=true)
+        @test err_func(J_fwd2, J_ref) < 1e-6
+
+        J_cen = FiniteDiff.finite_difference_jacobian(oopf_batch, x, Val{:central}; batch=true)
+        @test err_func(J_cen, J_ref) < 1e-8
+
+        J_cpx = FiniteDiff.finite_difference_jacobian(oopf_batch, x, Val{:complex}; batch=true)
+        @test err_func(J_cpx, J_ref) < 1e-14
+    end
+
+    @testset "In-place batch" begin
+        J = zero(J_ref)
+        FiniteDiff.finite_difference_jacobian!(J, iipf_batch, x, Val{:forward}; batch=true)
+        @test err_func(J, J_ref) < 1e-6
+
+        # With f_in provided
+        f_in = oopf_scalar(x)
+        J .= 0
+        FiniteDiff.finite_difference_jacobian!(J, iipf_batch, x, Val{:forward}, eltype(x), f_in; batch=true)
+        @test err_func(J, J_ref) < 1e-6
+
+        J .= 0
+        FiniteDiff.finite_difference_jacobian!(J, iipf_batch, x, Val{:central}; batch=true)
+        @test err_func(J, J_ref) < 1e-8
+
+        J .= 0
+        FiniteDiff.finite_difference_jacobian!(J, iipf_batch, x, Val{:complex}; batch=true)
+        @test err_func(J, J_ref) < 1e-14
+    end
+
+    @testset "Batch matches non-batch" begin
+        # Test on a larger function to make sure batch and non-batch agree
+        f_oop(x) = [x[1]^2 + x[2]*x[3], sin(x[1]) + x[3]^2, x[1]*x[2]*x[3]]
+        function f_batch(X::AbstractMatrix)
+            hcat([f_oop(X[:, j]) for j in 1:size(X, 2)]...)
+        end
+        f_batch(x::AbstractVector) = f_oop(x)
+
+        x3 = [2.0, 3.0, 1.5]
+        for fdtype in (Val{:forward}, Val{:central}, Val{:complex})
+            J_std = FiniteDiff.finite_difference_jacobian(f_oop, x3, fdtype)
+            J_bat = FiniteDiff.finite_difference_jacobian(f_batch, x3, fdtype; batch=true)
+            @test J_std ≈ J_bat
+        end
+    end
+end
