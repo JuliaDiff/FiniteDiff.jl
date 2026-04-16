@@ -256,12 +256,46 @@ function finite_difference_gradient(
         dir = true) where {T1, T2, T3, T4, fdtype, returntype, inplace}
     if typeof(x) <: AbstractArray
         df = zero(returntype) .* x
+        finite_difference_gradient!(
+            df, f, x, cache, relstep = relstep, absstep = absstep, dir = dir)
+        df
     else
-        df = zero(cache.c1)
+        # Scalar x: compute out-of-place to support immutable output types
+        # (e.g. ArrayPartition{SVector} from SecondOrderODEProblem).
+        _scalar_gradient_oop(f, x, cache, fdtype, returntype, inplace;
+            relstep = relstep, absstep = absstep, dir = dir)
     end
-    finite_difference_gradient!(
-        df, f, x, cache, relstep = relstep, absstep = absstep, dir = dir)
-    df
+end
+
+# Out-of-place scalar→vector gradient that never mutates the result,
+# so it works even when f returns immutable arrays (SVector, etc.).
+function _scalar_gradient_oop(
+        f, x::Number, cache, fdtype, returntype, inplace;
+        relstep, absstep, dir)
+    fx, c1, c2 = cache.fx, cache.c1, cache.c2
+
+    if fdtype == Val(:forward)
+        epsilon = compute_epsilon(Val(:forward), x, relstep, absstep, dir)
+        _c1 = inplace == Val(true) ? (f(c1, x + epsilon); c1) : f(x + epsilon)
+        if typeof(fx) != Nothing
+            @. (_c1 - fx) / epsilon
+        else
+            _c2 = inplace == Val(true) ? (f(c2, x); c2) : f(x)
+            @. (_c1 - _c2) / epsilon
+        end
+    elseif fdtype == Val(:central)
+        epsilon = compute_epsilon(Val(:central), x, relstep, absstep, dir)
+        _c1 = inplace == Val(true) ? (f(c1, x + epsilon); c1) : f(x + epsilon)
+        _c2 = inplace == Val(true) ? (f(c2, x - epsilon); c2) : f(x - epsilon)
+        @. (_c1 - _c2) / (2 * epsilon)
+    elseif fdtype == Val(:complex) && returntype <: Real
+        epsilon_complex = eps(real(eltype(x)))
+        _c1 = inplace == Val(true) ?
+              (f(c1, x + im * epsilon_complex); c1) : f(x + im * epsilon_complex)
+        @. imag(_c1) / epsilon_complex
+    else
+        fdtype_error(returntype)
+    end
 end
 
 # vector of derivatives of a vector->scalar map by each component of a vector x

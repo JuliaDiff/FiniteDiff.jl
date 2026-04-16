@@ -290,6 +290,40 @@ complex_cache = FiniteDiff.GradientCache(df, x, Val{:complex})
     @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, complex_cache), df_ref) < 1e-15
 end
 
+@time @testset "Gradient of f:scalar->vector with immutable output" begin
+    # Regression test: finite_difference_gradient with scalar x must work
+    # when f returns immutable arrays, since the out-of-place API should
+    # never need to mutate the result. This failed previously because the
+    # cached version called finite_difference_gradient! which used @. df = ...
+    # to write into an immutable buffer.
+    #
+    # We use a wrapper around a regular Vector that blocks setindex! to
+    # simulate immutable array types (like StaticArrays.SVector or
+    # ArrayPartition containing SVectors).
+    struct ReadOnlyVec{T} <: AbstractVector{T}
+        data::Vector{T}
+    end
+    Base.size(v::ReadOnlyVec) = size(v.data)
+    Base.getindex(v::ReadOnlyVec, i::Int) = v.data[i]
+    Base.setindex!(::ReadOnlyVec, _, ::Int) = error("ReadOnlyVec does not support setindex!")
+    Base.similar(v::ReadOnlyVec) = ReadOnlyVec(zeros(eltype(v), length(v)))
+    Base.zero(v::ReadOnlyVec) = ReadOnlyVec(zeros(eltype(v), length(v)))
+    # Out-of-place broadcast returns a plain Vector (like SVector .+ SVector returns SVector)
+    Base.BroadcastStyle(::Type{<:ReadOnlyVec}) = Broadcast.DefaultArrayStyle{1}()
+
+    g(t) = ReadOnlyVec([sin(t), cos(t)])
+    t0 = 1.0
+    g_ref = [cos(t0), -sin(t0)]
+
+    # Out-of-place cached version (the bug path)
+    df_template = similar(g(t0))
+    for fdtype in (Val(:forward), Val(:central))
+        cache = FiniteDiff.GradientCache(df_template, t0, fdtype, Float64, Val(false))
+        result = FiniteDiff.finite_difference_gradient(g, t0, cache)
+        @test err_func(collect(result), g_ref) < 1e-4
+    end
+end
+
 f(df, x) = (df[1] = sin(x); df[2] = cos(x); df)
 x = (2π * rand()) * (1 + im)
 fx = fill(zero(typeof(x)), 2)
