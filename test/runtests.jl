@@ -17,6 +17,7 @@ if GROUP == "All" || GROUP == "Core"
   @time @safetestset "FiniteDiff Standard Tests" begin include("finitedifftests.jl") end
   @time @safetestset "Color Differentiation Tests" begin include("coloring_tests.jl") end
   @time @safetestset "Out of Place Tests" begin include("out_of_place_tests.jl") end
+  @time @safetestset "Cache Reuse Safety Tests" begin include("cache_reuse_tests.jl") end
 end
 
 if GROUP == "All" || GROUP == "Downstream"

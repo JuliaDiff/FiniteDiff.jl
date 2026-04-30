@@ -287,6 +287,13 @@ function finite_difference_jacobian(
         dir = true) where {T1, T2, T3, T4, cType, sType, fdtype, returntype}
     x1, fx, fx1 = cache.x1, cache.fx, cache.fx1
 
+    # Issue #213: cache.x1 may have been initialized via `similar(x)` (e.g. by
+    # DifferentiationInterface) or built around a previous x. Synchronize it
+    # with the current x so the cache is observably consistent after the call.
+    if x1 isa AbstractArray && ArrayInterface.ismutable(x1) && x1 !== x
+        copyto!(x1, x)
+    end
+
     if !(f_in isa Nothing)
         vecfx = _vec(f_in)
     elseif fdtype == Val(:forward)
@@ -297,7 +304,6 @@ function finite_difference_jacobian(
         vecfx = _vec(fx)
     end
     vecx = _vec(x)
-    vecx1 = _vec(x1)
     J = jac_prototype isa Nothing ?
         (sparsity isa Nothing ? Array{eltype(x), 2}(undef, length(vecfx), 0) :
          zeros(eltype(x), size(sparsity))) : zero(jac_prototype)
@@ -343,11 +349,14 @@ function finite_difference_jacobian(
             end
         end
     elseif fdtype == Val(:central)
+        # Both halves of the central difference must perturb around the *current*
+        # x. Reading the unperturbed components from `cache.x1` (issue #213) is
+        # unsafe — the cache may have been built via `similar(x)` or reused at a
+        # different x — so we always perturb around `vecx` directly.
         function calculate_Ji_central(i)
-            x1_save = ArrayInterface.allowed_getindex(vecx1, i)
             x_save = ArrayInterface.allowed_getindex(vecx, i)
-            epsilon = compute_epsilon(Val(:forward), x1_save, relstep, absstep, dir)
-            _vecx1 = setindex(vecx1, x1_save+epsilon, i)
+            epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
+            _vecx1 = setindex(vecx, x_save+epsilon, i)
             _vecx = setindex(vecx, x_save-epsilon, i)
             _x1 = reshape(_vecx1, axes(x))
             _x = reshape(_vecx, axes(x))
@@ -366,10 +375,10 @@ function finite_difference_jacobian(
                     dx = calculate_Ji_central(color_i)
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
-                    tmp = norm(vecx1 .* (colorvec .== color_i))
+                    tmp = norm(vecx .* (colorvec .== color_i))
                     epsilon = compute_epsilon(
                         Val(:forward), sqrt(tmp), relstep, absstep, dir)
-                    _vecx1 = @. vecx1 + epsilon * (colorvec == color_i)
+                    _vecx1 = @. vecx + epsilon * (colorvec == color_i)
                     _vecx = @. vecx - epsilon * (colorvec == color_i)
                     _x1 = reshape(_vecx1, axes(x))
                     _x = reshape(_vecx, axes(x))
