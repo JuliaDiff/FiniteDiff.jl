@@ -11,7 +11,7 @@ and `v` is a vector.
 - `x1::X1`: Temporary array for perturbed input values
 - `fx1::FX1`: Temporary array for function evaluations
 """
-mutable struct JVPCache{X1, FX1, FDType}
+struct JVPCache{X1, FX1, FDType}
     x1::X1
     fx1::FX1
 end
