@@ -11,7 +11,7 @@ and `v` is a vector.
 - `x1::X1`: Temporary array for perturbed input values
 - `fx1::FX1`: Temporary array for function evaluations
 """
-struct JVPCache{X1, FX1, FDType}
+struct JVPCache{X1,FX1,FDType}
     x1::X1
     fx1::FX1
 end
@@ -38,11 +38,11 @@ cache = JVPCache(x, Val(:forward))
 ```
 """
 function JVPCache(
-        x,
-        fdtype::Union{Val{FD}, Type{FD}} = Val(:forward)
-    ) where {FD}
+    x,
+    fdtype::Union{Val{FD},Type{FD}}=Val(:forward)
+) where {FD}
     fdtype isa Type && (fdtype = fdtype())
-    return JVPCache{typeof(x), typeof(x), fdtype}(copy(x), copy(x))
+    return JVPCache{typeof(x),typeof(x),fdtype}(copy(x), copy(x))
 end
 
 """
@@ -73,12 +73,12 @@ The arrays `x` and `fx1` will be modified during JVP computations. Ensure they
 are not used elsewhere if their values need to be preserved.
 """
 function JVPCache(
-        x,
-        fx,
-        fdtype::Union{Val{FD}, Type{FD}} = Val(:forward)
-    ) where {FD}
+    x,
+    fx,
+    fdtype::Union{Val{FD},Type{FD}}=Val(:forward)
+) where {FD}
     fdtype isa Type && (fdtype = fdtype())
-    return JVPCache{typeof(x), typeof(fx), fdtype}(x, fx)
+    return JVPCache{typeof(x),typeof(fx),fdtype}(x, fx)
 end
 
 """
@@ -133,13 +133,13 @@ where `h` is the step size and `v` is the direction vector.
 - Particularly efficient when `v` is sparse or when only one directional derivative is needed
 """
 function finite_difference_jvp(
-        f, x, v,
-        fdtype = Val(:forward),
-        f_in = nothing;
-        relstep = default_relstep(fdtype, eltype(x)),
-        absstep = relstep,
-        dir = true
-    )
+    f, x, v,
+    fdtype=Val(:forward),
+    f_in=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    dir=true
+)
     if f_in isa Nothing
         fx = f(x)
     else
@@ -161,15 +161,15 @@ end
 Cached.
 """
 function finite_difference_jvp(
-        f,
-        x,
-        v,
-        cache::JVPCache{X1, FX1, fdtype},
-        f_in = nothing;
-        relstep = default_relstep(fdtype, eltype(x)),
-        absstep = relstep,
-        dir = true
-    ) where {X1, FX1, fdtype}
+    f,
+    x,
+    v,
+    cache::JVPCache{X1,FX1,fdtype},
+    f_in=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    dir=true
+) where {X1,FX1,fdtype}
     if fdtype == Val(:complex)
         ArgumentError("finite_difference_jvp doesn't support :complex-mode finite diff")
     end
@@ -208,15 +208,15 @@ end
 Cache-less.
 """
 function finite_difference_jvp!(
-        jvp,
-        f,
-        x,
-        v,
-        fdtype = Val(:forward),
-        f_in = nothing;
-        relstep = default_relstep(fdtype, eltype(x)),
-        absstep = relstep
-    )
+    jvp,
+    f,
+    x,
+    v,
+    fdtype=Val(:forward),
+    f_in=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep
+)
     if !isnothing(f_in)
         cache = JVPCache(x, f_in, fdtype)
     elseif fdtype == Val(:forward)
@@ -243,16 +243,16 @@ end
 Cached.
 """
 function finite_difference_jvp!(
-        jvp,
-        f,
-        x,
-        v,
-        cache::JVPCache{X1, FX1, fdtype},
-        f_in = nothing;
-        relstep = default_relstep(fdtype, eltype(x)),
-        absstep = relstep,
-        dir = true
-    ) where {X1, FX1, fdtype}
+    jvp,
+    f,
+    x,
+    v,
+    cache::JVPCache{X1,FX1,fdtype},
+    f_in=nothing;
+    relstep=default_relstep(fdtype, eltype(x)),
+    absstep=relstep,
+    dir=true
+) where {X1,FX1,fdtype}
     if fdtype == Val(:complex)
         ArgumentError("finite_difference_jvp doesn't support :complex-mode finite diff")
     end
