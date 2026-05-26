@@ -1,6 +1,6 @@
 name = "FiniteDiff"
 uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
-version = "2.31.0"
+version = "2.31.1"
 
 [deps]
 ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
@@ -37,4 +37,12 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "BlockBandedMatrices", "BandedMatrices", "Pkg", "SafeTestsets", "SparseArrays", "StaticArrays"]
+test = [
+    "Test",
+    "BlockBandedMatrices",
+    "BandedMatrices",
+    "Pkg",
+    "SafeTestsets",
+    "SparseArrays",
+    "StaticArrays",
+]
