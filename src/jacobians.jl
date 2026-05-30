@@ -187,6 +187,167 @@ function _make_Ji(::AbstractArray, xtype, dx, color_i, nrows, ncols)
 end
 
 """
+    _finite_difference_jacobian_batch(f, x, fdtype, returntype, f_in; relstep, absstep, dir)
+
+Internal function implementing vectorized/batched finite difference Jacobian computation.
+
+When `batch=true` is passed to `finite_difference_jacobian`, this function is called instead
+of the standard column-by-column approach. The function `f` is expected to accept a matrix
+where each column is an input point, and return a matrix where each column is the
+corresponding output. This allows GPU-parallelized or otherwise vectorized functions to
+evaluate all perturbations in a single call.
+
+For forward differences, a single call to `f` is made with `n+1` columns (base point + `n`
+perturbations) if `f_in` is not provided, or `n` columns if `f_in` is provided.
+For central differences, `2n` columns are used (forward and backward perturbations).
+For complex step, `n` columns are used with complex perturbations.
+"""
+function _finite_difference_jacobian_batch(f, x, fdtype, returntype, f_in;
+        relstep, absstep, dir)
+    fdtype isa Type && (fdtype = fdtype())
+    n = length(x)
+    vecx = _vec(x)
+
+    if fdtype == Val(:forward)
+        epsilons = [compute_epsilon(Val(:forward), vecx[i], relstep, absstep, dir) for i in 1:n]
+
+        if f_in isa Nothing
+            # Include x as the first column so we only call f once
+            X = repeat(vecx, 1, n + 1)
+            for i in 1:n
+                X[i, i + 1] += epsilons[i]
+            end
+            FX = f(X)
+            fx_col = @view FX[:, 1]
+            J = similar(FX, size(FX, 1), n)
+            for i in 1:n
+                @. J[:, i] = (FX[:, i + 1] - fx_col) / epsilons[i]
+            end
+        else
+            X = repeat(vecx, 1, n)
+            for i in 1:n
+                X[i, i] += epsilons[i]
+            end
+            FX = f(X)
+            vfx = _vec(f_in)
+            J = similar(FX, size(FX, 1), n)
+            for i in 1:n
+                @. J[:, i] = (FX[:, i] - vfx) / epsilons[i]
+            end
+        end
+        return J
+
+    elseif fdtype == Val(:central)
+        epsilons = [compute_epsilon(Val(:central), vecx[i], relstep, absstep, dir) for i in 1:n]
+
+        # Build matrix with 2n columns: [x+eps1*e1, x-eps1*e1, x+eps2*e2, x-eps2*e2, ...]
+        X = repeat(vecx, 1, 2n)
+        for i in 1:n
+            X[i, 2i - 1] += epsilons[i]
+            X[i, 2i] -= epsilons[i]
+        end
+        FX = f(X)
+        J = similar(FX, size(FX, 1), n)
+        for i in 1:n
+            @. J[:, i] = (FX[:, 2i - 1] - FX[:, 2i]) / (2 * epsilons[i])
+        end
+        return J
+
+    elseif fdtype == Val(:complex) && returntype <: Real
+        epsilon = eps(eltype(x))
+
+        # Build complex matrix with n columns
+        X = repeat(complex.(vecx), 1, n)
+        for i in 1:n
+            X[i, i] += im * epsilon
+        end
+        FX = f(X)
+        J = similar(FX, real(eltype(FX)), size(FX, 1), n)
+        for i in 1:n
+            @. J[:, i] = imag(FX[:, i]) / epsilon
+        end
+        return J
+    else
+        fdtype_error(returntype)
+    end
+end
+
+"""
+    _finite_difference_jacobian_batch!(J, f, x, fdtype, returntype, f_in; relstep, absstep, dir)
+
+Internal in-place function implementing vectorized/batched finite difference Jacobian computation.
+
+When `batch=true` is passed to `finite_difference_jacobian!`, this function is called instead
+of the standard column-by-column approach. The function `f` is expected to accept two matrix
+arguments `f(FX, X)` where `X` has columns of input points and `FX` is filled with the
+corresponding outputs.
+"""
+function _finite_difference_jacobian_batch!(J, f, x, fdtype, returntype, f_in;
+        relstep, absstep, dir)
+    fdtype isa Type && (fdtype = fdtype())
+    m, n = size(J)
+    vecx = _vec(x)
+
+    if fdtype == Val(:forward)
+        epsilons = [compute_epsilon(Val(:forward), vecx[i], relstep, absstep, dir) for i in 1:n]
+
+        if f_in isa Nothing
+            # n+1 columns: base point + n perturbations
+            X = repeat(vecx, 1, n + 1)
+            for i in 1:n
+                X[i, i + 1] += epsilons[i]
+            end
+            FX = similar(x, m, n + 1)
+            f(FX, X)
+            for i in 1:n
+                @. J[:, i] = (FX[:, i + 1] - FX[:, 1]) / epsilons[i]
+            end
+        else
+            X = repeat(vecx, 1, n)
+            for i in 1:n
+                X[i, i] += epsilons[i]
+            end
+            FX = similar(x, m, n)
+            f(FX, X)
+            vfx = _vec(f_in)
+            for i in 1:n
+                @. J[:, i] = (FX[:, i] - vfx) / epsilons[i]
+            end
+        end
+
+    elseif fdtype == Val(:central)
+        epsilons = [compute_epsilon(Val(:central), vecx[i], relstep, absstep, dir) for i in 1:n]
+
+        X = repeat(vecx, 1, 2n)
+        for i in 1:n
+            X[i, 2i - 1] += epsilons[i]
+            X[i, 2i] -= epsilons[i]
+        end
+        FX = similar(x, m, 2n)
+        f(FX, X)
+        for i in 1:n
+            @. J[:, i] = (FX[:, 2i - 1] - FX[:, 2i]) / (2 * epsilons[i])
+        end
+
+    elseif fdtype == Val(:complex) && returntype <: Real
+        epsilon = eps(eltype(x))
+
+        X = repeat(complex.(vecx), 1, n)
+        for i in 1:n
+            X[i, i] += im * epsilon
+        end
+        FX = similar(X, Complex{eltype(x)}, m, n)
+        f(FX, X)
+        for i in 1:n
+            @. J[:, i] = imag(FX[:, i]) / epsilon
+        end
+    else
+        fdtype_error(returntype)
+    end
+    nothing
+end
+
+"""
     FiniteDiff.finite_difference_jacobian(
         f,
         x          :: AbstractArray{<:Number},
@@ -246,7 +407,12 @@ function finite_difference_jacobian(f, x,
         colorvec = 1:length(x),
         sparsity = nothing,
         jac_prototype = nothing,
-        dir = true)
+        dir = true,
+        batch = false)
+    if batch
+        return _finite_difference_jacobian_batch(f, x, fdtype, returntype, f_in;
+            relstep = relstep, absstep = absstep, dir = dir)
+    end
     if f_in isa Nothing
         fx = f(x)
     else
@@ -452,7 +618,13 @@ function finite_difference_jacobian!(J,
         relstep = default_relstep(fdtype, eltype(x)),
         absstep = relstep,
         colorvec = 1:length(x),
-        sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing)
+        sparsity = ArrayInterface.has_sparsestruct(J) ? J : nothing,
+        batch = false)
+    if batch
+        _finite_difference_jacobian_batch!(J, f, x, fdtype, returntype, f_in;
+            relstep = relstep, absstep = absstep, dir = true)
+        return nothing
+    end
     if f_in isa Nothing && fdtype == Val(:forward)
         if size(J, 1) == length(x)
             fx = zero(x)
