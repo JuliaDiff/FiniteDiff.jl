@@ -14,6 +14,7 @@ end
 @time begin
 
 if GROUP == "All" || GROUP == "Core"
+  @time @safetestset "Public API Tests" begin include("public_api_tests.jl") end
   @time @safetestset "FiniteDiff Standard Tests" begin include("finitedifftests.jl") end
   @time @safetestset "Color Differentiation Tests" begin include("coloring_tests.jl") end
   @time @safetestset "Out of Place Tests" begin include("out_of_place_tests.jl") end
