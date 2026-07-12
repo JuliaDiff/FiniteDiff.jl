@@ -344,7 +344,11 @@ central_cache = FiniteDiff.GradientCache(df, x, Val{:central})
     @test err_func(FiniteDiff.finite_difference_gradient!(df, f, x, central_cache), df_ref) < 3e-7
 end
 
-function ret_allocs(res, _f, x, cache)
+# Force specialization on the function argument. Without `::F where {F}`, Julia
+# does not specialize this helper on `_f` (a bare Function it only forwards), so
+# the inner call dispatches dynamically and the wrapper itself allocates ~48
+# bytes on 1.10/1.11 (0 on 1.12+) — a measurement artifact, not library work.
+function ret_allocs(res, _f::F, x, cache) where {F}
     allocs = @allocated FiniteDiff.finite_difference_gradient!(res, _f, x, cache)
     allocs
 end
