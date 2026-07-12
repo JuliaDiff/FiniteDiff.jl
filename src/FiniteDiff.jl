@@ -142,4 +142,17 @@ include("jacobians.jl")
 include("hessians.jl")
 include("jvp.jl")
 
+# Mark the documented user-facing API (the names rendered in the docs' `@docs`
+# blocks) as public. `public` is a keyword only on Julia 1.11+, so it is emitted
+# via `eval` guarded on the version to keep this source parseable on the 1.10 LTS.
+@static if VERSION >= v"1.11.0-DEV.469"
+    eval(Expr(:public,
+        :finite_difference_derivative, :finite_difference_derivative!,
+        :finite_difference_gradient, :finite_difference_gradient!,
+        :finite_difference_jacobian, :finite_difference_jacobian!,
+        :finite_difference_hessian, :finite_difference_hessian!,
+        :finite_difference_jvp, :finite_difference_jvp!,
+        :DerivativeCache, :GradientCache, :JacobianCache, :HessianCache, :JVPCache))
+end
+
 end # module
