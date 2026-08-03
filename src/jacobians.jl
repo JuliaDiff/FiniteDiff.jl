@@ -294,14 +294,17 @@ function finite_difference_jacobian(
         copyto!(x1, x)
     end
 
-    if !(f_in isa Nothing)
-        vecfx = _vec(f_in)
+    # Single assignment site: `vecfx` is captured by the `calculate_Ji_*` closures
+    # below, and a captured variable with several assignment sites is boxed, which
+    # makes the whole function's return type uninferrable.
+    vecfx = if !(f_in isa Nothing)
+        _vec(f_in)
     elseif fdtype == Val(:forward)
-        vecfx = _vec(f(x))
+        _vec(f(x))
     elseif fdtype == Val(:complex) && returntype <: Real
-        vecfx = real(fx)
+        real(fx)
     else
-        vecfx = _vec(fx)
+        _vec(fx)
     end
     vecx = _vec(x)
     J = jac_prototype isa Nothing ?
@@ -310,13 +313,16 @@ function finite_difference_jacobian(
     nrows, ncols = size(J)
 
     if !(sparsity isa Nothing)
-        rows_index, cols_index = ArrayInterface.findstructralnz(sparsity)
-        rows_index = [rows_index[i] for i in 1:length(rows_index)]
-        cols_index = [cols_index[i] for i in 1:length(cols_index)]
+        structural_rows, structural_cols = ArrayInterface.findstructralnz(sparsity)
+        rows_index = [structural_rows[i] for i in 1:length(structural_rows)]
+        cols_index = [structural_cols[i] for i in 1:length(structural_cols)]
     end
 
     if fdtype == Val(:forward)
+        # `local` keeps these from aliasing (and thereby boxing) the same-named
+        # variables of the enclosing function; see the `vecfx` comment above.
         function calculate_Ji_forward(i)
+            local x_save, epsilon, _vecx1, _x1, vecfx1, dx
             x_save = ArrayInterface.allowed_getindex(vecx, i)
             epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
             _vecx1 = setindex(vecx, x_save+epsilon, i)
@@ -336,12 +342,12 @@ function finite_difference_jacobian(
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     tmp = norm(vecx .* (colorvec .== color_i))
-                    epsilon = compute_epsilon(
+                    epsilon_c = compute_epsilon(
                         Val(:forward), sqrt(tmp), relstep, absstep, dir)
-                    _vecx = @. vecx + epsilon * (colorvec == color_i)
+                    _vecx = @. vecx + epsilon_c * (colorvec == color_i)
                     _x = reshape(_vecx, axes(x))
                     vecfx1 = _vec(f(_x))
-                    dx = (vecfx1-vecfx)/epsilon
+                    dx = (vecfx1-vecfx)/epsilon_c
                     Ji = _make_Ji(
                         J, rows_index, cols_index, dx, colorvec, color_i, nrows, ncols)
                     J = J + Ji
@@ -354,6 +360,7 @@ function finite_difference_jacobian(
         # unsafe — the cache may have been built via `similar(x)` or reused at a
         # different x — so we always perturb around `vecx` directly.
         function calculate_Ji_central(i)
+            local x_save, epsilon, _vecx1, _vecx, _x1, _x, vecfx1, vecfx0, dx
             x_save = ArrayInterface.allowed_getindex(vecx, i)
             epsilon = compute_epsilon(Val(:forward), x_save, relstep, absstep, dir)
             _vecx1 = setindex(vecx, x_save+epsilon, i)
@@ -361,8 +368,8 @@ function finite_difference_jacobian(
             _x1 = reshape(_vecx1, axes(x))
             _x = reshape(_vecx, axes(x))
             vecfx1 = _vec(f(_x1))
-            vecfx = _vec(f(_x))
-            dx = (vecfx1-vecfx)/(2epsilon)
+            vecfx0 = _vec(f(_x))
+            dx = (vecfx1-vecfx0)/(2epsilon)
             return dx
         end
 
@@ -376,15 +383,15 @@ function finite_difference_jacobian(
                     J = J + _make_Ji(J, eltype(x), dx, color_i, nrows, ncols)
                 else
                     tmp = norm(vecx .* (colorvec .== color_i))
-                    epsilon = compute_epsilon(
+                    epsilon_c = compute_epsilon(
                         Val(:forward), sqrt(tmp), relstep, absstep, dir)
-                    _vecx1 = @. vecx + epsilon * (colorvec == color_i)
-                    _vecx = @. vecx - epsilon * (colorvec == color_i)
+                    _vecx1 = @. vecx + epsilon_c * (colorvec == color_i)
+                    _vecx = @. vecx - epsilon_c * (colorvec == color_i)
                     _x1 = reshape(_vecx1, axes(x))
                     _x = reshape(_vecx, axes(x))
                     vecfx1 = _vec(f(_x1))
-                    vecfx = _vec(f(_x))
-                    dx = (vecfx1-vecfx)/(2epsilon)
+                    vecfx0 = _vec(f(_x))
+                    dx = (vecfx1-vecfx0)/(2epsilon_c)
                     Ji = _make_Ji(
                         J, rows_index, cols_index, dx, colorvec, color_i, nrows, ncols)
                     J = J + Ji
@@ -395,11 +402,12 @@ function finite_difference_jacobian(
         epsilon = eps(eltype(x))
 
         function calculate_Ji_complex(i)
+            local x_save, _vecx, _x, vecfx_c, dx
             x_save = ArrayInterface.allowed_getindex(vecx, i)
             _vecx = setindex(complex.(vecx), x_save+im*epsilon, i)
             _x = reshape(_vecx, axes(x))
-            vecfx = _vec(f(_x))
-            dx = imag(vecfx)/epsilon
+            vecfx_c = _vec(f(_x))
+            dx = imag(vecfx_c)/epsilon
             return dx
         end
 
@@ -414,8 +422,8 @@ function finite_difference_jacobian(
                 else
                     _vecx = @. vecx + im * epsilon * (colorvec == color_i)
                     _x = reshape(_vecx, axes(x))
-                    vecfx = _vec(f(_x))
-                    dx = imag(vecfx)/epsilon
+                    vecfx_c = _vec(f(_x))
+                    dx = imag(vecfx_c)/epsilon
                     Ji = _make_Ji(
                         J, rows_index, cols_index, dx, colorvec, color_i, nrows, ncols)
                     J = J + Ji

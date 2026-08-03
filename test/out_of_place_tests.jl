@@ -55,3 +55,17 @@ J = FiniteDiff.finite_difference_jacobian(f, x, Val{:central}, eltype(x))
 J = FiniteDiff.finite_difference_jacobian(f, x, Val{:complex}, eltype(x))
 @test J ≈ fill(1.0, 2, 1)
 @test J isa SMatrix{2,1}
+
+# The per-color closures used to assign variables that also live in the enclosing
+# function's scope, which boxed the captures and made the return type `Any`.
+# Static-array inputs stay uninferrable here: the `mapreduce(_, hcat, _)` accumulator
+# grows one `SMatrix` column per color, so its type depends on `maximum(colorvec)`.
+@testset "Type stability of the dense out-of-place jacobian" begin
+  g(x) = x .^ 2 .- 2
+  x = [1.0, 2.0, 3.0]
+  @testset "$difftype" for difftype in (:forward, :central, :complex)
+    cache = FiniteDiff.JacobianCache(x, Val{difftype}, eltype(x))
+    @test (@inferred FiniteDiff.finite_difference_jacobian(g, x, cache)) ≈
+      Diagonal(2x)
+  end
+end
