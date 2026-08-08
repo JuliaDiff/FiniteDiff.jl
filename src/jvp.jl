@@ -229,6 +229,11 @@ end
         absstep = relstep)
 
 Cache-less.
+
+Neither `x` nor `f_in` is modified: the internally-built cache perturbs a copy of `x`,
+and only reads `f_in`. Use the cached method with a `JVPCache` built by the
+non-allocating `JVPCache(x1, fx1, fdtype)` constructor to opt into perturbing arrays
+you own.
 """
 function finite_difference_jvp!(jvp,
         f,
@@ -238,12 +243,18 @@ function finite_difference_jvp!(jvp,
         f_in = nothing;
         relstep = default_relstep(fdtype, eltype(x)),
         absstep = relstep)
-    if !isnothing(f_in)
-        cache = JVPCache(x, f_in, fdtype)
-    elseif fdtype == Val(:forward)
-        fx = zero(x)
-        f(fx, x)
-        cache = JVPCache(x, fx, fdtype)
+    if fdtype == Val(:forward)
+        if isnothing(f_in)
+            fx = zero(x)
+            f(fx, x)
+        else
+            fx = f_in
+        end
+        cache = JVPCache(copy(x), fx, fdtype)
+    elseif !isnothing(f_in)
+        # f_in is unusable for a non-forward difference, but it does pin down the
+        # size of the function output, which `JVPCache(x, fdtype)` has to guess.
+        cache = JVPCache(copy(x), zero(f_in), fdtype)
     else
         cache = JVPCache(x, fdtype)
     end

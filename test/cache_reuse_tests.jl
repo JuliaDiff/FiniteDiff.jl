@@ -159,4 +159,27 @@ end
     end
 end
 
+# Aliasing x into the internally-built cache also broke :central-with-f_in numerically:
+# the second evaluation landed back on x instead of x + ϵv, halving the answer.
+@testset "cache-less JVP does not mutate the caller's x" begin
+    sq!(y, x) = (y[1] = x[1]^2 + x[2]; y[2] = x[1] * x[2]; y)
+    x_ref = [1.0, 2.0]
+    v = [1.0, 0.5]
+    jvp_ref = [2x_ref[1] 1.0; x_ref[2] x_ref[1]] * v
+    f_in = sq!(zeros(2), x_ref)
+
+    cases = ((Val(:forward), nothing), (Val(:forward), f_in),
+        (Val(:central), nothing), (Val(:central), f_in))
+
+    @testset "$(fdtype), f_in=$(fin0 !== nothing)" for (fdtype, fin0) in cases
+        x = copy(x_ref)
+        fin = fin0 === nothing ? nothing : copy(fin0)
+        jvp = zeros(2)
+        FiniteDiff.finite_difference_jvp!(jvp, sq!, x, v, fdtype, fin)
+        @test x == x_ref
+        fin === nothing || @test fin == f_in
+        @test jvp≈jvp_ref atol=1e-6
+    end
+end
+
 end  # outer testset
