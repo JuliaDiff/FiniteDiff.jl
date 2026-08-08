@@ -11,6 +11,21 @@ The JVP computes `J(x) * v` where `J(x)` is the Jacobian of function `f` at poin
 
 where `h` is the step size and `v` is the direction vector.
 
+## Step Size
+
+Because `f` is evaluated at `x + h*v`, the step `h` has units of `[x]/[v]`: it is not a
+step in `x` and it is not dimensionless. The step used is
+
+```julia
+h = max(relstep * norm(x), absstep) * dir / norm(v)
+```
+
+so that the perturbation `h*v` is a `relstep` relative change of `x`, floored at
+`absstep`, and the computed JVP is invariant (up to that floor) to rescaling of `v`.
+This matters for matrix-free Krylov solvers, where `v` is a unit-norm basis vector and
+`norm(x)` may be large: a step that ignores `norm(x)` is stuck at the `absstep` floor
+and the JVP loses accuracy proportionally to `norm(x)`.
+
 ## Performance Benefits
 
 JVP functions are particularly efficient when you only need directional derivatives:
