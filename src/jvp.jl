@@ -80,6 +80,31 @@ function JVPCache(
 end
 
 """
+    jvp_epsilon(fdtype, x, v, relstep::Real, absstep::Real, dir::Real)
+
+Compute the finite difference step size used by `finite_difference_jvp` and
+`finite_difference_jvp!`.
+
+The JVP evaluates `f(x + ϵ*v)`, so `ϵ` must carry units of `[x]/[v]` in order for
+`ϵ*v` to be a perturbation of `x`. The step is therefore the ordinary scalar step
+applied to the magnitude of `x`, rescaled by the magnitude of `v`:
+
+    ϵ = max(relstep*norm(x), absstep) * dir / norm(v)
+
+so that `norm(ϵ*v) == max(relstep*norm(x), absstep)`, i.e. the perturbation is a
+`relstep` relative change of `x` (floored at `absstep`), independent of how `v` is
+scaled. `norm(v) == 0` and non-finite `norm(x)` fall back to the unscaled step
+rather than producing `Inf`/`NaN` steps.
+"""
+@inline function jvp_epsilon(fdtype, x, v, relstep::Real, absstep::Real, dir::Real)
+    nx = norm(_vec(x))
+    nv = norm(_vec(v))
+    isfinite(nx) || (nx = zero(nx))
+    epsilon = compute_epsilon(fdtype, nx, relstep, absstep, dir)
+    (iszero(nv) || !isfinite(nv)) ? epsilon : epsilon / nv
+end
+
+"""
     FiniteDiff.finite_difference_jvp(
         f,
         x      :: AbstractArray{<:Number},
@@ -105,6 +130,10 @@ computing the full Jacobian when only `J*v` is needed.
 # Keyword Arguments
 - `relstep`: Relative step size (default: method-dependent optimal value)
 - `absstep=relstep`: Absolute step size fallback
+
+The step is `ϵ = max(relstep*norm(x), absstep)*dir/norm(v)`, i.e. `relstep` and
+`absstep` set the size of the perturbation `ϵ*v` relative to `x`, and the result is
+unchanged (up to the `absstep` floor) if `v` is rescaled.
 
 # Returns
 - Vector `J(x) * v` representing the Jacobian-vector product
@@ -169,8 +198,7 @@ function finite_difference_jvp(
         ArgumentError("finite_difference_jvp doesn't support :complex-mode finite diff")
     end
 
-    tmp = sqrt(abs(dot(_vec(x), _vec(v))))
-    epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
+    epsilon = jvp_epsilon(fdtype, x, v, relstep, absstep, dir)
     if fdtype == Val(:forward)
         fx = f_in isa Nothing ? f(x) : f_in
         x1 = @. x + epsilon * v
@@ -250,8 +278,7 @@ function finite_difference_jvp!(
     end
 
     (; x1, fx1) = cache
-    tmp = sqrt(abs(dot(_vec(x), _vec(v))))
-    epsilon = compute_epsilon(fdtype, tmp, relstep, absstep, dir)
+    epsilon = jvp_epsilon(fdtype, x, v, relstep, absstep, dir)
     if fdtype == Val(:forward)
         if f_in isa Nothing
             f(fx1, x)
