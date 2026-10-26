@@ -6,7 +6,12 @@ const GROUP = get(ENV, "GROUP", "All")
 const is_APPVEYOR = Sys.iswindows() && haskey(ENV,"APPVEYOR")
 
 function activate_downstream_env()
-    Pkg.activate("downstream")
+    # An installed package's files are read-only, so work on a writable copy.
+    env = mktempdir()
+    project_file = joinpath(env, "Project.toml")
+    cp(joinpath(@__DIR__, "downstream", "Project.toml"), project_file)
+    chmod(project_file, 0o644)
+    Pkg.activate(env)
     Pkg.develop(PackageSpec(path=dirname(@__DIR__)))
     Pkg.instantiate()
 end
